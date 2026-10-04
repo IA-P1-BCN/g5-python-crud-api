@@ -20,8 +20,8 @@ Codes: `NOT_FOUND`, `VALIDATION_ERROR`, `DUPLICATE`, `SLOT_TAKEN`, `SLOT_OVERLAP
 | GET | `/users` | 1 | List users | 200 |
 | GET | `/users/{id}` | 1 | Get user | 200 |
 | PUT | `/users/{id}` | 1 | Update name, phone | 200 |
-| PATCH | `/users/{id}/deactivate` | 1 | Deactivate | 200 |
-| PATCH | `/users/{id}/role` | 2 | Change role (admin) | 200 |
+| PUT | `/users/{id}/deactivate` | 1 | Deactivate | 200 |
+| PUT | `/users/{id}/role` | 2 | Change role (admin) | 200 |
 | GET | `/users/me` | 2 | Current user from JWT | 200 |
 
 ## Rooms (E2)
@@ -32,7 +32,7 @@ Codes: `NOT_FOUND`, `VALIDATION_ERROR`, `DUPLICATE`, `SLOT_TAKEN`, `SLOT_OVERLAP
 | GET | `/rooms` | 1 | List rooms (`?status=active`) | 200 |
 | GET | `/rooms/{id}` | 1 | Get room | 200 |
 | PUT | `/rooms/{id}` | 1 | Update room | 200 |
-| PATCH | `/rooms/{id}/deactivate` | 1 | Deactivate | 200 |
+| PUT | `/rooms/{id}/deactivate` | 1 | Deactivate | 200 |
 
 ## Time slots (E2)
 
@@ -51,12 +51,12 @@ Codes: `NOT_FOUND`, `VALIDATION_ERROR`, `DUPLICATE`, `SLOT_TAKEN`, `SLOT_OVERLAP
 | POST | `/bookings` | 1 | Create (`user_id`, `time_slot_id`, `players`) | 201 |
 | GET | `/bookings` | 1 | List (`?user_id=&status=`) | 200 |
 | GET | `/bookings/{id}` | 1 | Get booking | 200 |
-| PATCH | `/bookings/{id}` | 1 | Change `players` (BR-B7) | 200 |
-| PATCH | `/bookings/{id}/confirm` | 1 | PENDING -> CONFIRMED | 200 |
-| PATCH | `/bookings/{id}/cancel` | 1 | Cancel (BR-B6) | 200 |
+| PUT | `/bookings/{id}` | 1 | Change `players` (BR-B7) | 200 |
+| PUT | `/bookings/{id}/confirm` | 1 | PENDING -> CONFIRMED | 200 |
+| PUT | `/bookings/{id}/cancel` | 1 | Cancel (BR-B6) | 200 |
 | GET | `/bookings/today` | 2 | Today's bookings (staff) | 200 |
-| PATCH | `/bookings/{id}/start` | 2 | CONFIRMED -> IN_PROGRESS | 200 |
-| PATCH | `/bookings/{id}/finish` | 2 | IN_PROGRESS -> COMPLETED | 200 |
+| PUT | `/bookings/{id}/start` | 2 | CONFIRMED -> IN_PROGRESS | 200 |
+| PUT | `/bookings/{id}/finish` | 2 | IN_PROGRESS -> COMPLETED | 200 |
 | POST | `/bookings/{id}/result` | 2 | Register result | 201 |
 | GET | `/bookings/export.csv` | 2 | CSV export (admin) | 200 |
 

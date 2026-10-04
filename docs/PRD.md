@@ -31,14 +31,14 @@ Client (course professor) asked to **start simple: users, bookings, rooms with C
 
 | Sprint | Dates | Scope | Course level |
 |--------|-------|-------|--------------|
-| 1 | Fri Oct 2 - Fri Oct 9 (presentation Oct 12-13) | CRUD users, rooms, time slots, bookings. Business rules, tests, Swagger, env vars, logging, error handling, CI | Essential + part of Medium |
-| 2 | Tue Oct 13 - Mon Oct 19 (presentation Oct 20) | Supabase login, roles, games (start/finish/result), pagination, filters, CSV, statistics, Docker, retrospective | Medium + Advanced + part of Expert |
+| 1 | Fri Oct 2 - Fri Oct 9 (presentation Oct 12-13) | CRUD users, rooms, time slots, bookings. Business rules, tests, Swagger, env vars, logging, error handling, Docker | Essential + part of Medium |
+| 2 | Tue Oct 13 - Mon Oct 19 (presentation Oct 20) | Supabase login, roles, games (start/finish/result), pagination, filters, CSV, statistics, retrospective | Medium + Advanced + part of Expert |
 
 Out of scope for now: payments, discounts, loyalty, team members per booking, websockets, cloud deployment, UI. They stay in the full ER (DIAGRAMS.md section 2) as the long-term vision.
 
 ## Success criteria
 
-- Every endpoint has automated tests, all green in CI.
+- Every endpoint has automated tests, all green when run locally.
 - A full demo works: create room and slots, register, book, confirm, cancel, play, register result.
 - No secrets in the repository.
 - Board and docs match what is delivered.
@@ -54,4 +54,4 @@ Out of scope for now: payments, discounts, loyalty, team members per booking, we
 | `TICKETS.md` | Tickets, work split, timeline |
 | `API_CONTRACT.md` | Endpoint contract and error format |
 | `DIAGRAMS.md` | ER, state machine, user flows, sequences (Mermaid) |
-| `CONTRIBUTING.md` | Git flow, TDD, PR rules, Definition of Done |
+| `CONTRIBUTING.md` | Git flow, PR rules, Definition of Done |

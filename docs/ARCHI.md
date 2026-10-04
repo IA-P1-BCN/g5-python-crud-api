@@ -1,43 +1,43 @@
 # ARCHITECTURE
 
-## Principle: one folder per resource
+## Principle: MVC, client-server
 
-Four people work in parallel, so code is organised **by resource, not by layer**. Each person owns a folder and rarely touches others' files, which means fewer merge conflicts.
+The API is the **server**. Any client (a frontend later, Swagger UI, Postman) talks to it over HTTP + JSON. The structure follows the MVC example given by the teacher, with one file per resource inside each folder.
+
+| MVC | Folder | Role |
+|-----|--------|------|
+| Model | `models/` | SQLAlchemy tables |
+| View | `schemas/` | Pydantic request/response (the JSON the client sees) |
+| Controller | `controllers/` | Business rules (BR-*), raise domain errors |
+| Routes | `routes/` | HTTP only: parse request, call the controller, return the response |
 
 ```
+.env                     # at the project root (not in back/), never committed
+.env.example             # project root, committed, no secrets
+Dockerfile               # project root, Ticket 002
+docker-compose.yml       # project root, Ticket 002: API + PostgreSQL
 back/
   app/
-    main.py              # creates FastAPI app, includes routers
-    core/
-      config.py          # pydantic-settings, reads .env
-      logging.py         # logging setup
-      errors.py          # exception classes + handlers (BR-X1)
-      security.py        # Sprint 2: JWT validation, role dependencies
-    db/
-      session.py         # engine, SessionLocal, get_db
-      base.py            # declarative Base
-    users/    {models.py, schemas.py, service.py, router.py}
-    rooms/    {models.py, schemas.py, service.py, router.py}
-    slots/    {models.py, schemas.py, service.py, router.py}
-    bookings/ {models.py, schemas.py, service.py, router.py}
+    main.py              # creates FastAPI app, includes the routes
+    config/              # pydantic-settings, reads .env; logging setup
+    database/            # engine, SessionLocal, get_db, declarative Base
+    models/              # user.py  room.py  time_slot.py  booking.py
+    schemas/             # user.py  room.py  time_slot.py  booking.py
+    controllers/         # user.py  room.py  time_slot.py  booking.py
+    routes/              # user.py  room.py  time_slot.py  booking.py
+    core/                # errors.py (BR-X1), security.py (Sprint 2: JWT, roles)
   alembic/
   tests/
-    conftest.py          # shared fixtures: db session, client, factories
-    users/  rooms/  slots/  bookings/
+    conftest.py          # shared fixtures: db session, client
+    test_users.py  test_rooms.py  test_time_slots.py  test_bookings.py
   requirements.txt
-  .env.example
 ```
 
-## Layers inside each resource
+Four people work in parallel: each one owns the files of their resource in every folder (`models/room.py`, `routes/room.py`...), so merge conflicts stay rare.
 
-```
-router.py   HTTP only: parse request, call service, return response
-service.py  business rules (BR-*), raises domain errors
-models.py   SQLAlchemy tables
-schemas.py  Pydantic request/response
-```
+Routes never hold business rules, controllers never import FastAPI. Rules can be tested without HTTP.
 
-Routers never hold business rules, services never import FastAPI. This makes rules unit-testable without HTTP.
+The frontend is out of scope for now. If there is time, it will be a separate client in `front/` that uses this API.
 
 ## Dependencies between resources
 
@@ -48,7 +48,7 @@ flowchart LR
     slots --> bookings
 ```
 
-`bookings` depends on the other three. To avoid blocking, TECH tickets create all four models and the first migration on day 1, so everyone can work against the real schema.
+`bookings` depends on the other three. To avoid blocking, the foundation tickets create all four models and the first migration on day 1, so everyone can work against the real schema.
 
 ## Shared conventions
 
@@ -61,7 +61,9 @@ flowchart LR
 
 | Level | What | Where |
 |-------|------|-------|
-| Unit | Service rules with a test DB session | `tests/<resource>/test_service.py` |
-| API | Each endpoint through `TestClient`, happy path + each error | `tests/<resource>/test_api.py` |
+| Unit | Controller rules with a test DB session | `tests/test_<resource>.py` |
+| API | Each endpoint through `TestClient`, happy path + each error | `tests/test_<resource>.py` |
+
+Tests are written together with the code, in the same ticket and PR (no test-first rule).
 
 Minimum per endpoint (course requirement): one success test and one failing test per business rule it enforces.
