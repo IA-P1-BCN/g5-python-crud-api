@@ -6,7 +6,7 @@ Closes #
 
 ## Checklist
 - [ ] This PR targets `develop` (not `main`)
-- [ ] Tests were written first (RED) and now pass (GREEN)
+- [ ] Tests are included and pass
 - [ ] Success case + each business-rule error are tested
 - [ ] Endpoints documented in Swagger
 - [ ] No secrets committed; new env vars in `.env.example`
