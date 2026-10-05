@@ -24,5 +24,9 @@ dev = [
 line-length = 88
 target-version = "py312"
 
+[tool.ruff.lint]
+ignore = ["EXE002"]
+
 [tool.pytest.ini_options]
 testpaths = ["back/tests"]
+pythonpath = ["."]
