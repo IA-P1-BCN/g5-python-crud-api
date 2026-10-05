@@ -39,43 +39,12 @@ Web platform for managing escape rooms, bookings, teams, and customer experience
 
 ### 1. Clone the repository
 
-Clone the project from the team's GitHub repository:
-
 ```bash
 git clone https://github.com/IA-P1-BCN/g5-python-crud-api.git
 cd g5-python-crud-api
 ```
 
-### 2. Get the Docker environment branch
-
-The current Docker infrastructure is available in the `feature/docker-environment` branch.
-
-Fetch the latest branches:
-
-```bash
-git fetch origin
-```
-
-Switch to the Docker environment branch:
-
-```bash
-git checkout feature/docker-environment
-```
-
-Pull the latest changes:
-
-```bash
-git pull origin feature/docker-environment
-```
-
-If the branch does not exist locally, use:
-
-```bash
-git fetch origin
-git checkout -b feature/docker-environment origin/feature/docker-environment
-```
-
-### 3. Configure environment variables
+### 2. Configure environment variables
 
 Create your local `.env` file from the example:
 
@@ -85,28 +54,51 @@ Copy-Item .env.example .env
 
 Review the values in `.env` before starting the application.
 
+The application uses:
+
+```text
+DATABASE_URL
+POSTGRES_DB
+POSTGRES_USER
+POSTGRES_PASSWORD
+POSTGRES_HOST
+POSTGRES_PORT
+```
+
 **Important:** Never commit `.env` or other files containing secrets.
 
-### 4. Build and start the environment
+### 3. Build and start the environment
 
 Make sure Docker Desktop is running, then execute:
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
 This starts:
 
 * FastAPI application
-* PostgreSQL database
+* PostgreSQL 16 database
 
 The PostgreSQL service includes a healthcheck using `pg_isready`.
 
-The API depends on PostgreSQL being healthy before it starts. This prevents the API from starting before the database is ready to accept connections.
+The API depends on PostgreSQL being healthy before it starts.
+
+### 4. Apply database migrations
+
+Run the latest Alembic migrations:
+
+```bash
+docker compose exec api alembic upgrade head
+```
+
+Check the current migration:
+
+```bash
+docker compose exec api alembic current
+```
 
 ### 5. Verify the containers
-
-Open another terminal and run:
 
 ```bash
 docker compose ps
@@ -117,12 +109,6 @@ Expected result:
 ```text
 api    Up
 db     Up (healthy)
-```
-
-The database should appear with the status:
-
-```text
-Up (healthy)
 ```
 
 ### 6. Access the API
@@ -153,7 +139,7 @@ Content    : {"message":"Escape Room API"}
 To verify that the API container can connect to PostgreSQL through SQLAlchemy:
 
 ```bash
-docker compose run --rm api python -c "from sqlalchemy import text; from back.app.database import engine; conn = engine.connect(); print(conn.execute(text('SELECT 1')).scalar()); conn.close()"
+docker compose exec api python -c "from sqlalchemy import text; from back.app.database import engine; conn = engine.connect(); print(conn.execute(text('SELECT 1')).scalar()); conn.close()"
 ```
 
 Expected output:
@@ -164,41 +150,81 @@ Expected output:
 
 This confirms that the API container can successfully connect to PostgreSQL.
 
-## Development Commands
+## Database
 
-### Run the test suite
+PostgreSQL runs locally in Docker.
+
+The database schema is managed with SQLAlchemy models and Alembic migrations.
+
+### Current Sprint 1 models
+
+* `users`
+* `rooms`
+* `time_slots`
+* `bookings`
+
+### Run migrations
+
+Apply all pending migrations:
 
 ```bash
-docker compose run --rm api pytest
+docker compose exec api alembic upgrade head
 ```
 
-### Check code quality
+Show the current migration:
 
 ```bash
-docker compose run --rm api ruff check .
+docker compose exec api alembic current
 ```
 
-### Format code
+Generate a new migration after model changes:
 
 ```bash
-docker compose run --rm api ruff format .
+docker compose exec api alembic revision --autogenerate -m "describe the change"
 ```
 
-## Stop the Environment
+### Reset the local database
 
-To stop the containers:
+To stop the environment:
 
 ```bash
 docker compose down
 ```
 
-To stop the environment and remove the local database volume:
+To stop the environment and remove the PostgreSQL volume:
 
 ```bash
 docker compose down -v
 ```
 
-**Warning:** The second command permanently deletes the PostgreSQL data stored in the Docker volume.
+Then recreate the environment:
+
+```bash
+docker compose up -d --build
+docker compose exec api alembic upgrade head
+```
+
+**Warning:** `docker compose down -v` permanently deletes the local PostgreSQL data stored in the Docker volume.
+
+## Development Commands
+
+### Run the test suite
+
+```bash
+docker compose exec api pytest
+```
+
+### Check code quality
+
+```bash
+docker compose exec api ruff check .
+```
+
+### Format code
+
+```bash
+docker compose exec api ruff format .
+```
 
 ## Project Documentation
 
