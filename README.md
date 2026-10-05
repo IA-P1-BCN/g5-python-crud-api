@@ -2,6 +2,21 @@
 
 Web platform for managing escape rooms, bookings, teams, and customer experiences.
 
+## Documentation
+
+| Doc                                      | Content                                             |
+| ---------------------------------------- | --------------------------------------------------- |
+| [PRD](docs/PRD.md)                       | Context, scope per sprint                           |
+| [Stack](docs/STACK.md)                   | FastAPI, PostgreSQL (Docker), Supabase Auth, pytest |
+| [Architecture](docs/ARCHI.md)            | Structure, layers, tests                            |
+| [Business rules](docs/BUSINESS_RULES.md) | Rules Sprint 1 and 2, permissions                   |
+| [User stories](docs/STORIES.md)          | Stories and acceptance criteria                     |
+| [Tickets](docs/TICKETS.md)               | Tickets and timeline                                |
+| [Work split](docs/WORK_SPLIT.md)         | 4 parts to choose from, by resource                 |
+| [API contract](docs/API_CONTRACT.md)     | Endpoints and error format                          |
+| [Diagrams](docs/DIAGRAMS.md)             | ER, flows, state machine (Mermaid)                  |
+| [Contributing](docs/CONTRIBUTING.md)     | Git flow, PR rules                                  |
+
 ## Tech Stack
 
 * Python 3.12
@@ -195,6 +210,7 @@ docker compose down -v
 | [Business Rules](docs/BUSINESS_RULES.md) | Business rules and permissions         |
 | [User Stories](docs/STORIES.md)          | Stories and acceptance criteria        |
 | [Tickets](docs/TICKETS.md)               | Work distribution and timeline         |
+| [Work Split](docs/WORK_SPLIT.md)         | Work distribution by resource          |
 | [API Contract](docs/API_CONTRACT.md)     | Endpoints and error format             |
 | [Diagrams](docs/DIAGRAMS.md)             | ER diagrams, flows, and state machines |
 | [Contributing](docs/CONTRIBUTING.md)     | Git workflow, TDD, and PR rules        |
