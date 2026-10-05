@@ -1,1 +1,49 @@
+# Environment variables
+
 .env
+
+# Python
+
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+
+.venv/
+venv/
+env/
+
+# Testing
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ruff
+
+.ruff_cache/
+
+# IDEs and editors
+
+.vscode/
+.idea/
+
+# OS generated files
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build and distribution
+
+build/
+dist/
+*.egg-info/
+
+# Local databases
+
+*.db
+*.sqlite
+*.sqlite3
