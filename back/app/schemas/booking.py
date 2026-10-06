@@ -53,3 +53,9 @@ class BookingDetail(BookingRead):
 
     time_slot: SlotInfo
     room: RoomInfo
+
+
+class BookingUpdate(BaseModel):
+    """Data the client sends to modify a booking (BR-B7: only players)."""
+
+    players: int = Field(ge=1)
