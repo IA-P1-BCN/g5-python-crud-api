@@ -57,6 +57,8 @@ class Booking(Base):
             "status IN ('PENDING', 'CONFIRMED', 'CANCELLED')",
             name="ck_bookings_status",
         ),
+        # IN_PROGRESS is introduced in Sprint 2.
+        # It is included in the partial index now to satisfy BR-B8.
         Index(
             "uq_bookings_active_time_slot",
             "time_slot_id",
