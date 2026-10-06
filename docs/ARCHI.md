@@ -16,21 +16,22 @@ The API is the **server**. Any client (a frontend later, Swagger UI, Postman) ta
 .env.example             # project root, committed, no secrets
 Dockerfile               # project root, Ticket 002
 docker-compose.yml       # project root, Ticket 002: API + PostgreSQL
+pyproject.toml           # project root: dependencies, ruff and pytest config
+alembic.ini              # project root, Ticket 002
+alembic/                 # project root: env.py and versions/ (migrations)
 back/
   app/
     main.py              # creates FastAPI app, includes the routes
     config/              # pydantic-settings, reads .env; logging setup
-    database/            # engine, SessionLocal, get_db, declarative Base
+    database.py          # engine, SessionLocal, declarative Base (get_db comes with the first routes)
     models/              # user.py  room.py  time_slot.py  booking.py
     schemas/             # user.py  room.py  time_slot.py  booking.py
     controllers/         # user.py  room.py  time_slot.py  booking.py
     routes/              # user.py  room.py  time_slot.py  booking.py
     core/                # errors.py (BR-X1), security.py (Sprint 2: JWT, roles)
-  alembic/
   tests/
     conftest.py          # shared fixtures: db session, client
     test_users.py  test_rooms.py  test_time_slots.py  test_bookings.py
-  requirements.txt
 ```
 
 Four people work in parallel: each one owns the files of their resource in every folder (`models/room.py`, `routes/room.py`...), so merge conflicts stay rare.
