@@ -10,7 +10,7 @@ Fill in on **Monday Oct 5**. Write your name next to the part you pick, then ass
 | ------ | --------------------------------------------------------- | ----------- |
 | **E1** | Users (US01 to US06)                                      | Leandro     |
 | **E2** | Rooms & Slots (US07 to US12)                              | Isbel       |
-| **E3** | Bookings (US13 to US17)                                   | Caroly      |
+| **E3** | Bookings (US13 to US17)                                   | Carolay     |
 | **E4** | Foundation, Games, Admin (tickets 001, 002, US18 to US25) | M.Charlotte |
 
 ## How we work

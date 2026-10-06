@@ -14,7 +14,7 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 - **Resultado (tarde):**
 - **Bloqueos:**
 
-### Isabelle
+### Isbel
 
 - **Hoy:** Ticket 0-11 "Implement create room + test" (empieza el ticket 🔄)
 - **Resultado (tarde):**
