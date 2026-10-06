@@ -31,6 +31,10 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ### Marie-Charlotte
 
-- **Hoy:** Ticket 0-24 "Implement create booking + test" (empieza el ticket 🔄)
+- **Hoy:**
+- Ticket 0-24 "Implement create booking + test" (done ✅)
 - **Resultado (tarde):**
+- Ticket 025 - Implement double-booking guard (IntegrityError to 409 SLOT_TAKEN) + tests (done ✅)
+- Ticket 027 - Implement view bookings + tests (done ✅)
+- Ticket 029 - Implement modify booking (players) + tests (empieza el ticket 🔄)
 - **Bloqueos:**
