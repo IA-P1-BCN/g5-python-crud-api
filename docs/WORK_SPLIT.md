@@ -6,12 +6,12 @@
 
 Fill in on **Monday Oct 5**. Write your name next to the part you pick, then assign yourself its tickets on the board.
 
-| Part | Epic | Taken by |
-|------|------|----------|
-| **E1** | Users (US01 to US06) | |
-| **E2** | Rooms & Slots (US07 to US12) | |
-| **E3** | Bookings (US13 to US17) | |
-| **E4** | Foundation, Games, Admin (tickets 001, 002, US18 to US25) | |
+| Part   | Epic                                                      | Taken by |
+| ------ | --------------------------------------------------------- | -------- | ----------- |
+| **E1** | Users (US01 to US06)                                      |          | Leandro     |
+| **E2** | Rooms & Slots (US07 to US12)                              |          | Isbel       |
+| **E3** | Bookings (US13 to US17)                                   |          | Caroly      |
+| **E4** | Foundation, Games, Admin (tickets 001, 002, US18 to US25) |          | M.Charlotte |
 
 ## How we work
 
@@ -20,80 +20,80 @@ Fill in on **Monday Oct 5**. Write your name next to the part you pick, then ass
 3. Everyone goes as far as they can. Sprint 2 tickets that nobody reached are taken by whoever is free first, at Sprint 2 planning.
 4. Rooms and slots stay with **one person**: a slot belongs to a room and its rules depend on the room, so one owner means no conflicts on the same files.
 
-| Part | Epics | Sprint 1 | Sprint 2 |
-|------|-------|----------|----------|
-| **A** (E1) | E1 - Users | US01, US02, US03 | US04, US05, US06 |
-| **B** (E2) | E2 - Rooms & Slots | US07 to US12 | - |
-| **C** (E3) | E3 - Bookings | US13 to US16 | US17 |
-| **D** (E4) | E0 - Foundation, E4 - Games, E5 - Admin | Foundation tickets 001, 002 (incl. Docker) | US18 to US25 |
-| All | Wrap-up | 032 README, 033 Release 1 | Retrospective, Release 2 |
+| Part       | Epics                                   | Sprint 1                                   | Sprint 2                 |
+| ---------- | --------------------------------------- | ------------------------------------------ | ------------------------ |
+| **A** (E1) | E1 - Users                              | US01, US02, US03                           | US04, US05, US06         |
+| **B** (E2) | E2 - Rooms & Slots                      | US07 to US12                               | -                        |
+| **C** (E3) | E3 - Bookings                           | US13 to US16                               | US17                     |
+| **D** (E4) | E0 - Foundation, E4 - Games, E5 - Admin | Foundation tickets 001, 002 (incl. Docker) | US18 to US25             |
+| All        | Wrap-up                                 | 032 README, 033 Release 1                  | Retrospective, Release 2 |
 
 Each part owns its own files (`models/room.py`, `routes/room.py`...), so merge conflicts stay rare. Ticket numbers match the board. Tests are written in the same ticket as the code (`CONTRIBUTING.md`).
 
 ## Part A - E1 Users
 
-| Sprint | US | Ticket | Title |
-|--------|----|--------|-------|
-| 1 | US01 | 005 | Create user (done) |
-| 1 | US02 | 007 | View and update user profile |
-| 1 | US03 | 009 | List and deactivate users |
-| 2 | US04 | 035, 036 | Login with Supabase (Google), first login creates the user row |
-| 2 | US05 | 037, 038 | Roles and permissions, role checks on the routes |
-| 2 | US06 | 039 | Own profile with `/users/me` |
+| Sprint | US   | Ticket   | Title                                                          |
+| ------ | ---- | -------- | -------------------------------------------------------------- |
+| 1      | US01 | 005      | Create user (done)                                             |
+| 1      | US02 | 007      | View and update user profile                                   |
+| 1      | US03 | 009      | List and deactivate users                                      |
+| 2      | US04 | 035, 036 | Login with Supabase (Google), first login creates the user row |
+| 2      | US05 | 037, 038 | Roles and permissions, role checks on the routes               |
+| 2      | US06 | 039      | Own profile with `/users/me`                                   |
 
 Light in Sprint 1, heavier in Sprint 2 (login and roles touch every route).
 
 ## Part B - E2 Rooms & Slots
 
-| Sprint | US | Ticket | Title |
-|--------|----|--------|-------|
-| 1 | US07 | 011 | Create room |
-| 1 | US08 | 013 | Edit room |
-| 1 | US09 | 015 | Deactivate room |
-| 1 | US10 | 017 | List and get rooms |
-| 1 | US11 | 019 | Configure time slots (create, edit, delete) |
-| 1 | US11 | 020 | Time rules (past, overlap, inactive room) |
-| 1 | US12 | 022 | Check availability |
+| Sprint | US   | Ticket | Title                                       |
+| ------ | ---- | ------ | ------------------------------------------- |
+| 1      | US07 | 011    | Create room                                 |
+| 1      | US08 | 013    | Edit room                                   |
+| 1      | US09 | 015    | Deactivate room                             |
+| 1      | US10 | 017    | List and get rooms                          |
+| 1      | US11 | 019    | Configure time slots (create, edit, delete) |
+| 1      | US11 | 020    | Time rules (past, overlap, inactive room)   |
+| 1      | US12 | 022    | Check availability                          |
 
 Biggest part of Sprint 1 (7 tickets, all small CRUDs). Nothing planned in Sprint 2: free to help others.
 
 ## Part C - E3 Bookings
 
-| Sprint | US | Ticket | Title |
-|--------|----|--------|-------|
-| 1 | US13 | 024 | Create booking |
-| 1 | US13 | 025 | Double-booking guard |
-| 1 | US14 | 027 | View bookings |
-| 1 | US15 | 029 | Modify booking (players) |
-| 1 | US16 | 031 | Cancel and confirm booking |
-| 2 | US17 | 040 | Change slot of a booking |
+| Sprint | US   | Ticket | Title                      |
+| ------ | ---- | ------ | -------------------------- |
+| 1      | US13 | 024    | Create booking             |
+| 1      | US13 | 025    | Double-booking guard       |
+| 1      | US14 | 027    | View bookings              |
+| 1      | US15 | 029    | Modify booking (players)   |
+| 1      | US16 | 031    | Cancel and confirm booking |
+| 2      | US17 | 040    | Change slot of a booking   |
 
 Most business rules of Sprint 1. It needs users, rooms and slots: start with the rules that do not depend on them (price, 24h cancellation).
 
 ## Part D - E0 Foundation, E4 Games, E5 Admin
 
-| Sprint | Epic | US | Ticket | Title |
-|--------|------|----|--------|-------|
-| 1 | E0 | - | 001 | Project skeleton, config, logging, error handling |
-| 1 | E0 | - | 002 | Database setup and Docker: SQLAlchemy, Alembic, 4 models, first migration |
-| 2 | E4 | US18 | 041 | Today's bookings (staff) |
-| 2 | E4 | US19 | 042 | Start game |
-| 2 | E4 | US20 | 043 | Finish game |
-| 2 | E4 | US21 | 044 | Register game result |
-| 2 | E4 | US22 | 045 | Game history |
-| 2 | E5 | US23 | 046 | Business statistics |
-| 2 | E5 | US24 | 047 | Export bookings to CSV |
-| 2 | E5 | US25 | 048, 049 | Pagination and filters on list endpoints |
+| Sprint | Epic | US   | Ticket   | Title                                                                     |
+| ------ | ---- | ---- | -------- | ------------------------------------------------------------------------- |
+| 1      | E0   | -    | 001      | Project skeleton, config, logging, error handling                         |
+| 1      | E0   | -    | 002      | Database setup and Docker: SQLAlchemy, Alembic, 4 models, first migration |
+| 2      | E4   | US18 | 041      | Today's bookings (staff)                                                  |
+| 2      | E4   | US19 | 042      | Start game                                                                |
+| 2      | E4   | US20 | 043      | Finish game                                                               |
+| 2      | E4   | US21 | 044      | Register game result                                                      |
+| 2      | E4   | US22 | 045      | Game history                                                              |
+| 2      | E5   | US23 | 046      | Business statistics                                                       |
+| 2      | E5   | US24 | 047      | Export bookings to CSV                                                    |
+| 2      | E5   | US25 | 048, 049 | Pagination and filters on list endpoints                                  |
 
 Tickets 001 and 002 are done first: they unblock everyone. Then part D prepares the Sprint 2 work.
 
 ## Everyone
 
-| Sprint | Ticket | Title |
-|--------|--------|-------|
-| 1 | 032 | README with setup instructions and Swagger check |
-| 1 | 033 | Release Sprint 1: PR `develop` to `main` |
-| 2 | 050, 051 | Retrospective, Release 2 |
+| Sprint | Ticket   | Title                                            |
+| ------ | -------- | ------------------------------------------------ |
+| 1      | 032      | README with setup instructions and Swagger check |
+| 1      | 033      | Release Sprint 1: PR `develop` to `main`         |
+| 2      | 050, 051 | Retrospective, Release 2                         |
 
 ## Order and dependencies (Sprint 1)
 
