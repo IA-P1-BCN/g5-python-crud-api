@@ -3,6 +3,7 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from back.app.models import Booking, Room, TimeSlot, User
 
@@ -133,6 +134,22 @@ def test_create_booking_already_booked_slot_returns_409(client, seed):
 
     assert response.status_code == 409
     assert response.json()["code"] == "SLOT_TAKEN"
+
+
+def test_create_booking_concurrent_request_returns_409(client, seed, db, monkeypatch):
+    """BR-B8: the unique index rejects a request that passed the pre-check."""
+
+    def failing_commit():
+        raise IntegrityError("INSERT", {}, Exception("unique violation"))
+
+    monkeypatch.setattr(db, "commit", failing_commit)
+
+    response = client.post(URL, json=payload(seed.user.id, seed.free_slot.id))
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "SLOT_TAKEN"
+    # only the seed booking remains: the failed one was rolled back
+    assert db.query(Booking).count() == 1
 
 
 def test_create_booking_zero_players_returns_422(client, seed):
