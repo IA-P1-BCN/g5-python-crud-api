@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 
 from back.app.config.logging import setup_logging
 from back.app.core.errors import AppError
-
 from back.app.routes.room import router as room_router
 
 setup_logging()
@@ -71,4 +70,5 @@ def root():
 @app.get("/api/v1/health")
 def health():
     return {"status": "ok"}
+
 app.include_router(room_router, prefix="/api/v1/rooms", tags=["Rooms"])
