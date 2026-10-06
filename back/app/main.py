@@ -37,8 +37,8 @@ async def app_error_handler(request: Request, exc: AppError):
     return JSONResponse(
         status_code=exc.status_code,
         content={
+            "detail": exc.message,
             "code": exc.code,
-            "message": exc.message,
         },
     )
 
@@ -54,8 +54,8 @@ async def unexpected_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={
+            "detail": "Internal server error",
             "code": "INTERNAL_ERROR",
-            "message": "Internal server error",
         },
     )
 
