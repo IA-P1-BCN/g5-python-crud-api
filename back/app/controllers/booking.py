@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from back.app.core.errors import AppError
 from back.app.models import Booking, TimeSlot, User
-from back.app.schemas.booking import BookingCreate
+from back.app.schemas.booking import BookingCreate, BookingDetail, BookingRead
 
 ACTIVE_STATUSES = ("PENDING", "CONFIRMED", "IN_PROGRESS")
 
@@ -64,3 +64,26 @@ def create_booking(db: Session, booking_in: BookingCreate) -> Booking:
         )
     db.refresh(booking)
     return booking
+
+
+def list_bookings(
+    db: Session, user_id: int | None = None, status: str | None = None
+) -> list[Booking]:
+    stmt = select(Booking).order_by(Booking.id)
+    if user_id is not None:
+        stmt = stmt.where(Booking.user_id == user_id)
+    if status is not None:
+        stmt = stmt.where(Booking.status == status)
+    return list(db.scalars(stmt))
+
+
+def get_booking(db: Session, booking_id: int) -> BookingDetail:
+    booking = db.get(Booking, booking_id)
+    if booking is None:
+        raise AppError("Booking not found", code="NOT_FOUND", status_code=404)
+
+    return BookingDetail(
+        **BookingRead.model_validate(booking).model_dump(),
+        time_slot=booking.time_slot,
+        room=booking.time_slot.room,
+    )

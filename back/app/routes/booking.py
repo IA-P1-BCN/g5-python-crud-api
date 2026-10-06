@@ -1,9 +1,11 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from back.app.controllers import booking as booking_controller
 from back.app.database import get_db
-from back.app.schemas.booking import BookingCreate, BookingRead
+from back.app.schemas.booking import BookingCreate, BookingDetail, BookingRead
 
 router = APIRouter()
 
@@ -29,3 +31,32 @@ def create_booking_endpoint(
     db: Session = Depends(get_db),  # noqa: B008
 ):
     return booking_controller.create_booking(db=db, booking_in=booking_in)
+
+
+@router.get(
+    "",
+    response_model=list[BookingRead],
+    summary="List bookings",
+    description="Lists bookings, optionally filtered by user_id and status.",
+    responses={422: {"description": "Invalid status filter"}},
+)
+def list_bookings_endpoint(
+    user_id: int | None = None,
+    status: Literal["PENDING", "CONFIRMED", "CANCELLED"] | None = None,
+    db: Session = Depends(get_db),  # noqa: B008
+):
+    return booking_controller.list_bookings(db=db, user_id=user_id, status=status)
+
+
+@router.get(
+    "/{booking_id}",
+    response_model=BookingDetail,
+    summary="Get a booking",
+    description="Returns a booking with its time slot and room.",
+    responses={404: {"description": "NOT_FOUND"}},
+)
+def get_booking_endpoint(
+    booking_id: int,
+    db: Session = Depends(get_db),  # noqa: B008
+):
+    return booking_controller.get_booking(db=db, booking_id=booking_id)

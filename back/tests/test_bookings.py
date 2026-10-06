@@ -171,3 +171,42 @@ def test_create_booking_missing_field_returns_422(client, seed):
     response = client.post(URL, json={"user_id": seed.user.id, "players": 2})
 
     assert response.status_code == 422
+
+
+def test_list_bookings_returns_all(client, seed):
+    response = client.get(URL)
+
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+
+
+def test_list_bookings_filter_by_user(client, seed):
+    assert len(client.get(URL, params={"user_id": seed.user.id}).json()) == 1
+    assert client.get(URL, params={"user_id": seed.inactive_user.id}).json() == []
+
+
+def test_list_bookings_filter_by_status(client, seed):
+    assert len(client.get(URL, params={"status": "PENDING"}).json()) == 1
+    assert client.get(URL, params={"status": "CANCELLED"}).json() == []
+
+
+def test_list_bookings_invalid_status_is_422(client, seed):
+    assert client.get(URL, params={"status": "NOPE"}).status_code == 422
+
+
+def test_get_booking_ok_includes_room_and_slot(client, seed):
+    booking_id = client.get(URL).json()[0]["id"]
+
+    response = client.get(f"{URL}/{booking_id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["room"]["name"] == "Pharaoh"
+    assert data["time_slot"]["id"] == seed.taken_slot.id
+
+
+def test_get_booking_not_found(client, seed):
+    response = client.get(f"{URL}/9999")
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "NOT_FOUND"

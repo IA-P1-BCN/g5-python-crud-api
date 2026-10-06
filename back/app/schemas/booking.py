@@ -24,3 +24,32 @@ class BookingRead(BaseModel):
     total_price: Decimal
     status: str
     created_at: datetime
+
+
+class SlotInfo(BaseModel):
+    """Time slot info shown inside a booking detail."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    starts_at: datetime
+    ends_at: datetime
+    status: str
+
+
+class RoomInfo(BaseModel):
+    """Room info shown inside a booking detail."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    capacity: int
+    base_price: Decimal
+
+
+class BookingDetail(BookingRead):
+    """Booking with its slot and room, returned by GET /bookings/{id}."""
+
+    time_slot: SlotInfo
+    room: RoomInfo
