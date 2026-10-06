@@ -25,8 +25,8 @@ def test_app_error_format():
 
     assert response.status_code == 400
     assert response.json() == {
+        "detail": "Business rule failed",
         "code": "BR-X1",
-        "message": "Business rule failed",
     }
 
 
@@ -51,8 +51,8 @@ def test_unexpected_exception_logging(caplog):
 
     assert response.status_code == 500
     assert response.json() == {
+        "detail": "Internal server error",
         "code": "INTERNAL_ERROR",
-        "message": "Internal server error",
     }
     assert any(
         "unexpected exception | method=GET | path=/test-unexpected-error"
