@@ -10,7 +10,7 @@ Auth: none in Sprint 1. From Sprint 2 every endpoint except room/slot listing ne
 { "detail": "Time slot is already booked", "code": "SLOT_TAKEN" }
 ```
 
-Codes: `NOT_FOUND`, `VALIDATION_ERROR`, `DUPLICATE`, `SLOT_TAKEN`, `SLOT_OVERLAP`, `ROOM_INACTIVE`, `CAPACITY_EXCEEDED`, `TOO_LATE_TO_CANCEL`, `INVALID_TRANSITION`, `FORBIDDEN`, `INTERNAL_ERROR` (unexpected 500, message is always "Internal server error").
+Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUPLICATE`, `SLOT_TAKEN`, `SLOT_NOT_AVAILABLE`, `SLOT_OVERLAP`, `ROOM_INACTIVE`, `USER_INACTIVE`, `INVALID_PLAYERS`, `CAPACITY_EXCEEDED`, `TOO_LATE_TO_CANCEL`, `INVALID_TRANSITION`, `FORBIDDEN`, `INTERNAL_ERROR` (unexpected 500, message is always "Internal server error").
 
 ## Users (E1)
 
