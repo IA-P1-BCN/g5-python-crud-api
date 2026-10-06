@@ -16,9 +16,12 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ### Isbel
 
-- **Hoy:** Ticket 0-11 "Implement create room + test" (empieza el ticket 🔄)
-- **Resultado (tarde):**
-- **Bloqueos:**
+### Isbel
+
+- **Hoy:** Ticket 013 completado (endpoints de habitaciones, tests y linter limpios). PR integrada en develop.
+- **Resultado (tarde):** PR integrada y rama develop actualizada.
+- **Bloqueos:** Ninguno.
+- **Siguiente:** Empezar el Ticket 015 (desactivación de habitaciones).
 
 ### Carolay
 
