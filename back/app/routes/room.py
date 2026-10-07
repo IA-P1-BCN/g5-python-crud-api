@@ -27,3 +27,10 @@ def update_room_endpoint(
     db: SessionDep
 ):
     return room_controller.update_room(db=db, room_id=room_id, room_in=room_in)
+
+@router.put("/{room_id}/deactivate", response_model=RoomResponse, status_code=status.HTTP_200_OK)
+def deactivate_room_endpoint(
+    room_id: int,
+    db: SessionDep
+):
+    return room_controller.deactivate_room(db=db, room_id=room_id)

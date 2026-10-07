@@ -4,18 +4,18 @@ Web platform for managing escape rooms, bookings, teams, and customer experience
 
 ## Documentation
 
-| Doc                                      | Content                                             |
-| ---------------------------------------- | --------------------------------------------------- |
-| [PRD](docs/PRD.md)                       | Context, scope per sprint                           |
-| [Stack](docs/STACK.md)                   | FastAPI, PostgreSQL (Docker), Supabase Auth, pytest |
-| [Architecture](docs/ARCHI.md)            | Structure, layers, tests                            |
-| [Business rules](docs/BUSINESS_RULES.md) | Rules Sprint 1 and 2, permissions                   |
-| [User stories](docs/STORIES.md)          | Stories and acceptance criteria                     |
-| [Tickets](docs/TICKETS.md)               | Tickets and timeline                                |
-| [Work split](docs/WORK_SPLIT.md)         | 4 parts to choose from, by resource                 |
-| [API contract](docs/API_CONTRACT.md)     | Endpoints and error format                          |
-| [Diagrams](docs/DIAGRAMS.md)             | ER, flows, state machine (Mermaid)                  |
-| [Contributing](docs/CONTRIBUTING.md)     | Git flow, PR rules                                  |
+| Doc                                      | Content                                    |
+| ---------------------------------------- | ------------------------------------------ |
+| [PRD](docs/PRD.md)                       | Context, scope per sprint                  |
+| [Stack](docs/STACK.md)                   | FastAPI, PostgreSQL, Supabase Auth, pytest |
+| [Architecture](docs/ARCHI.md)            | Structure, layers, tests                   |
+| [Business rules](docs/BUSINESS_RULES.md) | Rules Sprint 1 and 2, permissions          |
+| [User stories](docs/STORIES.md)          | Stories and acceptance criteria            |
+| [Tickets](docs/TICKETS.md)               | Tickets and timeline                       |
+| [Work split](docs/WORK_SPLIT.md)         | 4 parts to choose from, by resource        |
+| [API contract](docs/API_CONTRACT.md)     | Endpoints and error format                 |
+| [Diagrams](docs/DIAGRAMS.md)             | ER, flows, state machine (Mermaid)         |
+| [Contributing](docs/CONTRIBUTING.md)     | Git flow, PR rules                         |
 
 ## Tech Stack
 
@@ -26,6 +26,7 @@ Web platform for managing escape rooms, bookings, teams, and customer experience
 * Alembic
 * PostgreSQL 16
 * Docker Compose
+* Supabase PostgreSQL for shared team development
 * pytest + httpx
 * Ruff
 
@@ -54,7 +55,11 @@ Copy-Item .env.example .env
 
 Review the values in `.env` before starting the application.
 
-The application uses:
+### Local development
+
+By default, the project can run against the PostgreSQL 16 database provided by Docker Compose.
+
+The local configuration uses:
 
 ```text
 DATABASE_URL
@@ -65,7 +70,35 @@ POSTGRES_HOST
 POSTGRES_PORT
 ```
 
-**Important:** Never commit `.env` or other files containing secrets.
+### Shared team database
+
+For shared team development, the project can also use the common PostgreSQL database hosted in Supabase.
+
+Add the following variable to your local `.env`:
+
+```text
+SHARED_DATABASE_URL=<your-supabase-postgresql-connection-string>
+```
+
+When `SHARED_DATABASE_URL` is configured, the application uses the shared Supabase PostgreSQL database instead of the local Docker PostgreSQL database.
+
+The Supabase connection string must be copied from the project's Supabase dashboard.
+
+Do not commit the real Supabase connection string or any other credentials.
+
+**Important:** `.env` is local-only and must never be committed to Git.
+
+### Alembic database override
+
+Alembic can optionally use a separate database connection through:
+
+```text
+ALEMBIC_DATABASE_URL=<database-connection-string>
+```
+
+When `ALEMBIC_DATABASE_URL` is not defined, Alembic uses the application's effective database connection.
+
+This should only be used when a specific migration target is required.
 
 ### 3. Build and start the environment
 
@@ -84,6 +117,8 @@ The PostgreSQL service includes a healthcheck using `pg_isready`.
 
 The API depends on PostgreSQL being healthy before it starts.
 
+When shared Supabase mode is enabled, the local PostgreSQL container may still start because it is part of the Docker Compose environment. The application can nevertheless use the shared database configured through `SHARED_DATABASE_URL`.
+
 ### 4. Apply database migrations
 
 Run the latest Alembic migrations:
@@ -98,6 +133,8 @@ Check the current migration:
 docker compose exec api alembic current
 ```
 
+**Shared database warning:** migrations against the shared Supabase database affect the entire team. Coordinate schema changes with the team before applying migrations to the shared database.
+
 ### 5. Verify the containers
 
 ```bash
@@ -110,6 +147,8 @@ Expected result:
 api    Up
 db     Up (healthy)
 ```
+
+The `db` service may still be running even when the application is configured to use the shared Supabase database.
 
 ### 6. Access the API
 
@@ -136,7 +175,7 @@ Content    : {"message":"Escape Room API"}
 
 ### 8. Verify the database connection
 
-To verify that the API container can connect to PostgreSQL through SQLAlchemy:
+To verify that the API container can connect to its configured PostgreSQL database through SQLAlchemy:
 
 ```bash
 docker compose exec api python -c "from sqlalchemy import text; from back.app.database import engine; conn = engine.connect(); print(conn.execute(text('SELECT 1')).scalar()); conn.close()"
@@ -148,13 +187,55 @@ Expected output:
 1
 ```
 
-This confirms that the API container can successfully connect to PostgreSQL.
+This confirms that the API container can successfully connect to the currently configured database.
+
+To check which database is actually being used:
+
+```bash
+docker compose exec api python -c "from sqlalchemy import text; from back.app.database import engine; conn = engine.connect(); print(conn.execute(text('SELECT current_database(), current_user')).one()); conn.close()"
+```
+
+To list the current public tables:
+
+```bash
+docker compose exec api python -c "from sqlalchemy import text; from back.app.database import engine; conn = engine.connect(); print(conn.execute(text(\"SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name\")).fetchall()); conn.close()"
+```
 
 ## Database
 
-PostgreSQL runs locally in Docker.
+The project supports two database modes.
 
-The database schema is managed with SQLAlchemy models and Alembic migrations.
+### Local database
+
+The default local environment uses PostgreSQL 16 running in Docker.
+
+```text
+FastAPI
+   ↓
+DATABASE_URL
+   ↓
+Docker PostgreSQL
+```
+
+Each developer can have an independent local database.
+
+### Shared database
+
+For team development, the API can use the shared Supabase PostgreSQL database.
+
+```text
+FastAPI
+   ↓
+SHARED_DATABASE_URL
+   ↓
+Supabase PostgreSQL
+   ↓
+Shared team database
+```
+
+This mode allows the team to work with the same database state, including shared records such as users, rooms, time slots, and bookings.
+
+**Important:** avoid destructive database operations against the shared database unless they have been explicitly coordinated with the team.
 
 ### Current Sprint 1 models
 
@@ -163,25 +244,31 @@ The database schema is managed with SQLAlchemy models and Alembic migrations.
 * `time_slots`
 * `bookings`
 
-### Run migrations
+## Database Migrations
 
-Apply all pending migrations:
+The database schema is managed with SQLAlchemy models and Alembic migrations.
+
+### Apply migrations
 
 ```bash
 docker compose exec api alembic upgrade head
 ```
 
-Show the current migration:
+### Show the current migration
 
 ```bash
 docker compose exec api alembic current
 ```
 
-Generate a new migration after model changes:
+### Generate a new migration
+
+After changing SQLAlchemy models:
 
 ```bash
 docker compose exec api alembic revision --autogenerate -m "describe the change"
 ```
+
+Review the generated migration before applying it.
 
 ### Reset the local database
 
@@ -206,6 +293,8 @@ docker compose exec api alembic upgrade head
 
 **Warning:** `docker compose down -v` permanently deletes the local PostgreSQL data stored in the Docker volume.
 
+Do not use this command as a way to reset the shared Supabase database.
+
 ## Development Commands
 
 ### Run the test suite
@@ -224,6 +313,12 @@ docker compose exec api ruff check .
 
 ```bash
 docker compose exec api ruff format .
+```
+
+### Check formatting without changing files
+
+```bash
+docker compose exec api ruff format --check .
 ```
 
 ## Project Documentation

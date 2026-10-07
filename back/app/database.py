@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from back.app.config.settings import settings
 
-engine = create_engine(settings.database_url)
+engine = create_engine(settings.effective_database_url)
 
 SessionLocal = sessionmaker(
     bind=engine,
