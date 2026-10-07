@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dirección B - Pop</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Rubik+Mono+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+/* Direction B: pop / neo-brutalist. Sidebar nav, thick outlines, flat shadows, one big idea per block. */
+:root{--ink:#14110f;--cream:#fff6e4;--tom:#ff5a36;--but:#ffd23f;--mint:#7fe0b8;--sky:#8ab4ff;--mute:#5d564d}
+body{font:500 17px/1.5 'Bricolage Grotesque',sans-serif;background:var(--cream);color:var(--ink)}
+#app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.top{background:var(--ink);color:var(--cream);padding:24px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px}
+.brand{font:400 22px/1.05 'Rubik Mono One';color:var(--but);cursor:pointer;margin-bottom:22px}
+#nav{display:flex;flex-direction:column;gap:4px}
+.grp{font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.5;margin:16px 0 4px 10px}
+.nv{text-align:left;background:none;border:2px solid transparent;color:var(--cream);padding:9px 12px;font-weight:800;border-radius:10px}
+.nv:hover{border-color:var(--cream)}.nv.on{background:var(--but);color:var(--ink)}
+.top .cta{margin-top:auto}
+.cta{font-weight:800;font-size:16px;background:var(--tom);color:#fff;border:3px solid var(--ink);border-radius:12px;padding:12px 20px;box-shadow:4px 4px 0 var(--ink)}
+.top .cta{border-color:var(--cream);box-shadow:4px 4px 0 var(--cream)}
+.cta:active:not(:disabled){transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}.cta:disabled{background:#c8c1b5;color:#7a7368}
+main{padding:40px 44px 80px;max-width:1080px}
+.screen{animation:pop .35s cubic-bezier(.3,1.5,.5,1)}@keyframes pop{from{opacity:0;transform:translateY(12px)}}
+.ph{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:30px;flex-wrap:wrap}
+h1{font:400 clamp(30px,4.6vw,52px)/1 'Rubik Mono One';text-transform:uppercase}
+.lead{margin-top:12px;font-size:19px;color:var(--mute);max-width:560px}
+.hint{font-size:14px;color:var(--mute);margin-top:10px}
+.sec{font:400 20px 'Rubik Mono One';text-transform:uppercase;margin:40px 0 16px}
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{border:3px solid var(--ink);border-radius:99px;background:#fff;padding:6px 16px;font-weight:800;color:var(--ink)}
+.chip.on{background:var(--ink);color:var(--but)}.chip:hover:not(.on){background:var(--but)}
+.filter,.roomswitch{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:28px}.filter>span,.roomswitch>span{font-weight:800}
+.filterbar{margin-bottom:26px}
+.rooms{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:30px}
+.room-card{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:7px 7px 0 var(--ink);overflow:hidden;display:flex;flex-direction:column;transition:.15s}
+.room-card:hover:not(.dim){transform:translate(-3px,-3px);box-shadow:10px 10px 0 var(--rc)}
+.room-card .poster{height:170px;border-bottom:3px solid var(--ink)}
+.room-card .body{padding:20px;display:flex;flex-direction:column;gap:12px;flex:1}
+.room-card h2{font:800 25px/1.1 'Bricolage Grotesque'}
+.hook{color:var(--mute);flex:1;font-size:15px}
+.facts{display:flex;flex-wrap:wrap;gap:8px}.facts span{background:var(--cream);border:2px solid var(--ink);border-radius:99px;padding:2px 11px;font-size:13px;font-weight:600}
+.hero .facts span{background:transparent;border-color:#fff6;color:#fff}
+.hero{border:3px solid var(--ink);border-radius:24px;box-shadow:8px 8px 0 var(--rc);padding:40px;margin-bottom:34px}
+.hero .genre{display:inline-block;background:var(--rc);color:var(--ink);font-weight:800;font-size:13px;padding:3px 12px;border-radius:99px}
+.hero h1{margin:14px 0;color:#fff}.hero .story{max-width:540px;margin-bottom:18px;opacity:.92}.hero .diff{margin-bottom:14px;display:flex}
+.booker{display:grid;gap:30px}
+.step h3{font:800 20px 'Bricolage Grotesque';margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.step h3 b{background:var(--ink);color:var(--but);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:400 14px 'Rubik Mono One'}
+.day{text-align:center;line-height:1.1;min-width:66px;border-radius:14px}.day small{display:block;font-size:11px;font-weight:600}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px}
+.slot{font:400 19px 'Rubik Mono One';border:3px solid var(--ink);border-radius:14px;padding:13px 0;background:var(--mint);box-shadow:4px 4px 0 var(--ink);color:var(--ink)}
+.slot:hover:not(:disabled){transform:translate(-2px,-2px)}
+.slot em{display:block;font:600 11px 'Bricolage Grotesque';font-style:normal;margin-top:2px}
+.slot.sel{background:var(--but);transform:rotate(-2deg) scale(1.05)}
+.slot.taken,.slot.past{background:#e5e0d6;box-shadow:none;border-style:dashed;color:#8d867a}
+.slot.blocked{background:repeating-linear-gradient(-45deg,#fff 0 8px,#eee 8px 16px);box-shadow:none;color:#8d867a}
+.stepper{display:flex;align-items:center;gap:16px}
+.stepper button{width:48px;height:48px;border-radius:50%;border:3px solid var(--ink);background:var(--but);font:800 24px 'Bricolage Grotesque'}
+.stepper button:disabled{background:#e5e0d6;opacity:.6}
+.stepper strong{font:400 40px 'Rubik Mono One';min-width:44px;text-align:center}.stepper span{color:var(--mute)}
+.stepper.small button{width:34px;height:34px;font-size:18px}.stepper.small strong{font-size:22px;min-width:30px}
+.sum{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:var(--but);border:3px solid var(--ink);border-radius:20px;box-shadow:6px 6px 0 var(--ink);padding:20px 26px}
+.sum div{display:flex;flex-direction:column}.sum strong{font:400 34px/1.1 'Rubik Mono One'}.sum small{color:var(--ink);opacity:.7}
+.checkout{display:grid;grid-template-columns:1.2fr 1fr;gap:34px;align-items:start}
+.field{margin-bottom:18px}.field label{display:block;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.field input{width:100%;font:600 17px 'Bricolage Grotesque';border:3px solid var(--ink);border-radius:12px;padding:11px 14px;background:#fff}
+.field input:focus{outline:none;box-shadow:4px 4px 0 var(--rc)}.field input:disabled{background:#eee;color:#888}
+.ticket{background:var(--but);border:3px solid var(--ink);border-radius:20px;box-shadow:7px 7px 0 var(--rc);padding:24px;display:flex;flex-direction:column;gap:8px}
+.ticket h2{font:800 28px/1.1 'Bricolage Grotesque'}.ticket .genre{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em}
+.total{font:400 42px 'Rubik Mono One';margin:8px 0}
+.alert{border:3px solid var(--ink);border-radius:14px;padding:14px 18px;margin:16px 0;background:#fff}
+.alert.err{background:var(--tom);color:#fff}.alert.ok{background:var(--mint)}
+a{color:var(--tom);font-weight:800}
+.blist{display:grid;gap:18px}
+.booking{display:grid;grid-template-columns:150px 1fr auto auto;gap:18px;align-items:center;background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--rc);padding:16px 20px}
+.when strong{font:400 15px 'Rubik Mono One'}.what h3{font:800 21px 'Bricolage Grotesque'}.what p{font-size:14px;color:var(--mute)}
+.acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;min-width:200px}
+.btn{font-weight:800;font-size:14px;background:var(--ink);color:var(--cream);border:3px solid var(--ink);border-radius:10px;padding:7px 14px}.btn.ghost{background:#fff;color:var(--ink)}
+.lock{max-width:220px}
+.badge{font-weight:800;font-size:12px;border:2.5px solid var(--ink);border-radius:99px;padding:2px 12px;white-space:nowrap;background:#fff}
+.s-pend{background:var(--but)}.s-conf{background:var(--mint)}.s-prog{background:var(--sky)}.s-done{background:#d8c8ff}.s-canc{background:var(--tom);color:#fff}
+.profile{display:grid;grid-template-columns:1.2fr 1fr;gap:44px;align-items:start}
+.avatar{width:100px;height:100px;border-radius:50%;border:3px solid var(--ink);background:var(--sky);display:grid;place-items:center;font:400 38px 'Rubik Mono One';box-shadow:6px 6px 0 var(--ink);margin-bottom:26px}
+.score{display:grid;gap:16px}.score div{background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--ink);padding:16px 22px;display:flex;justify-content:space-between;align-items:baseline}
+.score div:nth-child(1){background:var(--but)}.score div:nth-child(2){background:var(--mint)}.score div:nth-child(3){background:var(--sky)}
+.score b{font:400 34px 'Rubik Mono One'}
+.tbl{width:100%;border-collapse:separate;border-spacing:0 12px}
+.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.1em;text-align:left;padding:0 14px}
+.tbl td{background:#fff;padding:14px;border-top:3px solid var(--ink);border-bottom:3px solid var(--ink)}
+.tbl td:first-child{border-left:3px solid var(--ink);border-radius:14px 0 0 14px}.tbl td:last-child{border-right:3px solid var(--ink);border-radius:0 14px 14px 0}
+.tbl .t{font:400 20px 'Rubik Mono One'}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.kpi{border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--ink);padding:18px 22px}.kpi span{font-weight:600}.kpi b{display:block;font:400 42px 'Rubik Mono One'}
+.kpi:nth-child(1){background:var(--but)}.kpi:nth-child(2){background:var(--mint)}.kpi:nth-child(3){background:var(--sky)}
+.bars{display:flex;gap:22px;align-items:flex-end;height:230px;margin-bottom:64px}
+.bar{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}
+.bar i{display:block;width:100%;height:calc(var(--v)*.78);background:var(--rc);border:3px solid var(--ink);border-radius:14px 14px 0 0;transition:height .4s}
+.bar b{font:400 20px 'Rubik Mono One'}.bar span{position:absolute;top:100%;margin-top:10px;font-weight:800;font-size:13px;text-align:center;width:120%}
+@media(max-width:860px){#app{grid-template-columns:1fr}.top{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center}.brand{margin:0 auto 0 0}#nav{flex-direction:row;flex-wrap:wrap}.grp{display:none}.top .cta{margin:0}main{padding:24px 16px 60px}.checkout,.profile,.kpis{grid-template-columns:1fr}.booking{grid-template-columns:1fr}.acts{justify-content:flex-start}.hero{padding:24px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>window.BRAND='Escape<br>Room'</script>
+<script src="shared.js"></script>
+</body>
+</html>

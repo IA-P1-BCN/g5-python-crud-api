@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dirección A - Expediente</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+/* Direction A: police case file. Warm paper, typewriter type, one red accent. Calm and readable. */
+:root{--paper:#ece4d0;--card:#f6f0e0;--ink:#211d17;--red:#b0281f;--mute:#6d6354;--line:#211d1722}
+body{background:#2e2a23;color:var(--ink);font:400 16px/1.55 'Courier Prime',monospace}
+#app{max-width:1060px;margin:0 auto;padding:22px 16px 70px}
+.top{display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--ink);color:var(--paper);padding:12px 22px;border-radius:4px 4px 0 0}
+.brand{font:400 22px 'Special Elite';letter-spacing:.04em;cursor:pointer;margin-right:auto}
+.brand::before{content:"● ";color:var(--red)}
+#nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.grp{font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.5;margin:0 6px 0 14px}
+.nv{background:none;border:none;color:var(--paper);padding:6px 10px;font:700 13px 'Courier Prime';opacity:.7;border-bottom:2px solid transparent}
+.nv:hover{opacity:1}.nv.on{opacity:1;border-color:var(--red)}
+.cta{font:700 14px 'Courier Prime';letter-spacing:.08em;text-transform:uppercase;background:var(--red);color:#fff;border:none;padding:11px 20px;border-radius:2px}
+.cta:hover{filter:brightness(1.1)}.cta:disabled{background:#8a8070}
+.top .cta{padding:8px 16px}
+main{background:var(--paper);padding:38px 44px 56px;border-radius:0 0 4px 4px;box-shadow:0 24px 50px #0007;min-height:60vh}
+.screen{animation:in .3s}@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.ph{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding-bottom:16px;margin-bottom:26px;border-bottom:3px double var(--ink)}
+h1{font:400 clamp(30px,4.5vw,46px)/1.05 'Special Elite'}
+.lead{color:var(--mute);margin-top:8px;max-width:560px}
+.hint{font-size:13px;color:var(--mute);margin-top:10px}
+.sec{font:400 22px 'Special Elite';margin:38px 0 14px}
+/* chips */
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--card);border:1.5px solid var(--ink);color:var(--ink);padding:7px 14px;font:700 14px 'Courier Prime';border-radius:2px}
+.chip.on{background:var(--ink);color:var(--paper)}.chip:hover:not(.on){background:#fff8}
+.filter,.roomswitch{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px}
+.filter>span,.roomswitch>span{font:400 15px 'Special Elite'}
+.filterbar{margin-bottom:22px}
+/* rooms */
+.rooms{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:24px}
+.room-card{background:var(--card);border:1.5px solid var(--ink);display:flex;flex-direction:column;box-shadow:4px 5px 0 #0002;transition:.2s}
+.room-card:hover:not(.dim){transform:translateY(-4px);box-shadow:4px 9px 0 #0002}
+.room-card .poster{height:170px;border-bottom:1.5px solid var(--ink)}
+.room-card .body{padding:18px;display:flex;flex-direction:column;gap:10px;flex:1}
+.room-card h2{font:400 23px/1.1 'Special Elite'}
+.hook{font-size:14px;color:var(--mute);flex:1}
+.facts{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;border-top:1px dashed var(--ink);padding-top:10px}
+.room-card .cta{margin-top:4px}
+/* room page */
+.hero{padding:34px 34px 30px;margin-bottom:28px;border:1.5px solid var(--ink)}
+.hero .genre{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--rc)}
+.hero h1{margin:6px 0 12px;color:#fff}
+.hero .story{max-width:540px;opacity:.9;margin-bottom:16px}
+.hero .facts{border-color:#fff4;margin-top:14px;max-width:540px}
+.booker{display:grid;gap:28px}
+.step h3{font:400 20px 'Special Elite';margin-bottom:12px}
+.step h3 b{display:inline-grid;place-items:center;width:28px;height:28px;border:2px solid var(--ink);border-radius:50%;font-size:14px;margin-right:8px}
+.day{text-align:center;min-width:64px;line-height:1.2}.day small{display:block;font-size:11px;font-weight:400}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.slot{background:var(--card);border:2px solid var(--ink);padding:12px 4px;font:700 17px 'Courier Prime';color:var(--ink)}
+.slot em{display:block;font:400 11px 'Courier Prime';font-style:normal;color:var(--mute)}
+.slot.sel{background:var(--rc);border-color:var(--ink);color:#fff;box-shadow:3px 3px 0 var(--ink)}
+.slot:hover:not(:disabled):not(.sel){background:#fff}
+.slot.taken,.slot.past{border-style:dashed;opacity:.5;text-decoration:line-through}
+.slot.blocked{opacity:.5;background:repeating-linear-gradient(45deg,transparent 0 5px,var(--line) 5px 10px)}
+.stepper{display:flex;align-items:center;gap:16px}
+.stepper button{width:42px;height:42px;border:2px solid var(--ink);background:var(--card);font:700 22px 'Courier Prime'}
+.stepper button:disabled{opacity:.3}
+.stepper strong{font:400 36px 'Special Elite';min-width:34px;text-align:center}
+.stepper span{color:var(--mute);font-size:14px}.stepper.small strong{font-size:24px}.stepper.small button{width:32px;height:32px;font-size:18px}
+.sum{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:var(--card);border:2px solid var(--ink);border-left:8px solid var(--rc);padding:16px 22px}
+.sum div{display:flex;flex-direction:column}.sum strong{font:400 34px/1.1 'Special Elite'}.sum small{color:var(--mute)}
+/* checkout */
+.checkout{display:grid;grid-template-columns:1.2fr 1fr;gap:34px;align-items:start}
+.field{margin-bottom:18px}.field label{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.field input{width:100%;background:transparent;border:none;border-bottom:2px solid var(--ink);font:400 18px 'Courier Prime';padding:6px 0;outline:none;color:var(--ink)}
+.field input:focus{background:#fff6}.field input:disabled{opacity:.5}
+.ticket{background:var(--card);border:2px solid var(--ink);padding:22px;display:flex;flex-direction:column;gap:6px;border-top:8px solid var(--rc)}
+.ticket h2{font:400 26px 'Special Elite'}.ticket .genre{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--mute)}
+.total{font:400 40px 'Special Elite';margin:8px 0}
+.alert{border:2px solid var(--ink);padding:14px 18px;margin:16px 0;background:var(--card)}
+.alert.err{border-color:var(--red);color:var(--red)}.alert.ok{border-left:8px solid #2c6b3a}
+a{color:var(--red)}
+/* bookings */
+.blist{display:grid;gap:14px}
+.booking{display:grid;grid-template-columns:170px 1fr auto auto;gap:18px;align-items:center;background:var(--card);border:1.5px solid var(--ink);border-left:8px solid var(--rc);padding:14px 18px}
+.when strong{font:400 17px 'Special Elite'}.what h3{font:400 20px 'Special Elite'}.what p{font-size:14px;color:var(--mute)}
+.acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;min-width:200px}
+.btn{font:700 13px 'Courier Prime';background:var(--ink);color:var(--paper);border:2px solid var(--ink);padding:7px 12px}
+.btn.ghost{background:none;color:var(--ink)}
+.lock{max-width:210px}
+.badge{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;border:2px solid;padding:2px 9px;white-space:nowrap}
+.s-pend{color:#8a6410}.s-conf{color:#2c6b3a}.s-prog{color:#274b7a}.s-done{color:#5b4a8a}.s-canc{color:var(--red)}
+/* profile, tables, kpis */
+.profile{display:grid;grid-template-columns:1.2fr 1fr;gap:44px;align-items:start}
+.avatar{width:84px;height:84px;border:3px solid var(--ink);border-radius:50%;display:grid;place-items:center;font:400 30px 'Special Elite';margin-bottom:22px;background:var(--card)}
+.score{display:grid;gap:14px}.score div{background:var(--card);border:2px solid var(--ink);padding:14px 20px;display:flex;justify-content:space-between;align-items:baseline}
+.score b{font:400 34px 'Special Elite'}.score span{color:var(--mute)}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font:400 13px 'Special Elite';text-transform:uppercase;letter-spacing:.12em;text-align:left;padding:8px;border-bottom:2px solid var(--ink)}
+.tbl td{padding:14px 8px;border-bottom:1px dashed var(--ink)}.tbl .t{font:400 20px 'Special Elite'}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.kpi{background:var(--card);border:2px solid var(--ink);padding:16px 20px}.kpi span{color:var(--mute);font-size:13px}.kpi b{display:block;font:400 40px 'Special Elite'}
+.bars{display:flex;gap:18px;align-items:flex-end;height:210px;border-bottom:2px solid var(--ink);padding:0 10px}
+.bar{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}
+.bar i{display:block;width:100%;height:calc(var(--v)*.78);background:var(--rc);border:2px solid var(--ink);transition:height .4s}
+.bar b{font:400 20px 'Special Elite'}.bar span{position:absolute;top:100%;margin-top:8px;font-size:12px;text-align:center;width:120%}
+.bars{margin-bottom:60px}
+@media(max-width:780px){main{padding:24px 16px 40px}.checkout,.profile,.kpis{grid-template-columns:1fr}.booking{grid-template-columns:1fr;gap:8px}.acts{justify-content:flex-start}.top{padding:12px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>window.BRAND='Expediente · Sala 13'</script>
+<script src="shared.js"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+/* Shared by the three skins: room colour themes + the animated "room atmosphere".
+   Skins style layout and chrome; this file only defines what is specific to each ROOM. */
+
+[data-room=relojero]  { --rc: #e0a243; --rd: #2a1b0d }
+[data-room=biblioteca]{ --rc: #4fc48f; --rd: #0c2a20 }
+[data-room=faro]      { --rc: #5cc3e6; --rd: #0a2734 }
+[data-room=atraco]    { --rc: #ff4560; --rd: #1d0b10 }
+[data-room=lab]       { --rc: #9aa0a6; --rd: #1b1d20 }
+
+* { box-sizing: border-box; margin: 0 }
+button { font: inherit; cursor: pointer }
+button:disabled { cursor: not-allowed }
+.dim { opacity: .38; filter: grayscale(.7) }
+
+/* Poster art on room cards */
+.poster { position: relative; overflow: hidden; color: var(--rc);
+  background: radial-gradient(circle at 70% 20%, color-mix(in srgb, var(--rc) 35%, transparent), transparent 60%), var(--rd) }
+.poster .art { display: grid; place-items: center; height: 100%; min-height: 150px }
+.poster .art svg { width: 92px; height: 92px; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--rc) 70%, transparent)) }
+.poster .genre { position: absolute; left: 12px; bottom: 10px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #fff; opacity: .85 }
+
+/* Difficulty dots */
+.diff { display: inline-flex; align-items: center; gap: 4px }
+.diff i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid currentColor; opacity: .4 }
+.diff i.on { background: var(--rc, currentColor); border-color: var(--rc, currentColor); opacity: 1 }
+.diff em { font-style: normal; font-size: 12px; margin-left: 6px; opacity: .75 }
+
+/* Room atmosphere (hero of the room page). Each room reacts differently. */
+.hero { position: relative; overflow: hidden; background: var(--rd); color: #fff }
+.hero .fx { position: absolute; inset: 0; pointer-events: none }
+.hero .inner { position: relative }
+
+/* El Relojero: a big clock whose second hand ticks */
+[data-room=relojero] .fx::before { content: ""; position: absolute; right: 4%; top: 50%; width: 300px; height: 300px; margin-top: -150px; border-radius: 50%;
+  border: 2px solid var(--rc); opacity: .35;
+  background: repeating-conic-gradient(var(--rc) 0 .6deg, transparent .6deg 30deg) }
+[data-room=relojero] .fx::after { content: ""; position: absolute; right: calc(4% + 149px); top: calc(50% - 130px); width: 2px; height: 130px; background: var(--rc); opacity: .7;
+  transform-origin: bottom center; animation: tick 60s steps(60) infinite }
+@keyframes tick { to { transform: rotate(360deg) } }
+
+/* La Biblioteca: dust floating up */
+[data-room=biblioteca] .fx { opacity: .8;
+  background-image: radial-gradient(circle, var(--rc) 1px, transparent 2px), radial-gradient(circle, #fff 1px, transparent 2px), radial-gradient(circle, var(--rc) 1.5px, transparent 2.5px);
+  background-size: 90px 90px, 140px 140px, 210px 210px; background-position: 0 0, 40px 60px, 100px 30px; animation: dust 28s linear infinite }
+@keyframes dust { to { background-position: 30px -900px, 20px -600px, 80px -1200px } }
+
+/* Faro 1923: lighthouse beam sweeping */
+[data-room=faro] .fx::before { content: ""; position: absolute; right: -10%; top: -90%; width: 130%; height: 280%;
+  background: conic-gradient(from 0deg, transparent 0 336deg, color-mix(in srgb, var(--rc) 38%, transparent) 352deg, transparent 360deg);
+  animation: spin 7s linear infinite; transform-origin: 62% 50% }
+@keyframes spin { to { transform: rotate(360deg) } }
+
+/* El Gran Atraco: laser grid + a scan line */
+[data-room=atraco] .fx { background:
+  repeating-linear-gradient(72deg, transparent 0 70px, color-mix(in srgb, var(--rc) 55%, transparent) 70px 71px),
+  repeating-linear-gradient(-72deg, transparent 0 90px, color-mix(in srgb, var(--rc) 40%, transparent) 90px 91px);
+  animation: flick 3s steps(2) infinite }
+[data-room=atraco] .fx::after { content: ""; position: absolute; left: 0; right: 0; height: 60px; top: -60px;
+  background: linear-gradient(transparent, color-mix(in srgb, var(--rc) 30%, transparent), transparent); animation: scan 4s linear infinite }
+@keyframes scan { to { top: 100% } }
+@keyframes flick { 50% { opacity: .75 } }
+
+@media (prefers-reduced-motion: reduce) { .fx, .fx::before, .fx::after { animation: none !important } }
+
+/* Accessibility baseline (ui-ux-pro-max): visible focus, 44px targets, reduced motion */
+:focus-visible { outline: 3px solid var(--rc, currentColor); outline-offset: 2px }
+.chip, .btn, .slot, .nv, .cta, .stepper button { min-height: 44px }
+.stepper button { min-width: 44px }
+.ic { vertical-align: -3px; margin-right: 4px }
+.aud { font-size: 13px; opacity: .8 }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important } }
