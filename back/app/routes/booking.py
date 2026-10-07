@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session
 
 from back.app.controllers import booking as booking_controller
 from back.app.database import get_db
-from back.app.schemas.booking import BookingCreate, BookingDetail, BookingRead
+from back.app.schemas.booking import (
+    BookingCreate,
+    BookingDetail,
+    BookingRead,
+    BookingUpdate,
+)
 
 router = APIRouter()
 
@@ -60,3 +65,26 @@ def get_booking_endpoint(
     db: Session = Depends(get_db),  # noqa: B008
 ):
     return booking_controller.get_booking(db=db, booking_id=booking_id)
+
+
+@router.put(
+    "/{booking_id}",
+    response_model=BookingRead,
+    summary="Modify a booking",
+    description="Changes the number of players and recalculates total_price. "
+    "Only PENDING or CONFIRMED bookings, and only 24h or more before the "
+    "slot starts.",
+    responses={
+        404: {"description": "NOT_FOUND"},
+        409: {"description": "INVALID_TRANSITION or TOO_LATE_TO_MODIFY"},
+        422: {"description": "Invalid body or INVALID_PLAYERS"},
+    },
+)
+def update_booking_endpoint(
+    booking_id: int,
+    booking_in: BookingUpdate,
+    db: Session = Depends(get_db),  # noqa: B008
+):
+    return booking_controller.update_booking(
+        db=db, booking_id=booking_id, booking_in=booking_in
+    )

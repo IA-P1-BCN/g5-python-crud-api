@@ -210,3 +210,65 @@ def test_get_booking_not_found(client, seed):
 
     assert response.status_code == 404
     assert response.json()["code"] == "NOT_FOUND"
+
+
+def make_booking(db, seed, slot, status="PENDING", players=2):
+    """Insert a booking on the given slot and return it."""
+    booking = Booking(
+        user_id=seed.user.id,
+        time_slot_id=slot.id,
+        players=players,
+        total_price=seed.room.base_price * players,
+        status=status,
+    )
+    db.add(booking)
+    db.commit()
+    return booking
+
+
+def test_update_booking_players_recalculates_price(client, seed, db):
+    """BR-B7 happy path, BR-B4 total_price = base_price x players."""
+    booking = db.query(Booking).one()
+
+    response = client.put(f"{URL}/{booking.id}", json={"players": 3})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["players"] == 3
+    assert Decimal(data["total_price"]) == Decimal("60.00")
+
+
+def test_update_booking_too_late_returns_409(client, seed, db):
+    """BR-B7: the slot starts in less than 24h."""
+    begin = datetime.now(UTC) + timedelta(hours=2)
+    soon_slot = TimeSlot(
+        room_id=seed.room.id, starts_at=begin, ends_at=begin + timedelta(hours=1)
+    )
+    db.add(soon_slot)
+    db.commit()
+    booking = make_booking(db, seed, soon_slot)
+
+    response = client.put(f"{URL}/{booking.id}", json={"players": 3})
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "TOO_LATE_TO_MODIFY"
+
+
+def test_update_booking_cancelled_returns_409(client, seed, db):
+    """BR-B7: only PENDING or CONFIRMED bookings can be modified."""
+    booking = make_booking(db, seed, seed.free_slot, status="CANCELLED")
+
+    response = client.put(f"{URL}/{booking.id}", json={"players": 3})
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "INVALID_TRANSITION"
+
+
+def test_update_booking_over_capacity_returns_422(client, seed, db):
+    """BR-B2 upper bound: room capacity is 6."""
+    booking = db.query(Booking).one()
+
+    response = client.put(f"{URL}/{booking.id}", json={"players": 7})
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "INVALID_PLAYERS"
