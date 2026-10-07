@@ -4,16 +4,22 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class RoomBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100, description="Nome della stanza")
-    capacity: int = Field(..., ge=1, description="Numero massimo di giocatori")
-    duration: int = Field(..., gt=0, description="Durata in minuti")
-    base_price: Decimal = Field(..., ge=0, decimal_places=2, description="Prezzo base")
+    name: str = Field(..., min_length=1, max_length=100, description="Room name")
+    capacity: int = Field(..., ge=1, description="Maximum number of players")
+    duration: int = Field(..., gt=0, description="Duration in minutes")
+    base_price: Decimal = Field(..., ge=Decimal("0.00"), description="Base price")
+    status: str = Field(
+        default="active", pattern="^(active|inactive)$", description="Room status"
+    )
+
 
 class RoomCreate(RoomBase):
     pass
 
+
 class RoomUpdate(RoomBase):
     pass
+
 
 class RoomResponse(RoomBase):
     id: int

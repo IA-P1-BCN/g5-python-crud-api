@@ -65,8 +65,26 @@ def deactivate_room(db: Session, room_id: int) -> Room:
         )
 
     room.status = "inactive"
-    
+
     db.commit()
     db.refresh(room)
 
+    return room
+
+
+def list_rooms(db: Session, status: str | None = None) -> list[Room]:
+    stmt = select(Room)
+    if status:
+        stmt = stmt.where(Room.status == status)
+    return list(db.scalars(stmt).all())
+
+
+def get_room_by_id(db: Session, room_id: int) -> Room:
+    room = db.get(Room, room_id)
+    if not room:
+        raise AppError(
+            message="Room not found",
+            code="NOT_FOUND",
+            status_code=404,
+        )
     return room
