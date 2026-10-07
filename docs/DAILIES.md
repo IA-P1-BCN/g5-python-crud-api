@@ -29,6 +29,7 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 ### Marie-Charlotte
 
 - **Hoy:**
+  Front
 - **Resultado (tarde):**
 - **Bloqueos:**
 
