@@ -6,6 +6,34 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ---
 
+## Miércoles 7 de octubre de 2026
+
+### Leandro
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Isbel
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Carolay
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Marie-Charlotte
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+---
+
 ## Martes 6 de octubre de 2026
 
 ### Leandro
@@ -13,8 +41,6 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 - **Hoy:** Evento de la base de datos + ticket 0-05 "Create user" (en curso 🔄)
 - **Resultado (tarde):**
 - **Bloqueos:**
-
-### Isbel
 
 ### Isbel
 
