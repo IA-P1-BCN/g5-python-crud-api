@@ -7,6 +7,7 @@ from back.app.config.logging import setup_logging
 from back.app.core.errors import AppError
 from back.app.routes.booking import router as booking_router
 from back.app.routes.room import router as room_router
+from back.app.routes.user import router as user_router
 
 setup_logging()
 
@@ -73,6 +74,20 @@ def health():
     return {"status": "ok"}
 
 
-app.include_router(room_router, prefix="/api/v1/rooms", tags=["Rooms"])
-app.include_router(room_router, prefix="/api/v1/rooms", tags=["Rooms"])
-app.include_router(booking_router, prefix="/api/v1/bookings", tags=["Bookings"])
+app.include_router(
+    room_router,
+    prefix="/api/v1/rooms",
+    tags=["Rooms"],
+)
+
+app.include_router(
+    booking_router,
+    prefix="/api/v1/bookings",
+    tags=["Bookings"],
+)
+
+app.include_router(
+    user_router,
+    prefix="/api/v1/users",
+    tags=["Users"],
+)
