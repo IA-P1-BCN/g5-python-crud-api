@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import create_engine, pool
@@ -14,10 +15,15 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+database_url = os.getenv(
+    "ALEMBIC_DATABASE_URL",
+    settings.effective_database_url,
+)
+
 
 def run_migrations_offline() -> None:
     context.configure(
-        url=settings.database_url,
+        url=database_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -29,7 +35,7 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     connectable = create_engine(
-        settings.database_url,
+        database_url,
         poolclass=pool.NullPool,
     )
 
