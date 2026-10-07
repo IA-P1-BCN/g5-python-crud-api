@@ -114,3 +114,99 @@ def test_create_user_missing_name_returns_422(client):
     )
 
     assert response.status_code == 422
+
+
+def test_get_user_success(client):
+    create_response = client.post(
+        URL,
+        json={
+            "name": "Alice",
+            "email": "alice@example.com",
+            "phone": "+34123456789",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    user_id = create_response.json()["id"]
+
+    response = client.get(f"{URL}/{user_id}")
+
+    assert response.status_code == 200
+    assert response.json()["id"] == user_id
+    assert response.json()["name"] == "Alice"
+    assert response.json()["email"] == "alice@example.com"
+    assert response.json()["phone"] == "+34123456789"
+
+
+def test_get_user_not_found_returns_404(client):
+    response = client.get(f"{URL}/999999")
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": "User not found",
+        "code": "NOT_FOUND",
+    }
+
+
+def test_update_user_success(client, db):
+    create_response = client.post(
+        URL,
+        json={
+            "name": "Alice",
+            "email": "alice@example.com",
+            "phone": "+34123456789",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    user_id = create_response.json()["id"]
+
+    response = client.put(
+        f"{URL}/{user_id}",
+        json={
+            "name": "Alice Updated",
+            "phone": "+34987654321",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["id"] == user_id
+    assert data["name"] == "Alice Updated"
+    assert data["phone"] == "+34987654321"
+    assert data["email"] == "alice@example.com"
+
+    user = db.get(User, user_id)
+
+    assert user is not None
+    assert user.name == "Alice Updated"
+    assert user.phone == "+34987654321"
+    assert user.email == "alice@example.com"
+
+
+def test_update_user_invalid_data_returns_422(client):
+    create_response = client.post(
+        URL,
+        json={
+            "name": "Alice",
+            "email": "alice@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    user_id = create_response.json()["id"]
+
+    response = client.put(
+        f"{URL}/{user_id}",
+        json={
+            "name": "",
+            "phone": "+34987654321",
+        },
+    )
+
+    assert response.status_code == 422
