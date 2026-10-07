@@ -303,19 +303,13 @@ def test_cancel_confirmed_booking_success(client, seed, db):
 
 
 def test_cancel_booking_frees_the_slot(client, seed, db):
+    """BR-B6: after cancelling, the slot can be booked again."""
     booking = make_booking(db, seed, seed.free_slot)
     client.put(f"{URL}/{booking.id}/cancel")
 
-    active_bookings = (
-        db.query(Booking)
-        .filter(
-            Booking.time_slot_id == seed.free_slot.id,
-            Booking.status.in_(booking_controller.ACTIVE_STATUSES),
-        )
-        .count()
-    )
+    response = client.post(URL, json=payload(seed.user.id, seed.free_slot.id))
 
-    assert active_bookings == 0
+    assert response.status_code == 201
 
 
 def test_cancel_booking_exactly_24h_before_is_allowed(client, seed, db, monkeypatch):
