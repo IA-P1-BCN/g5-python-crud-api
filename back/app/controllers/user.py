@@ -7,8 +7,10 @@ from back.app.schemas.user import UserCreate
 
 
 def create_user(db: Session, user_in: UserCreate) -> User:
+    normalized_email = str(user_in.email).lower()
+
     existing_user = db.execute(
-        select(User).where(User.email == user_in.email)
+        select(User).where(User.email == normalized_email)
     ).scalar_one_or_none()
 
     if existing_user:
@@ -20,7 +22,7 @@ def create_user(db: Session, user_in: UserCreate) -> User:
 
     user = User(
         name=user_in.name,
-        email=user_in.email,
+        email=normalized_email,
         phone=user_in.phone,
         role=user_in.role,
     )

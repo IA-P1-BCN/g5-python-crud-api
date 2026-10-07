@@ -1,6 +1,5 @@
 from back.app.models import User
 
-
 URL = "/api/v1/users"
 
 
@@ -50,6 +49,40 @@ def test_create_user_duplicate_email_returns_409(client):
         json={
             "name": "Another Alice",
             "email": "alice@example.com",
+        },
+    )
+
+    assert second_response.status_code == 409
+    assert second_response.json() == {
+        "detail": "User with this email already exists",
+        "code": "DUPLICATE",
+    }
+
+
+def test_create_user_email_is_normalized(client, db):
+    first_response = client.post(
+        URL,
+        json={
+            "name": "Alice",
+            "email": "Alice@example.com",
+        },
+    )
+
+    assert first_response.status_code == 201
+
+    data = first_response.json()
+
+    assert data["email"] == "alice@example.com"
+
+    user = db.query(User).one()
+
+    assert user.email == "alice@example.com"
+
+    second_response = client.post(
+        URL,
+        json={
+            "name": "Another Alice",
+            "email": "ALICE@EXAMPLE.COM",
         },
     )
 
