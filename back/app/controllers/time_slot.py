@@ -19,7 +19,7 @@ def _ensure_utc(dt: datetime) -> datetime:
 def create_time_slot_controller(slot_in: TimeSlotCreate, db: Session) -> TimeSlot:
     room = db.get(Room, slot_in.room_id)
     if not room:
-        raise AppError(message="Room not found", code="ROOM_NOT_FOUND", status_code=404)
+        raise AppError(message="Room not found", code="NOT_FOUND", status_code=404)
     if room.status != "active":
         raise AppError(message="Room is inactive", code="ROOM_INACTIVE", status_code=409)
 
@@ -28,10 +28,10 @@ def create_time_slot_controller(slot_in: TimeSlotCreate, db: Session) -> TimeSlo
     ends_at = _ensure_utc(slot_in.ends_at)
 
     if starts_at < now:
-        raise AppError(message="Start time cannot be in the past", code="INVALID_START_TIME", status_code=422)
+        raise AppError(message="Start time cannot be in the past", code="VALIDATION_ERROR", status_code=422)
 
     if ends_at <= starts_at:
-        raise AppError(message="ends_at must be greater than starts_at", code="INVALID_TIME_RANGE", status_code=422)
+        raise AppError(message="ends_at must be greater than starts_at", code="VALIDATION_ERROR", status_code=422)
 
     overlapping = db.execute(
         select(TimeSlot).where(
@@ -61,7 +61,7 @@ def create_time_slot_controller(slot_in: TimeSlotCreate, db: Session) -> TimeSlo
 def update_time_slot_controller(slot_id: int, slot_in: TimeSlotUpdate, db: Session) -> TimeSlot:
     db_slot = db.get(TimeSlot, slot_id)
     if not db_slot:
-        raise AppError(message="Time slot not found", code="SLOT_NOT_FOUND", status_code=404)
+        raise AppError(message="Time slot not found", code="NOT_FOUND", status_code=404)
 
     room = db.get(Room, db_slot.room_id)
     if not room or room.status != "active":
@@ -77,25 +77,22 @@ def update_time_slot_controller(slot_id: int, slot_in: TimeSlotUpdate, db: Sessi
     ).scalars().first()
 
     if active_booking:
-        raise AppError(message="Cannot edit time slot with an active booking", code="ACTIVE_BOOKING_EXISTS", status_code=409)
+        raise AppError(message="Cannot edit time slot with an active booking", code="SLOT_OVERLAP", status_code=409)
 
     update_data = {k: v for k, v in slot_in.model_dump(exclude_unset=True).items() if v is not None}
 
     now = datetime.now(UTC)
-    
-    # Aseguramos zona horaria UTC para las fechas actuales en BD
     current_starts = _ensure_utc(db_slot.starts_at)
     current_ends = _ensure_utc(db_slot.ends_at)
 
     new_starts = _ensure_utc(update_data["starts_at"]) if "starts_at" in update_data else current_starts
     new_ends = _ensure_utc(update_data["ends_at"]) if "ends_at" in update_data else current_ends
 
-    # Validar pasado solo si se está modificando explícitamente starts_at
     if "starts_at" in update_data and new_starts < now:
-        raise AppError(message="Start time cannot be in the past", code="INVALID_START_TIME", status_code=422)
+        raise AppError(message="Start time cannot be in the past", code="VALIDATION_ERROR", status_code=422)
 
     if new_ends <= new_starts:
-        raise AppError(message="ends_at must be greater than starts_at", code="INVALID_TIME_RANGE", status_code=422)
+        raise AppError(message="ends_at must be greater than starts_at", code="VALIDATION_ERROR", status_code=422)
 
     if "starts_at" in update_data or "ends_at" in update_data:
         overlapping = db.execute(
@@ -127,7 +124,7 @@ def update_time_slot_controller(slot_id: int, slot_in: TimeSlotUpdate, db: Sessi
 def delete_time_slot_controller(slot_id: int, db: Session) -> None:
     db_slot = db.get(TimeSlot, slot_id)
     if not db_slot:
-        raise AppError(message="Time slot not found", code="SLOT_NOT_FOUND", status_code=404)
+        raise AppError(message="Time slot not found", code="NOT_FOUND", status_code=404)
 
     active_booking = db.execute(
         select(Booking).where(
@@ -139,7 +136,7 @@ def delete_time_slot_controller(slot_id: int, db: Session) -> None:
     ).scalars().first()
 
     if active_booking:
-        raise AppError(message="Cannot delete time slot with an active booking", code="ACTIVE_BOOKING_EXISTS", status_code=409)
+        raise AppError(message="Cannot delete time slot with an active booking", code="SLOT_OVERLAP", status_code=409)
 
     db.delete(db_slot)
     db.commit()

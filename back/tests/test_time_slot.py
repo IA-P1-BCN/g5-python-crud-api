@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from back.app.models.booking import Booking
 from back.app.models.room import Room
 from back.app.models.time_slot import TimeSlot
+from back.app.models.user import User
 
 
 def test_create_time_slot_success(client: TestClient, db: Session):
@@ -121,6 +122,12 @@ def test_delete_time_slot_with_active_booking(client: TestClient, db: Session):
     db.commit()
     db.refresh(room)
 
+    # Creamos un usuario real usando los campos correctos del modelo (name y email)
+    user = User(name="Test User", email="test@escape.com")
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
     starts_at = datetime.now(UTC) + timedelta(days=1)
     ends_at = starts_at + timedelta(hours=1)
     slot = TimeSlot(room_id=room.id, starts_at=starts_at, ends_at=ends_at, status="available")
@@ -128,22 +135,22 @@ def test_delete_time_slot_with_active_booking(client: TestClient, db: Session):
     db.commit()
     db.refresh(slot)
 
-    # Añadimos user_id, players y total_price para cumplir con todas las restricciones NOT NULL de bookings
-    booking = Booking(time_slot_id=slot.id, user_id=1, players=2, total_price=100.0, status="CONFIRMED")
+    booking = Booking(time_slot_id=slot.id, user_id=user.id, players=2, total_price=100.0, status="CONFIRMED")
     db.add(booking)
     db.commit()
 
     response = client.delete(f"/api/v1/time-slots/{slot.id}")
     assert response.status_code == 409
-    assert response.json()["code"] == "ACTIVE_BOOKING_EXISTS"
-    
+    assert response.json()["code"] == "SLOT_OVERLAP"
+
+
 def test_delete_time_slot_success(client: TestClient, db: Session):
     room = Room(name="Delete Room", capacity=4, duration=60, base_price=50.00, status="active")
     db.add(room)
     db.commit()
     db.refresh(room)
 
-    starts_at = datetime.now(UTC) + timedelta(days=1)
+    starts_at = datetime.now(UTC) + timedelta(days=3)  # Usamos un día distinto para evitar solapamientos
     ends_at = starts_at + timedelta(hours=1)
 
     slot = TimeSlot(
@@ -157,6 +164,5 @@ def test_delete_time_slot_success(client: TestClient, db: Session):
     db.refresh(slot)
 
     response = client.delete(f"/api/v1/time-slots/{slot.id}")
-
     assert response.status_code == 204
     assert db.get(TimeSlot, slot.id) is None
