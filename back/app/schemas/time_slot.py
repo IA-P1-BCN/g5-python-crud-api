@@ -1,39 +1,30 @@
 from datetime import datetime
-
-from pydantic import BaseModel, model_validator
+from typing import Literal, Optional
+from pydantic import BaseModel, ConfigDict
 
 
 class TimeSlotBase(BaseModel):
+    room_id: int
     starts_at: datetime
     ends_at: datetime
-    status: str | None = "available"
+    status: Optional[Literal["available", "blocked"]] = "available"
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TimeSlotCreate(TimeSlotBase):
-    room_id: int
-
-    @model_validator(mode="after")
-    def validate_dates(self) -> "TimeSlotCreate":
-        if self.ends_at <= self.starts_at:
-            raise ValueError("ends_at must be greater than starts_at")
-        return self
+    pass
 
 
 class TimeSlotUpdate(BaseModel):
-    starts_at: datetime | None = None
-    ends_at: datetime | None = None
-    status: str | None = None
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    status: Optional[Literal["available", "blocked"]] = None
 
-    @model_validator(mode="after")
-    def validate_dates(self) -> "TimeSlotUpdate":
-        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
-            raise ValueError("ends_at must be greater than starts_at")
-        return self
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TimeSlotResponse(TimeSlotBase):
     id: int
-    room_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

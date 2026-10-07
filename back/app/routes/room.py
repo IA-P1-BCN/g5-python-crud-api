@@ -34,3 +34,20 @@ def deactivate_room_endpoint(
     db: SessionDep
 ):
     return room_controller.deactivate_room(db=db, room_id=room_id)
+
+
+
+@router.get("", response_model=list[RoomResponse], status_code=status.HTTP_200_OK, summary="List rooms")
+def list_rooms_endpoint(
+    db: SessionDep,
+    status: str | None = None
+):
+    return room_controller.list_rooms(db=db, status=status)
+
+
+@router.get("/{room_id}", response_model=RoomResponse, status_code=status.HTTP_200_OK, summary="Get room by ID")
+def get_room_endpoint(
+    room_id: int,
+    db: SessionDep
+):
+    return room_controller.get_room_by_id(db=db, room_id=room_id)
