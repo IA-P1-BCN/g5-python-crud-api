@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 
@@ -7,7 +7,7 @@ class TimeSlotBase(BaseModel):
     room_id: int
     starts_at: datetime
     ends_at: datetime
-    status: Optional[Literal["available", "blocked"]] = "available"
+    status: Literal["available", "blocked"] | None = "available"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -17,9 +17,9 @@ class TimeSlotCreate(TimeSlotBase):
 
 
 class TimeSlotUpdate(BaseModel):
-    starts_at: Optional[datetime] = None
-    ends_at: Optional[datetime] = None
-    status: Optional[Literal["available", "blocked"]] = None
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    status: Literal["available", "blocked"] | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
