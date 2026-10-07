@@ -5,9 +5,11 @@ from fastapi.responses import JSONResponse
 
 from back.app.config.logging import setup_logging
 from back.app.core.errors import AppError
+from back.app.routes import room, time_slot
 from back.app.routes.booking import router as booking_router
 from back.app.routes.room import router as room_router
 
+app = FastAPI()
 setup_logging()
 
 logger = logging.getLogger(__name__)
@@ -76,3 +78,5 @@ def health():
 app.include_router(room_router, prefix="/api/v1/rooms", tags=["Rooms"])
 app.include_router(room_router, prefix="/api/v1/rooms", tags=["Rooms"])
 app.include_router(booking_router, prefix="/api/v1/bookings", tags=["Bookings"])
+app.include_router(room.router)
+app.include_router(time_slot.router) 
