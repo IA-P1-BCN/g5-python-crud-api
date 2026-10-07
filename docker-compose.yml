@@ -33,5 +33,12 @@ services:
       retries: 5
       start_period: 5s
 
+  front:
+    build: ./front
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
 volumes:
   postgres_data:
