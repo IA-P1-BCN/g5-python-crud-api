@@ -18,6 +18,26 @@ MODIFIABLE_STATUSES = ("PENDING", "CONFIRMED")
 MIN_NOTICE = timedelta(hours=24)
 
 
+def _utcnow() -> datetime:
+    """Single source of 'now', so tests can freeze it (24h boundary)."""
+    return datetime.now(UTC)
+
+
+def _starts_at_utc(booking: Booking) -> datetime:
+    """Slot start as tz-aware UTC (SQLite returns naive datetimes)."""
+    starts_at = booking.time_slot.starts_at
+    if starts_at.tzinfo is None:
+        starts_at = starts_at.replace(tzinfo=UTC)
+    return starts_at
+
+
+def _get_booking_or_404(db: Session, booking_id: int) -> Booking:
+    booking = db.get(Booking, booking_id)
+    if booking is None:
+        raise AppError("Booking not found", code="NOT_FOUND", status_code=404)
+    return booking
+
+
 def create_booking(db: Session, booking_in: BookingCreate) -> Booking:
     slot = db.get(TimeSlot, booking_in.time_slot_id)
     if slot is None:
@@ -99,9 +119,7 @@ def get_booking(db: Session, booking_id: int) -> BookingDetail:
 
 
 def update_booking(db: Session, booking_id: int, booking_in: BookingUpdate) -> Booking:
-    booking = db.get(Booking, booking_id)
-    if booking is None:
-        raise AppError("Booking not found", code="NOT_FOUND", status_code=404)
+    booking = _get_booking_or_404(db, booking_id)
 
     if booking.status not in MODIFIABLE_STATUSES:
         raise AppError(
@@ -110,10 +128,7 @@ def update_booking(db: Session, booking_id: int, booking_in: BookingUpdate) -> B
             status_code=409,
         )
 
-    starts_at = booking.time_slot.starts_at
-    if starts_at.tzinfo is None:
-        starts_at = starts_at.replace(tzinfo=UTC)
-    if starts_at - datetime.now(UTC) < MIN_NOTICE:
+    if _starts_at_utc(booking) - _utcnow() < MIN_NOTICE:
         raise AppError(
             "Bookings can only be modified 24h or more before the slot starts",
             code="TOO_LATE_TO_MODIFY",
@@ -130,6 +145,45 @@ def update_booking(db: Session, booking_id: int, booking_in: BookingUpdate) -> B
 
     booking.players = booking_in.players
     booking.total_price = room.base_price * booking_in.players
+    db.commit()
+    db.refresh(booking)
+    return booking
+
+
+def cancel_booking(db: Session, booking_id: int) -> Booking:
+    booking = _get_booking_or_404(db, booking_id)
+
+    if booking.status not in MODIFIABLE_STATUSES:
+        raise AppError(
+            f"Cannot cancel a {booking.status} booking",
+            code="INVALID_TRANSITION",
+            status_code=409,
+        )
+
+    if _starts_at_utc(booking) - _utcnow() < MIN_NOTICE:
+        raise AppError(
+            "Bookings can only be cancelled 24h or more before the slot starts",
+            code="TOO_LATE_TO_CANCEL",
+            status_code=409,
+        )
+
+    booking.status = "CANCELLED"
+    db.commit()
+    db.refresh(booking)
+    return booking
+
+
+def confirm_booking(db: Session, booking_id: int) -> Booking:
+    booking = _get_booking_or_404(db, booking_id)
+
+    if booking.status != "PENDING":
+        raise AppError(
+            f"Cannot confirm a {booking.status} booking",
+            code="INVALID_TRANSITION",
+            status_code=409,
+        )
+
+    booking.status = "CONFIRMED"
     db.commit()
     db.refresh(booking)
     return booking

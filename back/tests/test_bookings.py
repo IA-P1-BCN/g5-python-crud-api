@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 from sqlalchemy.exc import IntegrityError
 
+from back.app.controllers import booking as booking_controller
 from back.app.models import Booking, Room, TimeSlot, User
 
 
@@ -272,3 +273,130 @@ def test_update_booking_over_capacity_returns_422(client, seed, db):
 
     assert response.status_code == 422
     assert response.json()["code"] == "INVALID_PLAYERS"
+
+
+SLOT_START = datetime(2030, 1, 1, 10, tzinfo=UTC)
+
+
+def freeze_now(monkeypatch, now):
+    monkeypatch.setattr(booking_controller, "_utcnow", lambda: now)
+
+
+def test_cancel_booking_success(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot)
+
+    response = client.put(f"{URL}/{booking.id}/cancel")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "CANCELLED"
+    db.refresh(booking)
+    assert booking.status == "CANCELLED"
+
+
+def test_cancel_confirmed_booking_success(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot, status="CONFIRMED")
+
+    response = client.put(f"{URL}/{booking.id}/cancel")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "CANCELLED"
+
+
+def test_cancel_booking_frees_the_slot(client, seed, db):
+    """BR-B6: after cancelling, the slot can be booked again."""
+    booking = make_booking(db, seed, seed.free_slot)
+    client.put(f"{URL}/{booking.id}/cancel")
+
+    response = client.post(URL, json=payload(seed.user.id, seed.free_slot.id))
+
+    assert response.status_code == 201
+
+
+def test_cancel_booking_exactly_24h_before_is_allowed(client, seed, db, monkeypatch):
+    booking = make_booking(db, seed, seed.free_slot)
+    freeze_now(monkeypatch, SLOT_START - timedelta(hours=24))
+
+    response = client.put(f"{URL}/{booking.id}/cancel")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "CANCELLED"
+
+
+def test_cancel_booking_one_second_under_24h_returns_409(client, seed, db, monkeypatch):
+    booking = make_booking(db, seed, seed.free_slot)
+    freeze_now(monkeypatch, SLOT_START - timedelta(hours=24) + timedelta(seconds=1))
+
+    response = client.put(f"{URL}/{booking.id}/cancel")
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "TOO_LATE_TO_CANCEL"
+
+
+def test_cancel_booking_under_24h_returns_409(client, seed, db):
+    begin = datetime.now(UTC) + timedelta(hours=2)
+    soon_slot = TimeSlot(
+        room_id=seed.room.id, starts_at=begin, ends_at=begin + timedelta(hours=1)
+    )
+    db.add(soon_slot)
+    db.commit()
+    booking = make_booking(db, seed, soon_slot)
+
+    response = client.put(f"{URL}/{booking.id}/cancel")
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "TOO_LATE_TO_CANCEL"
+    db.refresh(booking)
+    assert booking.status == "PENDING"
+
+
+def test_cancel_booking_twice_returns_409(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot)
+    client.put(f"{URL}/{booking.id}/cancel")
+
+    response = client.put(f"{URL}/{booking.id}/cancel")
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "INVALID_TRANSITION"
+
+
+def test_cancel_booking_not_found(client, seed):
+    response = client.put(f"{URL}/9999/cancel")
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "NOT_FOUND"
+
+
+def test_confirm_booking_success(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot)
+
+    response = client.put(f"{URL}/{booking.id}/confirm")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "CONFIRMED"
+    db.refresh(booking)
+    assert booking.status == "CONFIRMED"
+
+
+def test_confirm_cancelled_booking_returns_409(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot, status="CANCELLED")
+
+    response = client.put(f"{URL}/{booking.id}/confirm")
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "INVALID_TRANSITION"
+
+
+def test_confirm_already_confirmed_returns_409(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot, status="CONFIRMED")
+
+    response = client.put(f"{URL}/{booking.id}/confirm")
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "INVALID_TRANSITION"
+
+
+def test_confirm_booking_not_found(client, seed):
+    response = client.put(f"{URL}/9999/confirm")
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "NOT_FOUND"

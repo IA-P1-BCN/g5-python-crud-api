@@ -66,6 +66,9 @@ class Booking(Base):
             postgresql_where=text(
                 "status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS')"
             ),
+            sqlite_where=text(
+                "status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS')"
+            ),
         ),
     )
 

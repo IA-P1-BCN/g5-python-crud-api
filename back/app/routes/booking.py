@@ -88,3 +88,38 @@ def update_booking_endpoint(
     return booking_controller.update_booking(
         db=db, booking_id=booking_id, booking_in=booking_in
     )
+
+
+@router.put(
+    "/{booking_id}/cancel",
+    response_model=BookingRead,
+    summary="Cancel a booking",
+    description="Sets the booking to CANCELLED and frees the slot. Only PENDING "
+    "or CONFIRMED bookings, and only 24h or more before the slot starts.",
+    responses={
+        404: {"description": "NOT_FOUND"},
+        409: {"description": "INVALID_TRANSITION or TOO_LATE_TO_CANCEL"},
+    },
+)
+def cancel_booking_endpoint(
+    booking_id: int,
+    db: Session = Depends(get_db),  # noqa: B008
+):
+    return booking_controller.cancel_booking(db=db, booking_id=booking_id)
+
+
+@router.put(
+    "/{booking_id}/confirm",
+    response_model=BookingRead,
+    summary="Confirm a booking",
+    description="Moves a PENDING booking to CONFIRMED.",
+    responses={
+        404: {"description": "NOT_FOUND"},
+        409: {"description": "INVALID_TRANSITION (booking is not PENDING)"},
+    },
+)
+def confirm_booking_endpoint(
+    booking_id: int,
+    db: Session = Depends(get_db),  # noqa: B008
+):
+    return booking_controller.confirm_booking(db=db, booking_id=booking_id)
