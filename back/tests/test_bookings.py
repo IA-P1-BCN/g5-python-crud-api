@@ -400,3 +400,146 @@ def test_confirm_booking_not_found(client, seed):
 
     assert response.status_code == 404
     assert response.json()["code"] == "NOT_FOUND"
+
+
+def add_slot(db, room, begin, status="available"):
+    slot = TimeSlot(
+        room_id=room.id,
+        starts_at=begin,
+        ends_at=begin + timedelta(hours=1),
+        status=status,
+    )
+    db.add(slot)
+    db.commit()
+    return slot
+
+
+def add_room(db, name, capacity, base_price):
+    room = Room(
+        name=name, capacity=capacity, duration=60, base_price=Decimal(base_price)
+    )
+    db.add(room)
+    db.commit()
+    return room
+
+
+LATER = datetime(2030, 1, 2, 10, tzinfo=UTC)
+
+
+# ---- change slot (US17, BR-L5, BR-B7) ----
+
+
+def test_change_slot_success_and_frees_old_slot(client, seed, db):
+    """BR-L5: the booking moves and the old slot becomes bookable again."""
+    booking = make_booking(db, seed, seed.free_slot)
+    new_slot = add_slot(db, seed.room, LATER)
+
+    response = client.put(f"{URL}/{booking.id}", json={"time_slot_id": new_slot.id})
+
+    assert response.status_code == 200
+    assert response.json()["time_slot_id"] == new_slot.id
+    assert Decimal(response.json()["total_price"]) == Decimal("40.00")
+
+    rebook = client.post(URL, json=payload(seed.user.id, seed.free_slot.id))
+    assert rebook.status_code == 201
+
+
+def test_change_slot_already_taken_returns_409(client, seed, db):
+    """BR-L5: the new slot already has an active booking."""
+    booking = make_booking(db, seed, seed.free_slot)
+
+    response = client.put(
+        f"{URL}/{booking.id}", json={"time_slot_id": seed.taken_slot.id}
+    )
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "SLOT_TAKEN"
+
+
+def test_change_slot_too_late_returns_409(client, seed, db):
+    """BR-L5: the new slot starts in less than 24h."""
+    booking = make_booking(db, seed, seed.free_slot)
+    soon_slot = add_slot(db, seed.room, datetime.now(UTC) + timedelta(hours=2))
+
+    response = client.put(f"{URL}/{booking.id}", json={"time_slot_id": soon_slot.id})
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "TOO_LATE_TO_MODIFY"
+
+
+def test_change_slot_to_another_room_recalculates_price(client, seed, db):
+    """BR-L5, BR-B4: other room, price uses the new room's base_price."""
+    booking = make_booking(db, seed, seed.free_slot, players=2)
+    other_room = add_room(db, "Mummy", capacity=8, base_price="30.00")
+    other_slot = add_slot(db, other_room, LATER)
+
+    response = client.put(f"{URL}/{booking.id}", json={"time_slot_id": other_slot.id})
+
+    assert response.status_code == 200
+    assert Decimal(response.json()["total_price"]) == Decimal("60.00")
+    detail = client.get(f"{URL}/{booking.id}").json()
+    assert detail["room"]["name"] == "Mummy"
+
+
+def test_change_slot_to_smaller_room_returns_422(client, seed, db):
+    """BR-B2: players must fit the capacity of the new room."""
+    booking = make_booking(db, seed, seed.free_slot, players=4)
+    small_room = add_room(db, "Tiny", capacity=2, base_price="10.00")
+    small_slot = add_slot(db, small_room, LATER)
+
+    response = client.put(f"{URL}/{booking.id}", json={"time_slot_id": small_slot.id})
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "INVALID_PLAYERS"
+
+
+def test_change_slot_blocked_returns_409(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot)
+
+    response = client.put(
+        f"{URL}/{booking.id}", json={"time_slot_id": seed.blocked_slot.id}
+    )
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "SLOT_NOT_AVAILABLE"
+
+
+def test_change_slot_inactive_room_returns_409(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot)
+
+    response = client.put(
+        f"{URL}/{booking.id}", json={"time_slot_id": seed.closed_room_slot.id}
+    )
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "ROOM_INACTIVE"
+
+
+def test_change_slot_unknown_slot_returns_404(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot)
+
+    response = client.put(f"{URL}/{booking.id}", json={"time_slot_id": 9999})
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "SLOT_NOT_FOUND"
+
+
+def test_change_slot_and_players_together(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot, players=2)
+    new_slot = add_slot(db, seed.room, LATER)
+
+    response = client.put(
+        f"{URL}/{booking.id}", json={"time_slot_id": new_slot.id, "players": 3}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["players"] == 3
+    assert Decimal(response.json()["total_price"]) == Decimal("60.00")
+
+
+def test_update_booking_empty_body_returns_422(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot)
+
+    response = client.put(f"{URL}/{booking.id}", json={})
+
+    assert response.status_code == 422
