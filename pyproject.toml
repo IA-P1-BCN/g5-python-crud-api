@@ -8,6 +8,7 @@ dependencies = [
     "uvicorn[standard]",
     "pydantic",
     "pydantic-settings",
+    "email-validator",
     "sqlalchemy",
     "alembic",
     "psycopg[binary]",
