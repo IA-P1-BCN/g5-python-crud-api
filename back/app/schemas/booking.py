@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class BookingCreate(BaseModel):
@@ -56,6 +56,13 @@ class BookingDetail(BookingRead):
 
 
 class BookingUpdate(BaseModel):
-    """Data the client sends to modify a booking (BR-B7: only players)."""
+    """Data the client sends to modify a booking (BR-B7, BR-L5)."""
 
-    players: int = Field(ge=1)
+    players: int | None = Field(default=None, ge=1)
+    time_slot_id: int | None = None
+
+    @model_validator(mode="after")
+    def at_least_one_field(self):
+        if self.players is None and self.time_slot_id is None:
+            raise ValueError("Provide players, time_slot_id or both")
+        return self

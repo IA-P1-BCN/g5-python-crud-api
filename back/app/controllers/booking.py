@@ -23,12 +23,16 @@ def _utcnow() -> datetime:
     return datetime.now(UTC)
 
 
-def _starts_at_utc(booking: Booking) -> datetime:
+def _slot_start_utc(slot: TimeSlot) -> datetime:
     """Slot start as tz-aware UTC (SQLite returns naive datetimes)."""
-    starts_at = booking.time_slot.starts_at
+    starts_at = slot.starts_at
     if starts_at.tzinfo is None:
         starts_at = starts_at.replace(tzinfo=UTC)
     return starts_at
+
+
+def _starts_at_utc(booking: Booking) -> datetime:
+    return _slot_start_utc(booking.time_slot)
 
 
 def _get_booking_or_404(db: Session, booking_id: int) -> Booking:
@@ -36,6 +40,35 @@ def _get_booking_or_404(db: Session, booking_id: int) -> Booking:
     if booking is None:
         raise AppError("Booking not found", code="NOT_FOUND", status_code=404)
     return booking
+
+
+def _ensure_slot_can_receive_booking(db: Session, slot: TimeSlot) -> None:
+    """BR-L5: the new slot must be bookable and 24h or more away."""
+    if slot.room.status != "active":
+        raise AppError("Room is inactive", code="ROOM_INACTIVE", status_code=409)
+
+    if slot.status != "available":
+        raise AppError(
+            "Time slot is not available", code="SLOT_NOT_AVAILABLE", status_code=409
+        )
+
+    if _slot_start_utc(slot) - _utcnow() < MIN_NOTICE:
+        raise AppError(
+            "The new slot must start 24h or more from now",
+            code="TOO_LATE_TO_MODIFY",
+            status_code=409,
+        )
+
+    already_booked = db.execute(
+        select(Booking.id).where(
+            Booking.time_slot_id == slot.id,
+            Booking.status.in_(ACTIVE_STATUSES),
+        )
+    ).first()
+    if already_booked:
+        raise AppError(
+            "Time slot is already booked", code="SLOT_TAKEN", status_code=409
+        )
 
 
 def create_booking(db: Session, booking_in: BookingCreate) -> Booking:
@@ -135,17 +168,37 @@ def update_booking(db: Session, booking_id: int, booking_in: BookingUpdate) -> B
             status_code=409,
         )
 
-    room = booking.time_slot.room
-    if booking_in.players > room.capacity:
+    new_slot = booking.time_slot
+    if (
+        booking_in.time_slot_id is not None
+        and booking_in.time_slot_id != booking.time_slot_id
+    ):
+        new_slot = db.get(TimeSlot, booking_in.time_slot_id)
+        if new_slot is None:
+            raise AppError(
+                "Time slot not found", code="SLOT_NOT_FOUND", status_code=404
+            )
+        _ensure_slot_can_receive_booking(db, new_slot)
+
+    room = new_slot.room
+    players = booking_in.players if booking_in.players is not None else booking.players
+    if players > room.capacity:
         raise AppError(
             f"Players exceed room capacity ({room.capacity})",
             code="INVALID_PLAYERS",
             status_code=422,
         )
 
-    booking.players = booking_in.players
-    booking.total_price = room.base_price * booking_in.players
-    db.commit()
+    booking.time_slot = new_slot
+    booking.players = players
+    booking.total_price = room.base_price * players
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise AppError(
+            "Time slot is already booked", code="SLOT_TAKEN", status_code=409
+        )
     db.refresh(booking)
     return booking
 
