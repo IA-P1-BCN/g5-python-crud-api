@@ -10,9 +10,9 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ### Leandro
 
-- **Hoy:**
+- **Hoy:** Ticket 005 "Create user" (en curso 🔄). Implementación del endpoint de creación de usuarios, normalización de emails y tests de duplicados case-insensitive. PR actualizada y enviada para revisión.
 - **Resultado (tarde):**
-- **Bloqueos:**
+- **Bloqueos:** Esperando el merge del PR 005 para continuar con el Ticket 007 desde `develop`.
 
 ### Isbel
 
