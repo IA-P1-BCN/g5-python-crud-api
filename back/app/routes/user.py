@@ -25,6 +25,21 @@ def create_user_endpoint(
 
 
 @router.get(
+    "",
+    response_model=list[UserResponse],
+    status_code=status.HTTP_200_OK,
+    summary="List users",
+    responses={
+        200: {"description": "Users retrieved successfully"},
+    },
+)
+def list_users_endpoint(
+    db: SessionDep,
+):
+    return user_controller.list_users(db=db)
+
+
+@router.get(
     "/{user_id}",
     response_model=UserResponse,
     summary="Get user profile",
@@ -56,4 +71,23 @@ def update_user_endpoint(
         db=db,
         user_id=user_id,
         user_in=user_in,
+    )
+
+
+@router.put(
+    "/{user_id}/deactivate",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Deactivate user",
+    responses={
+        404: {"description": "User not found"},
+    },
+)
+def deactivate_user_endpoint(
+    user_id: int,
+    db: SessionDep,
+):
+    return user_controller.deactivate_user(
+        db=db,
+        user_id=user_id,
     )
