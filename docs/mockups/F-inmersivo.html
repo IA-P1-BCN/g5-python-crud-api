@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dirección F - Inmersivo</title>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Hanken+Grotesk:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="F-inmersivo.css">
+<style>
+/* Direction D: "Esta noche". Cinema-dark, flashlight hero, a departures board of sessions as the home.
+   Inspired by real escape sites: sessions-first booking, posters, film grain. EXIT-green is the only CTA colour. */
+:root{--bg:#0a0b0d;--s1:#121418;--s2:#1a1d23;--line:#ffffff1f;--tx:#eceae4;--mute:#a4a39b;--exit:#3dff8f}
+body{background:var(--bg);color:var(--tx);font:400 17px/1.55 'Hanken Grotesk',sans-serif}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.07;z-index:50;
+background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+#app{max-width:1120px;margin:0 auto;padding:0 20px 80px}
+.top{display:flex;align-items:center;gap:20px;padding:18px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{font:900 26px 'Big Shoulders Display';letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-right:auto}
+.brand::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--exit);box-shadow:0 0 12px var(--exit);margin-right:10px}
+#nav{display:flex;gap:2px;flex-wrap:wrap;align-items:center}
+.grp{font:400 11px 'Share Tech Mono';letter-spacing:.2em;text-transform:uppercase;color:var(--mute);margin:0 8px 0 18px}
+.nv{background:none;border:none;color:var(--mute);padding:8px 12px;font:500 15px 'Hanken Grotesk';border-bottom:2px solid transparent}
+.nv:hover{color:var(--tx)}.nv.on{color:var(--tx);border-color:var(--exit)}
+.cta{font:700 15px 'Hanken Grotesk';letter-spacing:.04em;background:var(--exit);color:#04120a;border:none;border-radius:6px;padding:12px 22px;box-shadow:0 0 22px #3dff8f40;transition:.2s}
+.cta:hover:not(:disabled){box-shadow:0 0 34px #3dff8f80}.cta:disabled{background:#3b3f46;color:#8b8f97;box-shadow:none}
+main{padding-top:36px}
+.screen{animation:in .45s cubic-bezier(.16,1,.3,1)}@keyframes in{from{opacity:0;transform:translateY(14px)}}
+.ph{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+h1{font:900 clamp(38px,6vw,72px)/.95 'Big Shoulders Display';text-transform:uppercase;letter-spacing:.01em}
+.lead{color:var(--mute);margin-top:12px;max-width:540px}
+.hint{font:400 13px 'Share Tech Mono';color:var(--mute);margin-top:12px}
+.sec{font:900 28px 'Big Shoulders Display';text-transform:uppercase;letter-spacing:.04em;margin:44px 0 16px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--s1);border:1px solid var(--line);color:var(--tx);border-radius:99px;padding:8px 18px;font:500 15px 'Hanken Grotesk'}
+.chip.on{background:var(--tx);color:var(--bg)}.chip:hover:not(.on){border-color:var(--tx)}
+.filter,.roomswitch{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px;font:400 12px 'Share Tech Mono';letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.filterbar{margin-bottom:24px}
+/* departures board */
+.board{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--s1)}
+.brow{display:grid;grid-template-columns:90px 1fr 130px 130px 140px;gap:12px;align-items:center;padding:12px 18px;border-top:1px solid var(--line)}
+.brow:first-child{border-top:none;font:400 11px 'Share Tech Mono';letter-spacing:.2em;text-transform:uppercase;color:var(--mute);background:var(--s2)}
+.brow .tm{font:400 28px 'Share Tech Mono';color:var(--exit)}.brow.off .tm{color:#5a5e66;text-decoration:line-through}
+.brow .nm{display:flex;align-items:center;gap:12px;font-weight:700}.brow .nm i{width:10px;height:10px;border-radius:50%;background:var(--rc);box-shadow:0 0 10px var(--rc)}
+.brow .pp,.brow .st{font:400 14px 'Share Tech Mono';color:var(--mute)}
+.brow.off{opacity:.55}
+/* posters */
+.posters{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px}
+.pst{position:relative;aspect-ratio:2/3;border-radius:8px;overflow:hidden;border:1px solid var(--line);cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;padding:20px;color:var(--tx);text-align:left;background:none;transition:.3s}
+.pst .poster{position:absolute;inset:0}.pst .poster .genre{display:none}
+.pst::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 35%,#000d)}
+.pst>*:not(.poster){position:relative;z-index:1}
+.pst:hover,.pst:focus-visible{transform:translateY(-8px);border-color:var(--rc);box-shadow:0 18px 40px #000a,0 0 30px color-mix(in srgb,var(--rc) 40%,transparent)}
+.pst h3{font:900 34px/.95 'Big Shoulders Display';text-transform:uppercase}.pst .g{font:400 11px 'Share Tech Mono';letter-spacing:.18em;text-transform:uppercase;color:var(--rc)}
+.pst p{font-size:13px;color:#d8d6cf;margin-top:6px}
+/* classic rooms list (kept as an alternative view of the room cards) */
+.rooms{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.room-card{background:var(--s1);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.room-card .poster{height:150px}.room-card .body{padding:18px;display:flex;flex-direction:column;gap:10px;flex:1}.room-card h2{font:900 28px 'Big Shoulders Display';text-transform:uppercase}
+.hook{color:var(--mute);flex:1;font-size:15px}
+.facts{display:flex;flex-wrap:wrap;gap:6px 16px;font:400 13px 'Share Tech Mono';color:var(--mute)}
+/* room page */
+.hero{border:1px solid var(--line);border-radius:10px;padding:44px 36px;margin-bottom:30px}
+.hero .genre{font:400 12px 'Share Tech Mono';letter-spacing:.24em;text-transform:uppercase;color:var(--rc)}
+.hero h1{margin:8px 0 14px;text-shadow:0 0 40px color-mix(in srgb,var(--rc) 50%,transparent)}.hero .story{max-width:540px;margin-bottom:16px;color:#dcdad2}.hero .diff{display:flex;margin-bottom:12px}
+.booker{display:grid;gap:30px}
+.step h3{font:900 24px 'Big Shoulders Display';text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.step h3 b{font:400 13px 'Share Tech Mono';color:var(--exit);border:1px solid var(--exit);border-radius:4px;padding:1px 8px}
+.day{text-align:center;min-width:66px;line-height:1.15;border-radius:8px}.day small{display:block;font:400 11px 'Share Tech Mono';text-transform:uppercase}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.slot{background:var(--s1);border:1px solid var(--line);border-radius:8px;color:var(--exit);font:400 24px 'Share Tech Mono';padding:10px 4px;transition:.15s}
+.slot:hover:not(:disabled){border-color:var(--exit)}.slot.sel{background:var(--exit);color:#04120a;box-shadow:0 0 22px #3dff8f50}
+.slot em{display:block;font:400 11px 'Share Tech Mono';font-style:normal;color:var(--mute)}.slot.taken,.slot.past,.slot.blocked{color:#5a5e66;text-decoration:line-through}
+.slot.blocked{text-decoration:none;background:repeating-linear-gradient(45deg,transparent 0 6px,#ffffff0d 6px 12px)}
+.stepper{display:flex;align-items:center;gap:16px}.stepper button{border-radius:50%;border:1px solid var(--line);background:var(--s1);color:var(--tx);font-size:22px;width:44px}
+.stepper button:hover:not(:disabled){border-color:var(--exit)}.stepper button:disabled{opacity:.3}
+.stepper strong{font:400 44px 'Share Tech Mono';min-width:46px;text-align:center;color:var(--exit)}.stepper span{color:var(--mute)}.stepper.small strong{font-size:24px;min-width:30px}
+.sum{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:20px 26px}
+.sum div{display:flex;flex-direction:column}.sum strong{font:900 42px/1 'Big Shoulders Display'}.sum small{color:var(--mute)}
+.checkout{display:grid;grid-template-columns:1.1fr 1fr;gap:34px;align-items:start}
+.field{margin-bottom:18px}.field label{display:block;font:400 12px 'Share Tech Mono';letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
+.field input{width:100%;background:var(--s1);border:1px solid var(--line);border-radius:8px;color:var(--tx);font:500 17px 'Hanken Grotesk';padding:12px 14px}
+.field input:focus{outline:2px solid var(--exit);outline-offset:0}.field input:disabled{opacity:.5}
+.ticket{background:var(--s1);border:1px solid var(--line);border-top:4px solid var(--rc);border-radius:10px;padding:24px;display:flex;flex-direction:column;gap:8px}
+.ticket h2{font:900 32px/1 'Big Shoulders Display';text-transform:uppercase}.ticket .genre{font:400 11px 'Share Tech Mono';letter-spacing:.2em;text-transform:uppercase;color:var(--rc)}
+.total{font:900 54px/1 'Big Shoulders Display';margin:8px 0}
+.alert{border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:16px 0;background:var(--s1)}.alert.err{border-color:#ff5a6e;color:#ff8a98}.alert.ok{border-color:var(--exit)}
+a{color:var(--exit)}
+.blist{display:grid;gap:12px}
+.booking{display:grid;grid-template-columns:170px 1fr auto auto;gap:18px;align-items:center;background:var(--s1);border:1px solid var(--line);border-left:4px solid var(--rc);border-radius:8px;padding:14px 20px}
+.when strong{font:400 18px 'Share Tech Mono';color:var(--exit)}.what h3{font:900 26px 'Big Shoulders Display';text-transform:uppercase}.what p{font-size:14px;color:var(--mute)}
+.acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;min-width:200px}
+.btn{font:700 14px 'Hanken Grotesk';background:var(--tx);color:var(--bg);border:none;border-radius:6px;padding:8px 14px}.btn.ghost{background:none;color:var(--tx);border:1px solid var(--line)}.lock{max-width:220px}
+.badge{font:400 12px 'Share Tech Mono';letter-spacing:.1em;text-transform:uppercase;border:1px solid;border-radius:99px;padding:2px 12px;white-space:nowrap}
+.s-pend{color:#ffd166}.s-conf{color:var(--exit)}.s-prog{color:#7cc4ff}.s-done{color:#c4a6ff}.s-canc{color:#ff8a98}
+.profile{display:grid;grid-template-columns:1.1fr 1fr;gap:44px;align-items:start}
+.avatar{width:92px;height:92px;border-radius:50%;border:1px solid var(--exit);display:grid;place-items:center;font:900 34px 'Big Shoulders Display';color:var(--exit);margin-bottom:24px;box-shadow:0 0 24px #3dff8f30}
+.score{display:grid;gap:12px}.score div{background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:16px 22px;display:flex;justify-content:space-between;align-items:baseline}.score b{font:900 40px 'Big Shoulders Display'}.score span{color:var(--mute)}
+.tbl{width:100%;border-collapse:collapse}.tbl th{font:400 11px 'Share Tech Mono';letter-spacing:.2em;text-transform:uppercase;color:var(--mute);text-align:left;padding:10px;border-bottom:1px solid var(--line)}
+.tbl td{padding:16px 10px;border-bottom:1px solid var(--line)}.tbl .t{font:400 26px 'Share Tech Mono';color:var(--exit)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.kpi{background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:18px 22px}.kpi span{font:400 12px 'Share Tech Mono';letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}.kpi b{display:block;font:900 52px/1 'Big Shoulders Display'}
+.bars{display:flex;gap:18px;align-items:flex-end;height:220px;border-bottom:1px solid var(--line);padding:0 10px;margin-bottom:64px}
+.bar{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}
+.bar i{display:block;width:100%;height:calc(var(--v)*.78);background:linear-gradient(var(--rc),color-mix(in srgb,var(--rc) 30%,transparent));border-radius:6px 6px 0 0;transition:height .4s}
+.bar b{font:400 18px 'Share Tech Mono'}.bar span{position:absolute;top:100%;margin-top:10px;font-size:12px;text-align:center;width:120%;color:var(--mute)}
+@media(max-width:800px){.brow{grid-template-columns:70px 1fr 110px}.brow .pp{display:none}.checkout,.profile,.kpis{grid-template-columns:1fr}.booking{grid-template-columns:1fr}.acts{justify-content:flex-start}.flash{cursor:default}}
+
+.ticket{position:relative}
+/* 3D hero host */
+.gl{position:relative;height:clamp(340px,60vh,540px);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:34px;background:#06070a}
+.gl canvas{display:block;width:100%;height:100%;cursor:grab}.gl canvas.drag{cursor:grabbing}.gl.hov canvas{cursor:pointer}
+.gl .cap{position:absolute;left:14px;top:12px;z-index:2;background:#06070acc;border-radius:99px;padding:6px 14px;font-size:11px;max-width:calc(100% - 28px);font:400 12px 'Share Tech Mono';letter-spacing:.2em;text-transform:uppercase;color:var(--mute);pointer-events:none}
+.gl .tip{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);font:900 26px 'Big Shoulders Display';text-transform:uppercase;letter-spacing:.06em;pointer-events:none;opacity:0;transition:opacity .2s;text-shadow:0 0 18px currentColor}
+.gl.hov .tip{opacity:1}
+.gl .mv{position:absolute;right:14px;bottom:14px;z-index:2;background:#0a0b0dcc;color:var(--tx);border:1px solid var(--line);border-radius:99px;padding:8px 18px;font:500 14px 'Hanken Grotesk'}.gl .mv:hover{border-color:var(--exit);color:var(--exit)}
+.gl .nogl{display:none;position:absolute;inset:0;place-items:center;color:var(--mute);padding:20px;text-align:center}.gl.off .nogl{display:grid}
+/* 1. room entrance transitions (cover -> swap screen -> uncover, 1.3 s) */
+#gate{position:fixed;inset:0;z-index:100;pointer-events:none;display:none;perspective:1200px}
+#gate.on{display:block;pointer-events:all}
+#gate>*{position:absolute;inset:0}
+@keyframes cov{0%{opacity:0}35%,62%{opacity:1}100%{opacity:0}}
+@keyframes spin1{to{transform:rotate(720deg)}}@keyframes zoom1{from{transform:scale(.5)}to{transform:scale(2.6)}}
+.g-relojero{background:#2a1b0d;display:grid;place-items:center;animation:cov 1.3s linear forwards}
+.g-relojero i{width:340px;height:340px;border-radius:50%;border:3px solid #e0a243;background:repeating-conic-gradient(#e0a243 0 .8deg,transparent .8deg 30deg);position:relative;animation:zoom1 1.3s ease-in forwards}
+.g-relojero i::after{content:"";position:absolute;left:50%;top:50%;width:3px;height:44%;margin-left:-1.5px;background:#e0a243;transform-origin:top;transform:rotate(180deg);animation:spin1 1.3s ease-in-out}
+.g-faro{background:#02060a;animation:cov 1.3s linear forwards}
+.g-faro::before{content:"";position:absolute;left:50%;top:50%;width:300vmax;height:300vmax;margin:-150vmax;background:conic-gradient(transparent 0 330deg,#5cc3e6aa 350deg,transparent 360deg);animation:spin1 1.3s ease-in-out forwards}
+.g-biblioteca{perspective:1200px}
+@keyframes pgL{0%{transform:rotateY(90deg)}35%,60%{transform:rotateY(0)}100%{transform:rotateY(-105deg)}}
+@keyframes pgR{0%{transform:rotateY(-90deg)}35%,60%{transform:rotateY(0)}100%{transform:rotateY(105deg)}}
+.g-biblioteca b{position:absolute;top:0;bottom:0;width:50%;background:repeating-linear-gradient(#0c2a20 0 34px,#0f3a2b 34px 35px);border:6px solid #4fc48f;animation-fill-mode:forwards;animation-duration:1.3s}
+.g-biblioteca b:first-child{left:0;transform-origin:left center;animation-name:pgL}.g-biblioteca b:last-child{right:0;transform-origin:right center;animation-name:pgR}
+@keyframes door{0%{transform:scale(.6) rotate(0)}60%{transform:scale(1) rotate(200deg)}100%{transform:scale(3.4) rotate(260deg)}}
+.g-atraco{background:#1d0b10;display:grid;place-items:center;animation:cov 1.3s linear forwards}
+.g-atraco i{width:300px;height:300px;border-radius:50%;border:10px solid #ff4560;position:relative;background:repeating-conic-gradient(#ff4560 0 4deg,transparent 4deg 60deg);animation:door 1.3s ease-in-out forwards}
+.g-atraco i::after{content:"";position:absolute;inset:38%;border-radius:50%;background:#1d0b10;border:6px solid #ff4560}
+/* 2. stamp + flying ticket + corner countdown */
+.stamp{position:absolute;right:14px;top:56px;z-index:3;font:900 40px/1 'Big Shoulders Display';letter-spacing:.08em;color:#ff4560;border:5px solid #ff4560;border-radius:6px;padding:4px 14px;transform:rotate(-12deg);opacity:0;animation:stamp .35s cubic-bezier(.2,1.6,.4,1) forwards;background:#0a0b0dcc}
+@keyframes stamp{0%{opacity:0;transform:scale(3.2) rotate(-24deg)}100%{opacity:1;transform:scale(1) rotate(-12deg)}}
+.shake{animation:shake .25s .3s}@keyframes shake{25%{transform:translate(4px,-3px)}50%{transform:translate(-4px,3px)}75%{transform:translate(2px,2px)}}
+.fly{position:fixed;z-index:90;margin:0;pointer-events:none}
+.nv.pulse{animation:pulse .7s}@keyframes pulse{50%{box-shadow:0 0 0 8px #3dff8f55;color:var(--exit)}}
+#clock{position:fixed;right:18px;bottom:18px;z-index:80;background:#0a0b0def;border:1px solid var(--exit);border-radius:10px;padding:10px 14px 10px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 0 28px #3dff8f30}
+#clock b{font:400 34px 'Share Tech Mono';color:var(--exit)}#clock span{font:400 11px 'Share Tech Mono';letter-spacing:.14em;text-transform:uppercase;color:var(--mute);line-height:1.3}
+#clock button{background:none;border:none;color:var(--mute);font-size:20px;min-height:44px;min-width:44px}
+/* 3. safe dial */
+.dialwrap{display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+.dial{position:relative;width:250px;height:150px;perspective:600px}
+.dial .num{position:absolute;left:50%;top:128px;width:44px;height:44px;margin:-22px;border-radius:50%;border:1px solid var(--line);background:var(--s1);color:var(--tx);font:400 20px 'Share Tech Mono';padding:0}
+.dial .num.on{background:var(--exit);color:#04120a;border-color:var(--exit)}.dial .num:hover:not(.on){border-color:var(--exit)}
+.dial .knob{position:absolute;left:50%;top:128px;width:118px;height:118px;margin:-59px;border-radius:50%;background:conic-gradient(from 0deg,#2b2f37,#4a505b,#23262c,#555b67,#2b2f37);box-shadow:0 8px 20px #000,inset 0 0 0 5px #15171b,inset 0 0 0 6px #ffffff22;transform-style:preserve-3d}
+.dial .knob::before{content:"";position:absolute;left:50%;top:6px;width:6px;height:34px;margin-left:-3px;border-radius:3px;background:var(--exit);box-shadow:0 0 12px var(--exit)}
+.dial .knob::after{content:"";position:absolute;inset:34%;border-radius:50%;background:#15171b;box-shadow:inset 0 2px 6px #000}
+.dialwrap .read{font:400 64px/1 'Share Tech Mono';color:var(--exit)}.dialwrap .read small{display:block;font:400 12px 'Share Tech Mono';color:var(--mute);letter-spacing:.14em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div id="app"></div><div id="gate" aria-hidden="true"></div>
+<script src="F-inmersivo.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* Everything below extends F-inmersivo.js after it has loaded (V / A / render are its globals). */
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.querySelector('.brand') && (document.querySelector('.brand').textContent = 'Sala 13');
+
+/* ---------- Home: 3D corridor + tonight's board + posters ---------- */
+V.salas = () => {
+  const rows = [];
+  PUBLIC.forEach(r => times(r).forEach((t, i) => { const s = slotState(r, 0, i, t); if (s !== 'past' && s !== 'blocked') rows.push({ r, t, s }) }));
+  rows.sort((a, b) => a.t.localeCompare(b.t));
+  const board = rows.slice(0, 8).map(x => { const free = x.s === 'free';
+    return '<div class="brow ' + (free ? '' : 'off') + '" data-room="' + x.r.id + '"><span class="tm">' + x.t + '</span><span class="nm"><i></i>' + x.r.name + '</span><span class="pp">' + x.r.min + '–' + x.r.max + ' jugadores</span><span class="st">' + (free ? 'LIBRE' : 'COMPLETA') + '</span>' +
+      (free ? '<button class="cta" onclick="A.quick(\'' + x.r.id + '\',\'' + x.t + '\')">Reservar</button>' : '<span></span>') + '</div>' }).join('');
+  const posters = PUBLIC.map(r => '<button class="pst" data-room="' + r.id + '" onclick="A.pick(\'' + r.id + '\')" aria-label="Entrar en ' + r.name + '"><div class="poster"><div class="art">' + ART[r.id] + '</div></div><span class="g">' + r.genre + '</span><h3>' + r.name + '</h3><p>' + r.aud + ' · ' + r.rate + ' % escapa</p><p>' + dots(r.diff) + '</p></button>').join('');
+  return '<div class="gl" id="gl"><div class="cap">Clic en el centro para avanzar · arrastra para mirar · pasa sobre una puerta para iluminarla y haz clic para entrar</div><div class="tip" id="tip"></div><button class="mv" id="mv" type="button" onclick="A.mv()">'+(stn?'↓ Retroceder':'↑ Avanzar')+'</button><div class="nogl">Tu navegador no puede mostrar el pasillo 3D. Usa los carteles de abajo.</div></div>' +
+    '<div class="ph"><div><h1>Esta noche</h1><p class="lead">Miércoles 7 de octubre. Elige una sesión libre y reserva en dos clics.</p></div></div>' +
+    '<div class="board"><div class="brow"><span>Hora</span><span>Sala</span><span>Jugadores</span><span>Estado</span><span></span></div>' + board + '</div>' +
+    '<h2 class="sec">Las salas</h2><div class="posters">' + posters + '</div><p class="hint">Cancelación gratuita hasta 24 h antes · llegad 15 min antes de la sesión</p>';
+};
+
+/* ---------- 3. Safe dial replaces the +/- stepper ---------- */
+const dialAngle = (r, n) => r.max === r.min ? 0 : -60 + (n - r.min) * 120 / (r.max - r.min);
+const vSala = V.sala;
+V.sala = () => {
+  const r = R(S.room), cnt = r.max - r.min + 1;
+  const nums = Array.from({ length: cnt }, (_, i) => { const n = r.min + i, a = dialAngle(r, n);
+    return '<button class="num ' + (n === S.players ? 'on' : '') + '" style="transform:rotate(' + a + 'deg) translateY(-112px) rotate(' + (-a) + 'deg)" onclick="A.setp(' + n + ')" aria-label="' + n + ' jugadores">' + n + '</button>' }).join('');
+  const dial = '<div class="dialwrap"><div class="dial" role="group" aria-label="Número de jugadores">' + nums + '<div class="knob" id="knob" style="transform:rotate(' + dialAngle(r, S.players) + 'deg)"></div></div><div class="read">' + S.players + '<small>jugadores · de ' + r.min + ' a ' + r.max + '</small></div></div>';
+  return vSala().replace(/<div class="stepper">[\s\S]*?<\/div>/, dial);
+};
+
+/* ---------- Actions ---------- */
+let gateBusy = false, prevAngle = null;
+const GATE = {
+  relojero: '<div class="g-relojero"><i></i></div>', faro: '<div class="g-faro"></div>',
+  biblioteca: '<div class="g-biblioteca"><b></b><b></b></div>', atraco: '<div class="g-atraco"><i></i></div>'
+};
+function enterRoom(id) {            /* 1. themed entrance */
+  const pick = () => { S.room = id; const r = R(id); S.players = Math.min(r.max, Math.max(r.min, S.players)); firstFree(); S.screen = 1; render(); scrollTo(0, 0) };
+  if (RM || gateBusy) return pick();
+  gateBusy = true; const g = document.getElementById('gate'); g.innerHTML = GATE[id]; g.classList.add('on');
+  setTimeout(pick, 620); setTimeout(() => { g.classList.remove('on'); g.innerHTML = ''; gateBusy = false }, 1320);
+}
+A.pick = (id, stay) => stay ? (S.room = id, S.players = Math.min(R(id).max, Math.max(R(id).min, S.players)), firstFree(), render()) : enterRoom(id);
+A.quick = (id, t) => { S.room = id; S.day = 0; S.slot = t; const r = R(id); S.players = Math.min(r.max, Math.max(r.min, S.players)); A.go(2) };
+A.setp = n => { const r = R(S.room); prevAngle = dialAngle(r, S.players); S.players = n; render() };
+A.pl = d => { const r = R(S.room); A.setp(Math.min(r.max, Math.max(r.min, S.players + d))) };
+
+/* 2. confirm: stamp -> ticket flies to "Mis reservas" -> countdown chip */
+function startClock(r) {
+  const old = document.getElementById('clock'); old && old.remove(); clearInterval(startClock.t);
+  const c = document.createElement('div'); c.id = 'clock'; c.setAttribute('role', 'timer');
+  c.innerHTML = '<span>Tu partida<br>' + r.name + '</span><b></b><button aria-label="Cerrar cuenta atrás" onclick="this.parentNode.remove();clearInterval(startClock.t)">×</button>';
+  document.body.appendChild(c); let s = r.dur * 60; const b = c.querySelector('b');
+  const tick = () => { b.textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); if (s > 0) s--; };
+  tick(); startClock.t = setInterval(tick, 1000);
+}
+A.ok = () => {
+  const r = R(S.room), t = document.querySelector('.ticket'), fin = () => { S.done = true; S.err = false; render(); scrollTo(0, 0); startClock(r) };
+  if (RM || !t || gateBusy) return fin();
+  gateBusy = true; const st = document.createElement('div'); st.className = 'stamp'; st.textContent = 'RESERVADO'; t.appendChild(st); t.classList.add('shake');
+  setTimeout(() => {
+    const b = t.getBoundingClientRect(), c = t.cloneNode(true), nv = [...document.querySelectorAll('.nv')].find(x => x.textContent.trim() === 'Mis reservas');
+    c.classList.add('fly'); Object.assign(c.style, { left: b.left + 'px', top: b.top + 'px', width: b.width + 'px', height: b.height + 'px' });
+    document.body.appendChild(c); t.style.visibility = 'hidden';
+    const n = nv.getBoundingClientRect(), dx = n.left + n.width / 2 - (b.left + b.width / 2), dy = n.top + n.height / 2 - (b.top + b.height / 2);
+    c.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(' + dx * .3 + 'px,' + (dy * .3 - 60) + 'px) scale(.7) rotate(-6deg)', opacity: 1, offset: .35 }, { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.04) rotate(8deg)', opacity: .2 }], { duration: 800, easing: 'cubic-bezier(.5,0,.8,.4)', fill: 'forwards' })
+      .onfinish = () => { c.remove(); gateBusy = false; fin(); const nn = [...document.querySelectorAll('.nv')].find(x => x.textContent.trim() === 'Mis reservas'); nn && nn.classList.add('pulse') };
+  }, 900);
+};
+
+/* ---------- 4. Three.js corridor ---------- */
+let gl = null, stn = 0; const STN_Z = -5.4;
+A.mv = () => { stn = 1 - stn; const b = document.getElementById('mv'); b && (b.textContent = stn ? '↓ Retroceder' : '↑ Avanzar') };
+function dispose() { if (gl) { cancelAnimationFrame(gl.raf); gl.ro && gl.ro.disconnect(); gl.r.dispose(); gl = null } }
+function label(text, color) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 128; const x = c.getContext('2d');
+  x.font = '900 72px "Big Shoulders Display", Impact, sans-serif'; const w = x.measureText(text.toUpperCase()).width; if (w > 470) x.font = '900 ' + Math.floor(72 * 470 / w) + 'px "Big Shoulders Display", Impact, sans-serif'; x.textAlign = 'center'; x.fillStyle = color; x.shadowColor = color; x.shadowBlur = 18; x.fillText(text.toUpperCase(), 256, 90);
+  return new THREE.CanvasTexture(c);
+}
+function init3D() {
+  dispose(); const host = document.getElementById('gl'); if (!host) return;
+  if (!window.THREE) return host.classList.add('off');
+  let r; try { r = new THREE.WebGLRenderer({ antialias: true }); } catch (e) { return host.classList.add('off') }
+  r.setPixelRatio(Math.min(devicePixelRatio, 2)); host.prepend(r.domElement); r.domElement.setAttribute('aria-hidden', 'true');
+  const sc = new THREE.Scene(); sc.background = new THREE.Color(0x06070a); sc.fog = new THREE.Fog(0x06070a, 6, 22);
+  const cam = new THREE.PerspectiveCamera(62, 1, .1, 60); const BASE = new THREE.Vector3(0, 1.6, 0.4); cam.position.copy(BASE); const look = new THREE.Vector3(0, 1.5, -10);
+  sc.add(new THREE.AmbientLight(0x8a8fa0, .35));
+  const dark = new THREE.MeshStandardMaterial({ color: 0x14161b, roughness: .9 });
+  const add = (g, m, x, y, z, rx, ry) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); o.rotation.set(rx || 0, ry || 0, 0); sc.add(o); return o };
+  add(new THREE.PlaneGeometry(6, 30), new THREE.MeshStandardMaterial({ color: 0x0d0e12, roughness: .4, metalness: .3 }), 0, 0, -8, -Math.PI / 2);
+  add(new THREE.PlaneGeometry(6, 30), dark, 0, 3.2, -8, Math.PI / 2);
+  add(new THREE.PlaneGeometry(30, 3.2), dark, -3, 1.6, -8, 0, Math.PI / 2); add(new THREE.PlaneGeometry(30, 3.2), dark, 3, 1.6, -8, 0, -Math.PI / 2);
+  const exit = add(new THREE.PlaneGeometry(1.6, .5), new THREE.MeshBasicMaterial({ map: label('salida', '#3dff8f'), transparent: true }), 0, 2.5, -20);
+  const doors = [];
+  PUBLIC.forEach((room, i) => {
+    const side = i % 2 ? 1 : -1, z = -3 - Math.floor(i / 2) * 5.5, col = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--x') || 0);
+    const hex = { relojero: 0xe0a243, biblioteca: 0x4fc48f, faro: 0x5cc3e6, atraco: 0xff4560 }[room.id], ry = side > 0 ? -Math.PI / 2 : Math.PI / 2, x = side * 2.95;
+    const mat = new THREE.MeshStandardMaterial({ color: 0x1b1d23, emissive: hex, emissiveIntensity: .25, roughness: .6 });
+    const d = add(new THREE.BoxGeometry(1.5, 2.5, .12), mat, x, 1.25, z, 0, ry); d.userData = { id: room.id, mat, side, z };
+    const frame = add(new THREE.BoxGeometry(1.7, 2.7, .08), new THREE.MeshBasicMaterial({ color: hex }), x + side * .04 * -1, 1.35, z, 0, ry); frame.position.x = x - side * .03; frame.scale.set(1, 1, .5);
+    const lb = add(new THREE.PlaneGeometry(2, .5), new THREE.MeshBasicMaterial({ map: label(room.name, '#' + hex.toString(16).padStart(6, '0')), transparent: true }), x - side * .1, 2.95, z, 0, ry);
+    const pl = new THREE.PointLight(hex, 1.1, 7); pl.position.set(side * 2.2, 1.6, z); sc.add(pl); d.userData.light = pl; doors.push(d);
+  });
+  const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(9, 9), tip = document.getElementById('tip'), pv = new THREE.Vector3();
+  /* hd = door under the cursor (light up + slight lean); sel = door clicked (turn to face it fully, then walk in) */
+  let hd = null, sel = null, leaving = false, mx = 0, my = 0, t0 = performance.now(), dYaw = 0, dPitch = 0, down = null, moved = 0;
+  let bz = stn ? STN_Z : BASE.z, lastT = performance.now(), amt = 0, eh = 0, fd = null, hdl = null, cy = 0, cp = 0, cx = 0;
+  const size = () => { const w = host.clientWidth, h = host.clientHeight; r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix() };
+  size(); gl = { r, ro: window.ResizeObserver ? new ResizeObserver(size) : null }; gl.ro && gl.ro.observe(host);
+  const cv = r.domElement; cv.style.touchAction = 'pan-y';
+  const say = d => { const rm = d && R(d.userData.id); tip.textContent = rm ? rm.name + ' · ' + rm.min + '–' + rm.max + ' jug.' + (sel ? ' · entrando…' : ' · clic para entrar') : ''; tip.style.color = d ? '#' + d.material.emissive.getHexString() : '' };
+  const setHover = d => { if (d === hd) return; hd = d; if (d) hdl = d; host.classList.toggle('hov', !!d); say(d) };
+  const setNdc = e => { const b = cv.getBoundingClientRect(); mouse.set((e.clientX - b.left) / b.width * 2 - 1, -(e.clientY - b.top) / b.height * 2 + 1) };
+  cv.addEventListener('pointerdown', e => { setNdc(e); down = { x: e.clientX, y: e.clientY }; moved = 0; cv.setPointerCapture(e.pointerId) });
+  cv.addEventListener('pointerup', () => { down = null; cv.classList.remove('drag') });
+  cv.addEventListener('pointermove', e => {
+    setNdc(e); mx = mouse.x; my = mouse.y;
+    if (down && !sel) { const dx = e.clientX - down.x, dy = e.clientY - down.y; moved += Math.abs(dx) + Math.abs(dy); if (moved > 6) cv.classList.add('drag');
+      dYaw = Math.max(-1.25, Math.min(1.25, dYaw - dx * .004)); dPitch = Math.max(-.3, Math.min(.3, dPitch + dy * .003)); down = { x: e.clientX, y: e.clientY } }
+  });
+  cv.addEventListener('pointerleave', () => { mouse.set(9, 9); mx = 0; my = 0 });
+  cv.addEventListener('keydown', e => { if (e.key === 'ArrowLeft') dYaw = Math.max(-1.25, dYaw - .2); if (e.key === 'ArrowRight') dYaw = Math.min(1.25, dYaw + .2) });
+  cv.addEventListener('click', () => {
+    if (moved > 6 || leaving) return;
+    if (sel) { sel = null; return say(hd) }                                   /* click again while turning = cancel */
+    ray.setFromCamera(mouse, cam); const h = ray.intersectObjects(doors)[0];
+    if (h) { sel = h.object; setHover(null); host.classList.add('hov'); say(sel) } else if (Math.abs(mouse.x) < .4) A.mv();
+  });
+  const enter = d => {
+    leaving = true; const from = cam.position.clone(), l0 = look.clone(), start = performance.now(), to = new THREE.Vector3(d.userData.side * 1.9, 1.5, d.userData.z), tgt = new THREE.Vector3(d.userData.side * 3, 1.3, d.userData.z), f0 = cam.fov;
+    const go = () => { const k = Math.min(1, (performance.now() - start) / (RM ? 1 : 700)), e = k * k * (3 - 2 * k); cam.position.lerpVectors(from, to, e); look.lerpVectors(l0, tgt, e);
+      cam.fov = f0 + (36 - f0) * e; cam.updateProjectionMatrix(); cam.lookAt(look); if (k < 1) requestAnimationFrame(go); else { dispose(); A.pick(d.userData.id) } }; go();
+  };
+  const loop = t => {
+    if (!host.isConnected) return dispose();
+    gl.raf = requestAnimationFrame(loop); const tt = (t - t0) / 1000;
+    if (!leaving) {
+      /* hover: raycast to acquire; once acquired keep it while the cursor stays near the door on screen (no flicker when the camera leans) */
+      if (!sel) {
+        ray.setFromCamera(mouse, cam); const hit = ray.intersectObjects(doors)[0];
+        if (hit) setHover(hit.object);
+        else if (hd) { hd.getWorldPosition(pv); pv.y = 1.3; pv.project(cam); if (Math.abs(pv.x - mouse.x) > .35 || Math.abs(pv.y - mouse.y) > .8) setHover(null) }
+      }
+      const dt = Math.min(.05, (t - lastT) / 1000), sm = 1 - Math.exp(-dt * 2.6);
+      if (sel) fd = sel;
+      bz += ((stn ? STN_Z : BASE.z) - bz) * (1 - Math.exp(-dt * 1.7));
+      amt = Math.max(0, Math.min(1, amt + (sel ? 1 : -1) * dt / (RM ? .01 : 1.2)));
+      eh += ((hd && !sel ? 1 : 0) - eh) * (1 - Math.exp(-dt * 3));
+      const e = amt * amt * (3 - 2 * amt);
+      cy += ((dYaw + (RM ? 0 : mx * .22)) - cy) * sm; cp += ((dPitch + (RM ? 0 : my * .07)) - cp) * sm; cx += ((RM ? 0 : mx * .25) - cx) * sm;
+      let Y = cy, P = cp, X = cx, Z = bz, F = 62;
+      if (hdl && !RM) { Y += (hdl.userData.side * Math.PI / 2 - Y) * .2 * eh; F -= 5 * eh }              /* hover: only a slight lean toward the door */
+      if (fd) { const sd = fd.userData.side; Y += (sd * Math.PI / 2 - Y) * e; P *= 1 - e; X += (-sd * 1.9 - X) * e; Z += (fd.userData.z - Z) * e; F += (50 - F) * e }
+      cam.position.set(X, 1.6 + (RM ? 0 : Math.sin(tt * .8) * .03 * (1 - e)), Z); cam.fov = F; cam.updateProjectionMatrix();
+      look.set(X + Math.sin(Y) * Math.cos(P) * 10, cam.position.y + Math.sin(P) * 10, Z - Math.cos(Y) * Math.cos(P) * 10);
+      if (sel && amt > .985) enter(sel);                                                                 /* click: face the door, then walk in */
+    }
+    cam.lookAt(look);
+    doors.forEach(d => { const on = d === hd || d === sel, k = on ? 1.6 : .25; d.userData.mat.emissiveIntensity += (k - d.userData.mat.emissiveIntensity) * .12; d.userData.light.intensity += ((on ? 2.6 : 1.1) - d.userData.light.intensity) * .12 });
+    exit.material.opacity = .7 + Math.sin(tt * 3) * .3; r.render(sc, cam); lastT = t;
+  };
+  gl.raf = requestAnimationFrame(loop);
+}
+const _render = render;
+render = function () {
+  const prev = prevAngle; prevAngle = null; _render();
+  if (S.screen === 0) init3D(); else dispose();
+  const k = document.getElementById('knob');
+  if (k && prev !== null && k.animate) { const to = dialAngle(R(S.room), S.players); k.animate([{ transform: 'rotate(' + prev + 'deg)' }, { transform: 'rotate(' + (to + (to > prev ? 8 : -8)) + 'deg)', offset: .7 }, { transform: 'rotate(' + to + 'deg)' }], { duration: RM ? 1 : 520, easing: 'ease-out' }) }
+};
+render();
+</script>
+</body>
+</html>

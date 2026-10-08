@@ -4,6 +4,8 @@ Shared source of truth so four people can build in parallel. Base path: `/api/v1
 
 Auth: none in Sprint 1. From Sprint 2 every endpoint except room/slot listing needs `Authorization: Bearer <jwt>`.
 
+The browser client (`front/`) calls the relative path `/api/v1/...` on its own origin: Nginx (Docker) and the Vite dev server proxy `/api` to the API, so no CORS configuration is needed. The front maps the error `code` (e.g. `SLOT_TAKEN`, `TOO_LATE_TO_CANCEL`) to a Spanish message.
+
 ## Error format (BR-X1)
 
 ```json
