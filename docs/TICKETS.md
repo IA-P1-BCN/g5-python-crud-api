@@ -40,6 +40,7 @@ Each story has one **Implement ... + tests** ticket: code and tests are done tog
 | 029 | Implement modify booking (players) + tests | E3 Bookings | US15 | Feature | S |
 | 031 | Implement cancel and confirm booking + tests | E3 Bookings | US16 | Feature | M |
 | 040 | Implement change slot of a booking + tests | E3 Bookings | US17 | Feature | M |
+| 060 | Enrich booking responses (room, slot, user, result, can_modify) + tests | E3 Bookings | US14 | Feature | M |
 | 032 | README with setup instructions and Swagger check | E0 Foundation | - | Docs | S |
 | 033 | Release Sprint 1: PR develop to main | E0 Foundation | - | Tech | S |
 | 064 | Front setup: Vite, Tailwind, providers, routes, Docker with Nginx (`front`) | E0 Foundation | - | Tech | M |
@@ -71,7 +72,6 @@ Each story has one **Implement ... + tests** ticket: code and tests are done tog
 | 057 | Implement reactivate room (admin) + tests | E2 Rooms & Slots | US09 | S |
 | 058 | Implement bulk generation of time slots for a room (admin) + tests | E2 Rooms & Slots | US11 | M |
 | 059 | Expose slot state (free / taken / blocked / past) and day board across rooms + tests | E2 Rooms & Slots | US12 | M |
-| 060 | Enrich booking responses (room, slot, user, result, can_modify) + tests | E3 Bookings | US14 | M |
 | 061 | Implement personal stats (games played, escaped, best time) + tests | E4 Games | US22 | S |
 | 062 | Expose room success rate in room responses + tests | E4 Games | US22 | S |
 | 063 | Demo seed: 4 rooms, slots, users and sample bookings | E0 Foundation | - | M |

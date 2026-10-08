@@ -95,7 +95,7 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | BR-L2 | Bookings filter by `status`, `room_id`, `date_from`, `date_to`. Slots by `room_id`, `date`, `available` |
 | BR-L3 | Admin exports bookings to CSV with the same filters |
 | BR-L4 | Statistics: bookings per room, occupancy %, revenue per period |
-| BR-L5 | BR-B7 extended: client can change slot if the new slot is bookable and 24h or more away |
+| BR-L5 | BR-B7 extended: client can change slot if the new slot is bookable and 24h or more away. The new slot may belong to another room (team-approved): `total_price` is recalculated with the new room's `base_price` (BR-B4) and `players` must fit its capacity (BR-B2). The old slot becomes free |
 
 ## Out of scope (Phase 3, not committed)
 Payments, discounts, loyalty points, `booking_players` (team members), pending-booking expiry, websockets, cloud deployment.
