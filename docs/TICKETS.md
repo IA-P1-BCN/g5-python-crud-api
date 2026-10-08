@@ -80,7 +80,7 @@ Each story has one **Implement ... + tests** ticket: code and tests are done tog
 
 React client in `front/`. Ticket 064 (setup) belongs to Sprint 1 and is listed above; the rest are Sprint 2. Each ticket owns its own feature folder, so they can be taken in parallel (see `WORK_SPLIT.md`). Pure logic (prices, slot states, 24h rule, game transitions, door state machine) gets unit tests written with the code.
 
-Corridor and rooms (tickets 059, 065, 066, 067, 068): doors are built only from rooms that are active **and** have at least one upcoming slot, free or taken (BR-R6; the back exposes `has_upcoming_slots` in ticket 059; a fully booked room stays visible as full); `roomThemes` has a default theme for new rooms; the detail page of an inactive room shows "not found". See `ARCHI.md`, section 3D corridor.
+Corridor and rooms (tickets 059, 065, 066, 067, 068, 069): a room is shown to clients only if it is active **and** has at least one upcoming slot, free or taken (BR-R6). Ticket 059 adds `has_upcoming_slots` to the room responses; 066 and 067 build the corridor and the list from the rooms that pass this filter; a fully booked room stays visible as full; 065 gives `roomThemes` a default theme for new rooms; 067 shows "not found" for an inactive room; 069 warns the admin that a new room appears only once it has slots. See `ARCHI.md`, section 3D corridor.
 
 | Ticket | Title | Epic | User Story | Size | Feature folder |
 |--------|-------|------|------------|------|----------------|
