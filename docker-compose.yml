@@ -40,5 +40,16 @@ services:
     depends_on:
       - api
 
+  # Dev tooling (lint, format, tests). Not started by `docker compose up`.
+  front-tools:
+    image: node:22-alpine
+    profiles: ["tools"]
+    working_dir: /app
+    volumes:
+      - ./front:/app
+      - front_node_modules:/app/node_modules
+    command: sh -c "npm install --no-audit --no-fund && npm run ready"
+
 volumes:
   postgres_data:
+  front_node_modules:
