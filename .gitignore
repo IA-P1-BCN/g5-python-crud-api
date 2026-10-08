@@ -47,3 +47,22 @@ dist/
 *.db
 *.sqlite
 *.sqlite3
+
+# Node / front
+
+node_modules/
+dist-ssr/
+*.local
+
+# Logs
+
+logs/
+*.log
+
+# Editor leftovers
+
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
