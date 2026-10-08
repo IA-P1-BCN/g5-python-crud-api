@@ -87,6 +87,28 @@ Most business rules of Sprint 1. It needs users, rooms and slots: start with the
 
 Tickets 001 and 002 are done first: they unblock everyone. Then part D prepares the Sprint 2 work.
 
+## Front (React client, label `front`)
+
+The front tickets (064 to 085, see `TICKETS.md`) are split **by feature folder**, not by epic: each folder in `front/src/features/` has one owner, so nobody edits the same files. Names are filled in when a ticket is taken (same rule as the back: assign yourself on the board).
+
+| Area | Feature folder | Tickets | Taken by |
+|------|----------------|---------|----------|
+| Setup, Docker, tooling | `app/`, `Dockerfile`, `nginx.conf` | 064 (In progress) | M.Charlotte |
+| Shared base | `shared/`, `test/`, `rooms/model/roomThemes.js` | 065 | - |
+| 3D corridor | `corridor/` | 066 | - |
+| Rooms and transitions | `rooms/`, `styles/` | 067, 068 | - |
+| Admin rooms and slots | `admin-rooms/` | 069, 070 | - |
+| Booking flow | `booking/` | 071, 072, 073 | - |
+| My bookings and history | `my-bookings/` | 074, 075, 076, 083 | - |
+| Auth and profile | `auth/`, `profile/` | 077, 078, 079 | - |
+| Admin users | `admin-users/` | 080 | - |
+| Staff | `staff/` | 081, 082 | - |
+| Admin statistics | `admin-stats/` | 084, 085 | - |
+
+How the front stays conflict-free (`ARCHI.md`): each feature owns its routes (`routes.js`), its i18n file (`i18n/es/<feature>.js`) and its MSW handlers (`test/mocks/handlers/<feature>.js`). Shared files (`app/routes.jsx`, `i18n/es.js`, `test/mocks/handlers.js`) only compose them and should not be edited per ticket.
+
+Order: 064 first (in progress, PR pending: it unblocks everyone), then 065 (theme, MSW, common UI) before the visual tickets. The 3D corridor (066) is mandatory for the demo, so it goes to one person from the start and runs in parallel with the booking flow: it only needs the rooms data and the `onEnter` contract. Front tickets whose back ticket is not merged yet start with MSW mocks.
+
 ## Everyone
 
 | Sprint | Ticket   | Title                                            |
