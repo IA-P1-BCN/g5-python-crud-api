@@ -1,7 +1,8 @@
+import uuid
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, Numeric, String, text
+from sqlalchemy import CheckConstraint, Numeric, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from back.app.database import Base
@@ -27,6 +28,44 @@ class Room(Base):
         server_default=text("'active'"),
     )
 
+    
+    slug: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        unique=True,
+        default=lambda: f"room-{uuid.uuid4().hex[:8]}",
+        server_default=text("'room-default'"),
+    )
+
+    genre: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        server_default=text("'Mystery'"),
+    )
+    min_players: Mapped[int] = mapped_column(
+        nullable=False,
+        server_default=text("1"),
+    )
+    difficulty: Mapped[int] = mapped_column(
+        nullable=False,
+        server_default=text("3"),
+    )
+    hook: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        server_default=text("''"),
+    )
+    story: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        server_default=text("''"),
+    )
+    audience: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        server_default=text("'All ages'"),
+    )
+
     __table_args__ = (
         CheckConstraint("capacity >= 1", name="ck_rooms_capacity_positive"),
         CheckConstraint("duration > 0", name="ck_rooms_duration_positive"),
@@ -34,6 +73,15 @@ class Room(Base):
         CheckConstraint(
             "status IN ('active', 'inactive')",
             name="ck_rooms_status",
+        ),
+        
+        CheckConstraint(
+            "min_players >= 1 AND min_players <= capacity",
+            name="ck_rooms_min_players_range",
+        ),
+        CheckConstraint(
+            "difficulty >= 1 AND difficulty <= 5",
+            name="ck_rooms_difficulty_range",
         ),
     )
 
