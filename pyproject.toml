@@ -26,11 +26,8 @@ line-length = 88
 target-version = "py312"
 
 [tool.ruff.lint]
-ignore = ["EXE002"]
+ignore = ["EXE002", "B008"]
 
 [tool.pytest.ini_options]
 testpaths = ["back/tests"]
 pythonpath = ["."]
-
-[tool.ruff.lint]
-ignore = ["B008"]

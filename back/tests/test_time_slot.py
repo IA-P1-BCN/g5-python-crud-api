@@ -32,19 +32,43 @@ def create_slot(
     is_blocked: bool = False,
     offset_hours: int = 1,
 ) -> TimeSlot:
-    """Auxiliar para crear un time slot de prueba."""
+    """Auxiliar para crear un time slot de prueba gestionando relaciones y estados válidos."""
     start = datetime.now(UTC) + timedelta(hours=offset_hours)
     end = start + timedelta(hours=1)
+    
+    # Mapeo de estado en lugar de usar un kwarg inexistente
+    slot_status = "blocked" if is_blocked else "available"
+    
     slot = TimeSlot(
         room_id=room_id,
         starts_at=start,
         ends_at=end,
-        is_booked=is_booked,
-        is_blocked=is_blocked,
+        status=slot_status,
     )
     db.add(slot)
     db.commit()
     db.refresh(slot)
+
+    # Si se requiere simular que está reservado, se crea una reserva activa
+    if is_booked:
+        user = db.query(User).first()
+        if not user:
+            user = User(name="Test User", email="test@escape.com")
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
+        booking = Booking(
+            time_slot_id=slot.id,
+            user_id=user.id,
+            players=2,
+            total_price=Decimal("100.00"),
+            status="CONFIRMED",
+        )
+        db.add(booking)
+        db.commit()
+        db.refresh(slot)
+
     return slot
 
 
