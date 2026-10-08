@@ -46,22 +46,253 @@ React client (Vite, JavaScript), served by Nginx in Docker. It never shares code
 
 ### Structure
 
+Complete layout of `front/` as scaffolded by ticket 064 (folders first, then files; each feature follows the same shape, see below).
+
 ```
 front/
-  Dockerfile                 # Node build, then Nginx
-  nginx.conf                 # SPA fallback + /api proxy to the API
-  package.json
-  vite.config.js             # @ alias, /api dev proxy, Vitest config
-  src/
-    main.jsx                 # entry point
-    app/                     # wiring only, no business logic
-      App.jsx  providers.jsx  routes.jsx  layout/
-    features/                # one self-contained folder per feature (table below)
-    shared/                  # reusable code that knows no feature
-      api/  hooks/  lib/  ui/
-    styles/                  # Sass: bespoke animated effects only
-    i18n/                    # es.js composes i18n/es/<feature>.js
-    test/                    # setup + MSW handlers (one file per feature)
+├── public/
+│   ├── favicon.svg
+│   └── icons.svg
+├── src/
+│   ├── app/
+│   │   ├── layout/
+│   │   │   └── NavBar.jsx                 # role-based navigation (ticket 078)
+│   │   ├── App.jsx                        # Providers + routes
+│   │   ├── providers.jsx                  # QueryClientProvider + BrowserRouter
+│   │   ├── routes.jsx                     # composes the routes owned by each feature
+│   │   └── routes.test.jsx                # each feature exports its routes; "/" renders
+│   ├── features/
+│   │   ├── admin-rooms/
+│   │   │   ├── api/
+│   │   │   │   ├── adminRoomsApi.js
+│   │   │   │   └── adminSlotsApi.js
+│   │   │   ├── components/
+│   │   │   │   ├── RoomForm.jsx
+│   │   │   │   ├── RoomsTable.jsx
+│   │   │   │   ├── SlotForm.jsx
+│   │   │   │   └── SlotsTable.jsx
+│   │   │   ├── hooks/
+│   │   │   │   ├── useAdminRooms.js
+│   │   │   │   ├── useAdminSlots.js
+│   │   │   │   └── useSaveRoom.js
+│   │   │   ├── model/
+│   │   │   │   ├── errors.js
+│   │   │   │   ├── roomSchema.js          # Zod schema
+│   │   │   │   └── slotSchema.js          # Zod schema
+│   │   │   ├── pages/
+│   │   │   │   ├── AdminRoomsPage.jsx     # /admin/salas
+│   │   │   │   └── AdminSlotsPage.jsx     # /admin/salas/:id/horarios
+│   │   │   ├── index.js                   # public API of the feature
+│   │   │   └── routes.js                  # routes of this feature
+│   │   ├── admin-stats/
+│   │   │   ├── api/
+│   │   │   │   └── adminStatsApi.js
+│   │   │   ├── components/
+│   │   │   │   ├── BookingsPerRoom.jsx
+│   │   │   │   ├── ExportCsvButton.jsx    # CSV export
+│   │   │   │   └── KpiCards.jsx
+│   │   │   ├── hooks/
+│   │   │   │   └── useStats.js
+│   │   │   ├── pages/
+│   │   │   │   └── AdminStatsPage.jsx
+│   │   │   ├── index.js                   # public API of the feature
+│   │   │   └── routes.js                  # routes of this feature
+│   │   ├── admin-users/
+│   │   │   ├── api/
+│   │   │   │   └── adminUsersApi.js
+│   │   │   ├── components/
+│   │   │   │   └── UsersTable.jsx
+│   │   │   ├── hooks/
+│   │   │   │   ├── useAdminUsers.js
+│   │   │   │   └── useUpdateUser.js
+│   │   │   ├── pages/
+│   │   │   │   └── AdminUsersPage.jsx
+│   │   │   ├── index.js                   # public API of the feature
+│   │   │   └── routes.js                  # routes of this feature
+│   │   ├── auth/
+│   │   │   ├── api/
+│   │   │   │   └── authApi.js             # session / first login
+│   │   │   ├── components/
+│   │   │   │   ├── AuthProvider.jsx       # Context: user + role
+│   │   │   │   └── RequireRole.jsx        # route guard (API stays the authority)
+│   │   │   ├── hooks/
+│   │   │   │   └── useAuth.js
+│   │   │   ├── model/
+│   │   │   │   └── supabaseClient.js      # single Supabase client (Google login)
+│   │   │   ├── pages/
+│   │   │   │   └── LoginPage.jsx
+│   │   │   ├── index.js                   # public API of the feature
+│   │   │   └── routes.js                  # routes of this feature
+│   │   ├── booking/
+│   │   │   ├── api/
+│   │   │   │   └── bookingApi.js          # slots + create booking
+│   │   │   ├── components/
+│   │   │   │   ├── DayPicker.jsx          # day selection
+│   │   │   │   ├── PlayersDial.jsx        # players selector (safe dial)
+│   │   │   │   ├── SlotGrid.jsx           # slots with states
+│   │   │   │   ├── Stamp.jsx              # confirmation stamp animation
+│   │   │   │   └── Ticket.jsx             # booking ticket
+│   │   │   ├── hooks/
+│   │   │   │   ├── useCreateBooking.js    # create booking mutation
+│   │   │   │   └── useSlots.js            # slots of a room and day
+│   │   │   ├── model/
+│   │   │   │   ├── bookingDraft.store.js  # Zustand: booking in progress
+│   │   │   │   ├── checkoutSchema.js      # Zod schema of the checkout form
+│   │   │   │   ├── errors.js              # booking error codes (SLOT_TAKEN...)
+│   │   │   │   ├── price.js               # price (rule D-01 open: fixed per player)
+│   │   │   │   └── slotState.js           # past / taken / blocked / free (pure, test first)
+│   │   │   ├── pages/
+│   │   │   │   ├── BookingPage.jsx        # /reservar/:slug
+│   │   │   │   ├── CheckoutPage.jsx       # checkout
+│   │   │   │   └── ConfirmationPage.jsx   # confirmation
+│   │   │   ├── index.js                   # public API of the feature
+│   │   │   └── routes.js                  # routes of this feature
+│   │   ├── corridor/
+│   │   │   ├── Corridor.jsx               # useEffect: create / dispose()
+│   │   │   ├── CorridorFallback.jsx       # poster grid when no WebGL
+│   │   │   ├── createCorridor.js          # pure Three.js, returns { dispose }
+│   │   │   ├── doorMachine.js             # door state machine (pure, test first)
+│   │   │   ├── index.js                   # public API of the feature
+│   │   │   └── useWebGLSupport.js         # WebGL detection
+│   │   ├── my-bookings/
+│   │   │   ├── api/
+│   │   │   │   └── myBookingsApi.js       # list, update, cancel, change slot, history
+│   │   │   ├── components/
+│   │   │   │   ├── BookingCard.jsx
+│   │   │   │   ├── BookingTabs.jsx
+│   │   │   │   ├── CancelDialog.jsx
+│   │   │   │   ├── ChangeSlotDialog.jsx
+│   │   │   │   ├── GameHistory.jsx
+│   │   │   │   └── ModifyPlayersDialog.jsx
+│   │   │   ├── hooks/
+│   │   │   │   ├── useCancelBooking.js
+│   │   │   │   ├── useChangeSlot.js
+│   │   │   │   ├── useGameHistory.js
+│   │   │   │   ├── useMyBookings.js
+│   │   │   │   └── useUpdateBooking.js
+│   │   │   ├── model/
+│   │   │   │   ├── bookingFilters.js      # tab filters (pure)
+│   │   │   │   ├── canModify.js           # 24h rule (pure, test first)
+│   │   │   │   └── errors.js              # TOO_LATE_TO_CANCEL / TOO_LATE_TO_MODIFY ...
+│   │   │   ├── pages/
+│   │   │   │   ├── GameHistoryPage.jsx
+│   │   │   │   └── MyBookingsPage.jsx
+│   │   │   ├── index.js                   # public API of the feature
+│   │   │   └── routes.js                  # routes of this feature
+│   │   ├── profile/
+│   │   │   ├── api/
+│   │   │   │   └── userApi.js             # /users/me
+│   │   │   ├── hooks/
+│   │   │   │   ├── useMe.js
+│   │   │   │   └── useUpdateMe.js
+│   │   │   ├── model/
+│   │   │   │   └── profileSchema.js       # Zod schema
+│   │   │   ├── pages/
+│   │   │   │   └── ProfilePage.jsx
+│   │   │   ├── index.js                   # public API of the feature
+│   │   │   └── routes.js                  # routes of this feature
+│   │   ├── rooms/
+│   │   │   ├── api/
+│   │   │   │   └── roomsApi.js            # GET /rooms ...
+│   │   │   ├── components/
+│   │   │   │   ├── Atmosphere.jsx         # clock / beam / dust / lasers
+│   │   │   │   ├── GateTransition.jsx     # room entrance animation
+│   │   │   │   ├── RoomHero.jsx           # room detail header
+│   │   │   │   └── RoomPoster.jsx         # room card
+│   │   │   ├── hooks/
+│   │   │   │   ├── useRoom.js             # TanStack Query: detail
+│   │   │   │   └── useRooms.js            # TanStack Query: list
+│   │   │   ├── model/
+│   │   │   │   ├── roomMapper.js          # API response -> view model
+│   │   │   │   └── roomThemes.js          # REGISTRY slug -> colours, ambiance, entrance
+│   │   │   ├── pages/
+│   │   │   │   ├── RoomPage.jsx           # /salas/:slug
+│   │   │   │   └── RoomsPage.jsx          # /salas
+│   │   │   ├── index.js                   # public API of the feature
+│   │   │   └── routes.js                  # routes of this feature
+│   │   └── staff/
+│   │       ├── api/
+│   │       │   └── staffApi.js
+│   │       ├── components/
+│   │       │   ├── GameActions.jsx
+│   │       │   ├── ResultForm.jsx
+│   │       │   └── TodayBookingsTable.jsx
+│   │       ├── hooks/
+│   │       │   ├── useFinishGame.js
+│   │       │   ├── useRegisterResult.js
+│   │       │   ├── useStartGame.js
+│   │       │   └── useTodayBookings.js
+│   │       ├── model/
+│   │       │   ├── errors.js
+│   │       │   ├── gameTransitions.js     # actions allowed per booking status (pure, test first)
+│   │       │   └── resultSchema.js        # Zod schema of the game result
+│   │       ├── pages/
+│   │       │   └── StaffPlanningPage.jsx  # today's board
+│   │       ├── index.js                   # public API of the feature
+│   │       └── routes.js                  # routes of this feature
+│   ├── i18n/
+│   │   ├── es/
+│   │   │   ├── adminRooms.js              # texts (Spanish) of adminRooms
+│   │   │   ├── adminStats.js              # texts (Spanish) of adminStats
+│   │   │   ├── adminUsers.js              # texts (Spanish) of adminUsers
+│   │   │   ├── auth.js                    # texts (Spanish) of auth
+│   │   │   ├── booking.js                 # texts (Spanish) of booking
+│   │   │   ├── common.js                  # texts (Spanish) of common
+│   │   │   ├── myBookings.js              # texts (Spanish) of myBookings
+│   │   │   ├── profile.js                 # texts (Spanish) of profile
+│   │   │   ├── rooms.js                   # texts (Spanish) of rooms
+│   │   │   └── staff.js                   # texts (Spanish) of staff
+│   │   ├── es.js                          # composes the namespaces
+│   │   └── es.test.js
+│   ├── shared/
+│   │   ├── api/
+│   │   │   ├── client.js                  # the only Axios instance (/api/v1, JWT interceptor)
+│   │   │   └── errors.js                  # generic backend error mapping
+│   │   ├── hooks/
+│   │   │   ├── useCountdown.js
+│   │   │   ├── usePagination.js
+│   │   │   └── useReducedMotion.js
+│   │   ├── lib/
+│   │   │   └── format.js                  # price and date formatting
+│   │   └── ui/
+│   │       ├── Badge.jsx
+│   │       ├── Button.jsx
+│   │       ├── Chip.jsx
+│   │       ├── Pagination.jsx
+│   │       ├── Skeleton.jsx
+│   │       └── Toast.jsx
+│   ├── styles/
+│   │   ├── atmosphere.scss                # ambiance effects
+│   │   ├── corridor.scss                  # 3D overlay (caption, tooltip)
+│   │   └── gate.scss                      # room entrance animations
+│   ├── test/
+│   │   ├── mocks/
+│   │   │   ├── handlers/
+│   │   │   │   ├── adminRooms.js          # MSW handlers of adminRooms
+│   │   │   │   ├── adminStats.js          # MSW handlers of adminStats
+│   │   │   │   ├── adminUsers.js          # MSW handlers of adminUsers
+│   │   │   │   ├── auth.js                # MSW handlers of auth
+│   │   │   │   ├── booking.js             # MSW handlers of booking
+│   │   │   │   ├── myBookings.js          # MSW handlers of myBookings
+│   │   │   │   ├── profile.js             # MSW handlers of profile
+│   │   │   │   ├── rooms.js               # MSW handlers of rooms
+│   │   │   │   └── staff.js               # MSW handlers of staff
+│   │   │   ├── handlers.js                # composes the per-feature handlers
+│   │   │   ├── handlers.test.js
+│   │   │   └── server.js                  # MSW server
+│   │   └── setup.js                       # Vitest + jest-dom
+│   ├── index.css                          # Tailwind entry
+│   └── main.jsx                           # entry point: mounts <App />
+├── .dockerignore                          # node_modules, dist, .git
+├── .prettierignore                        # files Prettier skips
+├── .prettierrc                            # format rules (100 chars, no semicolons, single quotes)
+├── Dockerfile                             # Node 20 build, then Nginx
+├── eslint.config.js                       # lint + architecture boundaries + Prettier compat
+├── index.html                             # Vite entry page
+├── jsconfig.json                          # @ alias for the editor
+├── nginx.conf                             # SPA fallback + /api proxy to the API
+├── package.json                           # dependencies and scripts (check, ready...)
+└── vite.config.js                         # @ alias, /api dev proxy, Vitest config
 ```
 
 **Features** (`src/features/`):
