@@ -47,6 +47,10 @@ def get_user(db: Session, user_id: int) -> User:
     return user
 
 
+def list_users(db: Session) -> list[User]:
+    return list(db.scalars(select(User).order_by(User.id)).all())
+
+
 def update_user(db: Session, user_id: int, user_in: UserUpdate) -> User:
     user = db.get(User, user_id)
 
@@ -59,6 +63,24 @@ def update_user(db: Session, user_id: int, user_in: UserUpdate) -> User:
 
     user.name = user_in.name
     user.phone = user_in.phone
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+
+def deactivate_user(db: Session, user_id: int) -> User:
+    user = db.get(User, user_id)
+
+    if user is None:
+        raise AppError(
+            message="User not found",
+            code="NOT_FOUND",
+            status_code=404,
+        )
+
+    user.is_active = False
 
     db.commit()
     db.refresh(user)
