@@ -210,3 +210,29 @@ def test_update_user_invalid_data_returns_422(client):
     )
 
     assert response.status_code == 422
+
+
+def test_update_user_rejects_email_change(client):
+    create_response = client.post(
+        URL,
+        json={
+            "name": "Alice",
+            "email": "alice@example.com",
+            "phone": "+34123456789",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    user_id = create_response.json()["id"]
+
+    response = client.put(
+        f"{URL}/{user_id}",
+        json={
+            "name": "Alice Updated",
+            "phone": "+34987654321",
+            "email": "new@example.com",
+        },
+    )
+
+    assert response.status_code == 422
