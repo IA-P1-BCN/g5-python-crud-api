@@ -53,7 +53,7 @@ Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUP
 | POST | `/bookings` | 1 | Create (`user_id`, `time_slot_id`, `players`) | 201 |
 | GET | `/bookings` | 1 | List (`?user_id=&status=`) | 200 |
 | GET | `/bookings/{id}` | 1 | Get booking | 200 |
-| PUT | `/bookings/{id}` | 1 | Change `players` (BR-B7) | 200 |
+| PUT | `/bookings/{id}` | 1 | Change `players` and/or `time_slot_id` (BR-B7, BR-L5) | 200 |
 | PUT | `/bookings/{id}/confirm` | 1 | PENDING -> CONFIRMED | 200 |
 | PUT | `/bookings/{id}/cancel` | 1 | Cancel (BR-B6) | 200 |
 | GET | `/bookings/today` | 2 | Today's bookings (staff) | 200 |

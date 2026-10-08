@@ -71,12 +71,17 @@ def get_booking_endpoint(
     "/{booking_id}",
     response_model=BookingRead,
     summary="Modify a booking",
-    description="Changes the number of players and recalculates total_price. "
-    "Only PENDING or CONFIRMED bookings, and only 24h or more before the "
-    "slot starts.",
+    description="Changes the number of players and/or moves the booking to "
+    "another time slot. total_price is recalculated. Only PENDING or "
+    "CONFIRMED bookings, 24h or more before the current slot starts. The new "
+    "slot must be bookable and 24h or more away; the old slot becomes free. "
+    "Sending the current time_slot_id changes nothing.",
     responses={
-        404: {"description": "NOT_FOUND"},
-        409: {"description": "INVALID_TRANSITION or TOO_LATE_TO_MODIFY"},
+        404: {"description": "NOT_FOUND or SLOT_NOT_FOUND"},
+        409: {
+            "description": "INVALID_TRANSITION, TOO_LATE_TO_MODIFY, "
+            "ROOM_INACTIVE, SLOT_NOT_AVAILABLE or SLOT_TAKEN"
+        },
         422: {"description": "Invalid body or INVALID_PLAYERS"},
     },
 )

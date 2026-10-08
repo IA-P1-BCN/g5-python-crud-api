@@ -236,3 +236,154 @@ def test_update_user_rejects_email_change(client):
     )
 
     assert response.status_code == 422
+
+
+def test_list_users_empty(client):
+    response = client.get(URL)
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_list_users(client):
+    first_response = client.post(
+        URL,
+        json={
+            "name": "Alice",
+            "email": "alice@example.com",
+        },
+    )
+
+    second_response = client.post(
+        URL,
+        json={
+            "name": "Bob",
+            "email": "bob@example.com",
+        },
+    )
+
+    assert first_response.status_code == 201
+    assert second_response.status_code == 201
+
+    response = client.get(URL)
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+    assert data[0]["name"] == "Alice"
+    assert data[0]["email"] == "alice@example.com"
+    assert data[1]["name"] == "Bob"
+    assert data[1]["email"] == "bob@example.com"
+
+
+def test_list_users_is_ordered_by_id(client):
+    first_response = client.post(
+        URL,
+        json={
+            "name": "Alice",
+            "email": "alice@example.com",
+        },
+    )
+
+    second_response = client.post(
+        URL,
+        json={
+            "name": "Bob",
+            "email": "bob@example.com",
+        },
+    )
+
+    third_response = client.post(
+        URL,
+        json={
+            "name": "Charlie",
+            "email": "charlie@example.com",
+        },
+    )
+
+    assert first_response.status_code == 201
+    assert second_response.status_code == 201
+    assert third_response.status_code == 201
+
+    first_id = first_response.json()["id"]
+    second_id = second_response.json()["id"]
+    third_id = third_response.json()["id"]
+
+    response = client.get(URL)
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert [user["id"] for user in data] == [
+        first_id,
+        second_id,
+        third_id,
+    ]
+
+
+def test_deactivate_user(client, db):
+    create_response = client.post(
+        URL,
+        json={
+            "name": "Alice",
+            "email": "alice@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    user_id = create_response.json()["id"]
+
+    response = client.put(f"{URL}/{user_id}/deactivate")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["id"] == user_id
+    assert data["is_active"] is False
+
+    user = db.get(User, user_id)
+
+    assert user is not None
+    assert user.is_active is False
+
+
+def test_deactivate_user_is_idempotent(client, db):
+    create_response = client.post(
+        URL,
+        json={
+            "name": "Alice",
+            "email": "alice@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    user_id = create_response.json()["id"]
+
+    first_response = client.put(f"{URL}/{user_id}/deactivate")
+    second_response = client.put(f"{URL}/{user_id}/deactivate")
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    assert first_response.json()["is_active"] is False
+    assert second_response.json()["is_active"] is False
+
+    user = db.get(User, user_id)
+
+    assert user is not None
+    assert user.is_active is False
+
+
+def test_deactivate_unknown_user_returns_404(client):
+    response = client.put(f"{URL}/999999/deactivate")
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": "User not found",
+        "code": "NOT_FOUND",
+    }
