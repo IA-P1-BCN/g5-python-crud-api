@@ -31,10 +31,10 @@ Client (course professor) asked to **start simple: users, bookings, rooms with C
 
 | Sprint | Dates | Scope | Course level |
 |--------|-------|-------|--------------|
-| 1 | Fri Oct 2 - Fri Oct 9 (presentation Oct 12-13) | CRUD users, rooms, time slots, bookings. Business rules, tests, Swagger, env vars, logging, error handling, Docker | Essential + part of Medium |
-| 2 | Tue Oct 13 - Mon Oct 19 (presentation Oct 20) | Supabase login, roles, games (start/finish/result), pagination, filters, CSV, statistics, retrospective | Medium + Advanced + part of Expert |
+| 1 | Fri Oct 2 - Fri Oct 9 (presentation Oct 12-13) | CRUD users, rooms, time slots, bookings. Business rules, tests, Swagger, env vars, logging, error handling, Docker. Front setup (ticket 064) | Essential + part of Medium |
+| 2 | Tue Oct 13 - Mon Oct 19 (presentation Oct 20) | Supabase login, roles, games (start/finish/result), pagination, filters, CSV, statistics, retrospective. Web client in `front/` (tickets 065 to 085): immersive 3D corridor, booking flow, my bookings, staff and admin screens | Medium + Advanced + part of Expert |
 
-Out of scope for now: payments, discounts, loyalty, team members per booking, websockets, cloud deployment, UI. They stay in the full ER (DIAGRAMS.md section 2) as the long-term vision.
+Out of scope for now: payments, discounts, loyalty, team members per booking, websockets, cloud deployment. They stay in the full ER (DIAGRAMS.md section 2) as the long-term vision.
 
 ## Success criteria
 
@@ -47,8 +47,8 @@ Out of scope for now: payments, discounts, loyalty, team members per booking, we
 
 | File | Purpose |
 |------|---------|
-| `STACK.md` | Technology choices |
-| `ARCHI.md` | Folder structure, layers, test strategy |
+| `STACK.md` | Technology choices (back and front) |
+| `ARCHI.md` | Folder structure, layers, frontend architecture, test strategy |
 | `BUSINESS_RULES.md` | Rules per sprint, permissions, open decisions |
 | `STORIES.md` | User stories with acceptance criteria |
 | `TICKETS.md` | Tickets, work split, timeline |

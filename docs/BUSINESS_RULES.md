@@ -23,6 +23,7 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | BR-R3 | Rooms are deactivated (`status=inactive`), never hard-deleted | - |
 | BR-R4 | Inactive rooms are hidden from client listings and accept no new slots or bookings | 409 |
 | BR-R5 | A room with future active bookings cannot be deactivated **(to validate)** | 409 |
+| BR-R6 | A room is shown to clients only if it is active **and** has at least one upcoming time slot, free or taken. A fully booked room stays visible (shown as full); a room with no upcoming slot is hidden. The API exposes it as `has_upcoming_slots` **(to validate)** | - |
 
 ### Time slots (E2)
 | ID | Rule | Error |
@@ -95,7 +96,7 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | BR-L2 | Bookings filter by `status`, `room_id`, `date_from`, `date_to`. Slots by `room_id`, `date`, `available` |
 | BR-L3 | Admin exports bookings to CSV with the same filters |
 | BR-L4 | Statistics: bookings per room, occupancy %, revenue per period |
-| BR-L5 | BR-B7 extended: client can change slot if the new slot is bookable and 24h or more away |
+| BR-L5 | BR-B7 extended: client can change slot if the new slot is bookable and 24h or more away. The new slot may belong to another room (team-approved): `total_price` is recalculated with the new room's `base_price` (BR-B4) and `players` must fit its capacity (BR-B2). The old slot becomes free |
 
 ## Out of scope (Phase 3, not committed)
 Payments, discounts, loyalty points, `booking_players` (team members), pending-booking expiry, websockets, cloud deployment.
@@ -106,4 +107,5 @@ Payments, discounts, loyalty points, `booking_players` (team members), pending-b
 | D-01 | Price per player or per room? | Per player (BR-B4) |
 | D-02 | Where does the role live? | Our `users` table (BR-A3) |
 | D-03 | Room with future bookings: block deactivation or cancel them? | Block (BR-R5) |
+| D-05 | When is a room visible to clients? | Active and with at least one upcoming slot, even if all are taken (BR-R6) |
 | D-04 | Do we need a minimum number of players? | No, only max `capacity` |
