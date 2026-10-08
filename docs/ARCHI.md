@@ -140,7 +140,7 @@ front/
 │   │   │   │   ├── checkoutSchema.js      # Zod schema of the checkout form
 │   │   │   │   ├── errors.js              # booking error codes (SLOT_TAKEN...)
 │   │   │   │   ├── price.js               # price (rule D-01 open: fixed per player)
-│   │   │   │   └── slotState.js           # past / taken / blocked / free (pure, test first)
+│   │   │   │   └── slotState.js           # past / taken / blocked / free (pure)
 │   │   │   ├── pages/
 │   │   │   │   ├── BookingPage.jsx        # /reservar/:slug
 │   │   │   │   ├── CheckoutPage.jsx       # checkout
@@ -151,7 +151,7 @@ front/
 │   │   │   ├── Corridor.jsx               # useEffect: create / dispose()
 │   │   │   ├── CorridorFallback.jsx       # poster grid when no WebGL
 │   │   │   ├── createCorridor.js          # pure Three.js, returns { dispose }
-│   │   │   ├── doorMachine.js             # door state machine (pure, test first)
+│   │   │   ├── doorMachine.js             # door state machine (pure)
 │   │   │   ├── index.js                   # public API of the feature
 │   │   │   └── useWebGLSupport.js         # WebGL detection
 │   │   ├── my-bookings/
@@ -172,7 +172,7 @@ front/
 │   │   │   │   └── useUpdateBooking.js
 │   │   │   ├── model/
 │   │   │   │   ├── bookingFilters.js      # tab filters (pure)
-│   │   │   │   ├── canModify.js           # 24h rule (pure, test first)
+│   │   │   │   ├── canModify.js           # 24h rule (pure)
 │   │   │   │   └── errors.js              # TOO_LATE_TO_CANCEL / TOO_LATE_TO_MODIFY ...
 │   │   │   ├── pages/
 │   │   │   │   ├── GameHistoryPage.jsx
@@ -224,7 +224,7 @@ front/
 │   │       │   └── useTodayBookings.js
 │   │       ├── model/
 │   │       │   ├── errors.js
-│   │       │   ├── gameTransitions.js     # actions allowed per booking status (pure, test first)
+│   │       │   ├── gameTransitions.js     # actions allowed per booking status (pure)
 │   │       │   └── resultSchema.js        # Zod schema of the game result
 │   │       ├── pages/
 │   │       │   └── StaffPlanningPage.jsx  # today's board
@@ -409,6 +409,6 @@ Minimum per endpoint (course requirement): one success test and one failing test
 
 | Level | What | Tool |
 |-------|------|------|
-| Pure logic | `slotState`, `price`, 24h rule, game transitions, door state machine, mappers, schemas | Vitest, written test-first |
+| Pure logic | `slotState`, `price`, 24h rule, game transitions, door state machine, mappers, schemas | Vitest, written with the code |
 | Components and pages | Disabled slots, players min/max, checkout validation, `SLOT_TAKEN` flow | Testing Library + MSW (mocks of the FastAPI) |
 | 3D | Not unit-tested (WebGL); covered by the door state machine tests and a manual checklist | - |

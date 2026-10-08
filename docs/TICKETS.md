@@ -67,7 +67,7 @@ Each story has one **Implement ... + tests** ticket: code and tests are done tog
 
 ## Front tickets (Sprint 2, label `front`)
 
-React client in `front/`. Ticket 064 (setup) belongs to Sprint 1 and is listed above; the rest are Sprint 2. Each ticket owns its own feature folder, so they can be taken in parallel (see `WORK_SPLIT.md`). Pure logic (prices, slot states, 24h rule, game transitions, door state machine) is written test-first.
+React client in `front/`. Ticket 064 (setup) belongs to Sprint 1 and is listed above; the rest are Sprint 2. Each ticket owns its own feature folder, so they can be taken in parallel (see `WORK_SPLIT.md`). Pure logic (prices, slot states, 24h rule, game transitions, door state machine) gets unit tests written with the code.
 
 | Ticket | Title | Epic | User Story | Size | Feature folder |
 |--------|-------|------|------------|------|----------------|

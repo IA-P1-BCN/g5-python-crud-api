@@ -54,7 +54,7 @@ Front equivalent of steps 3 and 5: see "Workflow per ticket - front" below (`doc
 Same git flow as above (branch from `develop`, PR to `develop`). Differences:
 
 1. Branch from `develop`, e.g. `feat/071-day-picker-slot-grid`. Commit scope: the feature (`feat(booking): ...`).
-2. Write the tests first for pure logic (prices, slot states, 24h rule, game transitions, mappers, schemas): they must fail, then write the minimum code. Component tests use Testing Library + MSW.
+2. Write the code and its tests together: one test per acceptance criterion of the User Story (pure logic such as prices, slot states, 24h rule, game transitions, mappers and schemas gets unit tests; components use Testing Library + MSW).
 3. Texts go in `front/src/i18n/es/<feature>.js` (Spanish), never hard-coded in components.
 4. Respect the import rules (`ARCHI.md`, Frontend): use `@/...`, another feature only through its `index.js`. ESLint fails otherwise.
 5. At the **end of the ticket, before the PR**, from the project root:
