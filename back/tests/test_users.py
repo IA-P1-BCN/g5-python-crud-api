@@ -1,7 +1,41 @@
-from back.app.core.security import create_access_token
+from datetime import UTC, datetime, timedelta
+
+import jwt
+import pytest
+
+from back.app.config.settings import settings
 from back.app.models import User
 
 URL = "/api/v1/users"
+TEST_SUPABASE_JWT_SECRET = "test-supabase-jwt-secret-32-bytes!"
+
+
+@pytest.fixture(autouse=True)
+def use_test_supabase_secret(monkeypatch):
+    monkeypatch.setattr(
+        settings,
+        "supabase_jwt_secret",
+        TEST_SUPABASE_JWT_SECRET,
+    )
+
+
+def make_token(
+    subject: str,
+    *,
+    expires_at: datetime | None = None,
+    audience: str = "authenticated",
+) -> str:
+    payload = {
+        "sub": subject,
+        "exp": expires_at or datetime.now(UTC) + timedelta(minutes=60),
+        "aud": audience,
+    }
+
+    return jwt.encode(
+        payload,
+        TEST_SUPABASE_JWT_SECRET,
+        algorithm="HS256",
+    )
 
 
 def test_create_user_success(client, db):
@@ -139,7 +173,7 @@ def test_get_user_success(client, db):
     user.auth_id = auth_id
     db.commit()
 
-    token = create_access_token(auth_id)
+    token = make_token(auth_id)
 
     response = client.get(
         f"{URL}/{user_id}",
@@ -169,6 +203,59 @@ def test_get_user_without_token_returns_401(client):
     response = client.get(f"{URL}/{user_id}")
 
     assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Not authenticated",
+        "code": "UNAUTHORIZED",
+    }
+
+
+def test_get_user_invalid_token_returns_401(client):
+    response = client.get(
+        f"{URL}/1",
+        headers={"Authorization": "Bearer invalid-token"},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Invalid or expired token",
+        "code": "UNAUTHORIZED",
+    }
+
+
+def test_get_user_expired_token_returns_401(client):
+    token = make_token(
+        "google-user-123",
+        expires_at=datetime.now(UTC) - timedelta(minutes=1),
+    )
+
+    response = client.get(
+        f"{URL}/1",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Invalid or expired token",
+        "code": "UNAUTHORIZED",
+    }
+
+
+def test_get_user_invalid_audience_returns_401(client):
+    token = make_token(
+        "google-user-123",
+        audience="wrong-audience",
+    )
+
+    response = client.get(
+        f"{URL}/1",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Invalid or expired token",
+        "code": "UNAUTHORIZED",
+    }
 
 
 def test_get_user_not_found_returns_404(client, db):
@@ -184,7 +271,7 @@ def test_get_user_not_found_returns_404(client, db):
     db.add(user)
     db.commit()
 
-    token = create_access_token(auth_id)
+    token = make_token(auth_id)
 
     response = client.get(
         f"{URL}/999999",

@@ -2,9 +2,11 @@ import os
 
 # Default configuration so the app can import settings during tests
 os.environ.setdefault("DATABASE_URL", "sqlite://")
-os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key")
-os.environ.setdefault("JWT_ALGORITHM", "HS256")
-os.environ.setdefault("JWT_EXPIRE_MINUTES", "60")
+os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
+os.environ.setdefault(
+    "SUPABASE_JWT_SECRET",
+    "test-supabase-jwt-secret-32-bytes!",
+)
 
 import pytest
 from fastapi.testclient import TestClient

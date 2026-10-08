@@ -5,9 +5,8 @@ class Settings(BaseSettings):
     database_url: str
     shared_database_url: str | None = None
 
-    jwt_secret_key: str
-    jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 60
+    supabase_url: str
+    supabase_jwt_secret: str
 
     @property
     def effective_database_url(self) -> str:
