@@ -321,6 +321,21 @@ docker compose exec api ruff format .
 docker compose exec api ruff format --check .
 ```
 
+## Frontend Development
+
+### See your changes as you code (hot reload)
+
+```bash
+docker compose up
+```
+
+Starts `db`, `api` and `front`. The `front` container runs the Vite dev server on
+http://localhost:3000: save a file in `front/` and the browser updates by itself. Calls to
+`/api` are proxied to the API container.
+
+`front` waits for the API healthcheck (`/health`) before starting. The first start runs
+`npm install`, so give it a few seconds. The production image (Nginx) is `front/Dockerfile`.
+
 ## Frontend Development Commands
 
 Lint, formatting and tests for the front run in Docker (Node 22), so everyone gets the
