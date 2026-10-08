@@ -1,9 +1,7 @@
-# back/app/models/time_slot.py
-
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, ForeignKey
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from back.app.database import Base
@@ -15,35 +13,50 @@ if TYPE_CHECKING:
 
 class TimeSlot(Base):
     __tablename__ = "time_slots"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    room_id: Mapped[int] = mapped_column(
+        ForeignKey("rooms.id"),
+        nullable=False,
+    )
+    starts_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    ends_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        server_default=text("'available'"),
+    )
+
     __table_args__ = (
-        CheckConstraint(
-            "status IN ('available', 'booked', 'blocked')",
-            name="ck_time_slots_status",
-        ),
         CheckConstraint(
             "ends_at > starts_at",
             name="ck_time_slots_ends_after_starts",
         ),
+        CheckConstraint(
+            "status IN ('available', 'blocked')",
+            name="ck_time_slots_status",
+        ),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    room_id: Mapped[int] = mapped_column(
-        ForeignKey("rooms.id", ondelete="CASCADE"), nullable=False, index=True
+    room: Mapped["Room"] = relationship(
+        back_populates="time_slots",
     )
-    starts_at: Mapped[datetime] = mapped_column(nullable=False, index=True)
-    ends_at: Mapped[datetime] = mapped_column(nullable=False)
-    status: Mapped[str] = mapped_column(default="available", nullable=False)
-
-    room: Mapped["Room"] = relationship("Room", back_populates="time_slots")
     bookings: Mapped[list["Booking"]] = relationship(
-        "Booking", back_populates="time_slot"
+        back_populates="time_slot",
     )
 
     @property
     def is_bookable(self) -> bool:
+        """BR-S5: available and without active bookings."""
+        # Deferred import: the booking controller imports the models (circular).
+        from back.app.controllers.booking import ACTIVE_STATUSES
+
         if self.status != "available":
             return False
-        
-        # Importación local diferida para evitar la importación circular
-        from back.app.controllers.booking import ACTIVE_STATUSES
         return not any(b.status in ACTIVE_STATUSES for b in self.bookings)
