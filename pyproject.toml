@@ -31,3 +31,6 @@ ignore = ["EXE002"]
 [tool.pytest.ini_options]
 testpaths = ["back/tests"]
 pythonpath = ["."]
+
+[tool.ruff.lint]
+ignore = ["B008"]
