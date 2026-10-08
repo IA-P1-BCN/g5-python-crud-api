@@ -1,5 +1,5 @@
-/* Shared by the three skins: room colour themes + the animated "room atmosphere".
-   Skins style layout and chrome; this file only defines what is specific to each ROOM. */
+/* Room colour themes + the animated "room atmosphere".
+   Only defines what is specific to each ROOM; layout and chrome live in F-inmersivo.html. */
 
 [data-room=relojero]  { --rc: #e0a243; --rd: #2a1b0d }
 [data-room=biblioteca]{ --rc: #4fc48f; --rd: #0c2a20 }

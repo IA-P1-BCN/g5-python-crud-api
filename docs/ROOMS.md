@@ -1,6 +1,6 @@
 # ROOMS
 
-Initial catalogue of the escape rooms, ready to be inserted in the database (ticket 063, demo seed). Source: the validated mockup (`docs/mockups/shared.js`). Texts are in Spanish because they are shown to customers as they are.
+Initial catalogue of the escape rooms, ready to be inserted in the database (ticket 063, demo seed). Source: the validated mockup (`docs/mockups/F-inmersivo.js`). Texts are in Spanish because they are shown to customers as they are.
 
 ## Summary
 

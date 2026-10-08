@@ -1,6 +1,4 @@
-/* Shared content + behaviour for the three mockup skins (A, B, C).
-   One markup, three looks: each HTML file only brings its own CSS.
-   All copy is Spanish (Spanish escape room). All data is invented. */
+/* Content + behaviour of the mockup (data, screens, actions). All copy is Spanish; all data is invented. */
 
 const ROOMS = [
   { id: 'relojero', name: 'El Relojero', genre: 'Misterio victoriano', min: 2, max: 5, dur: 60, price: 22, diff: 2, active: true, aud: 'Para empezar y jugar en familia', rate: 68,
