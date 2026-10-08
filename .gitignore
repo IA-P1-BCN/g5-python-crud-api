@@ -27,7 +27,9 @@ htmlcov/
 
 # IDEs and editors
 
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 
 # OS generated files
