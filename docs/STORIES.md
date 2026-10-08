@@ -199,7 +199,7 @@ Acceptance criteria:
 
 Business rules: BR-B5, BR-B6
 
-### US17 - Change slot of a booking (Sprint 2)
+### US17 - Change slot of a booking (Sprint 1)
 
 **As a** client, **I want** move my booking to another time, **so that** I do not need to cancel and rebook.
 

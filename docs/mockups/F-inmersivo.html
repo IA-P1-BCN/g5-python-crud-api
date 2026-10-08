@@ -108,9 +108,10 @@ a{color:var(--exit)}
 /* 3D hero host */
 .gl{position:relative;height:clamp(340px,60vh,540px);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:34px;background:#06070a}
 .gl canvas{display:block;width:100%;height:100%;cursor:grab}.gl canvas.drag{cursor:grabbing}.gl.hov canvas{cursor:pointer}
-.gl .cap{position:absolute;left:18px;top:14px;font:400 12px 'Share Tech Mono';letter-spacing:.2em;text-transform:uppercase;color:var(--mute);pointer-events:none}
+.gl .cap{position:absolute;left:14px;top:12px;z-index:2;background:#06070acc;border-radius:99px;padding:6px 14px;font-size:11px;max-width:calc(100% - 28px);font:400 12px 'Share Tech Mono';letter-spacing:.2em;text-transform:uppercase;color:var(--mute);pointer-events:none}
 .gl .tip{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);font:900 26px 'Big Shoulders Display';text-transform:uppercase;letter-spacing:.06em;pointer-events:none;opacity:0;transition:opacity .2s;text-shadow:0 0 18px currentColor}
 .gl.hov .tip{opacity:1}
+.gl .mv{position:absolute;right:14px;bottom:14px;z-index:2;background:#0a0b0dcc;color:var(--tx);border:1px solid var(--line);border-radius:99px;padding:8px 18px;font:500 14px 'Hanken Grotesk'}.gl .mv:hover{border-color:var(--exit);color:var(--exit)}
 .gl .nogl{display:none;position:absolute;inset:0;place-items:center;color:var(--mute);padding:20px;text-align:center}.gl.off .nogl{display:grid}
 /* 1. room entrance transitions (cover -> swap screen -> uncover, 1.3 s) */
 #gate{position:fixed;inset:0;z-index:100;pointer-events:none;display:none;perspective:1200px}
@@ -170,7 +171,7 @@ V.salas = () => {
     return '<div class="brow ' + (free ? '' : 'off') + '" data-room="' + x.r.id + '"><span class="tm">' + x.t + '</span><span class="nm"><i></i>' + x.r.name + '</span><span class="pp">' + x.r.min + '–' + x.r.max + ' jugadores</span><span class="st">' + (free ? 'LIBRE' : 'COMPLETA') + '</span>' +
       (free ? '<button class="cta" onclick="A.quick(\'' + x.r.id + '\',\'' + x.t + '\')">Reservar</button>' : '<span></span>') + '</div>' }).join('');
   const posters = PUBLIC.map(r => '<button class="pst" data-room="' + r.id + '" onclick="A.pick(\'' + r.id + '\')" aria-label="Entrar en ' + r.name + '"><div class="poster"><div class="art">' + ART[r.id] + '</div></div><span class="g">' + r.genre + '</span><h3>' + r.name + '</h3><p>' + r.aud + ' · ' + r.rate + ' % escapa</p><p>' + dots(r.diff) + '</p></button>').join('');
-  return '<div class="gl" id="gl"><div class="cap">El pasillo sigue tu cursor · arrastra para mirar más · pasa el cursor sobre una puerta para girar hacia ella</div><div class="tip" id="tip"></div><div class="nogl">Tu navegador no puede mostrar el pasillo 3D. Usa los carteles de abajo.</div></div>' +
+  return '<div class="gl" id="gl"><div class="cap">Clic en el centro para avanzar · arrastra para mirar · pasa sobre una puerta para iluminarla y haz clic para entrar</div><div class="tip" id="tip"></div><button class="mv" id="mv" type="button" onclick="A.mv()">'+(stn?'↓ Retroceder':'↑ Avanzar')+'</button><div class="nogl">Tu navegador no puede mostrar el pasillo 3D. Usa los carteles de abajo.</div></div>' +
     '<div class="ph"><div><h1>Esta noche</h1><p class="lead">Miércoles 7 de octubre. Elige una sesión libre y reserva en dos clics.</p></div></div>' +
     '<div class="board"><div class="brow"><span>Hora</span><span>Sala</span><span>Jugadores</span><span>Estado</span><span></span></div>' + board + '</div>' +
     '<h2 class="sec">Las salas</h2><div class="posters">' + posters + '</div><p class="hint">Cancelación gratuita hasta 24 h antes · llegad 15 min antes de la sesión</p>';
@@ -228,7 +229,8 @@ A.ok = () => {
 };
 
 /* ---------- 4. Three.js corridor ---------- */
-let gl = null;
+let gl = null, stn = 0; const STN_Z = -5.4;
+A.mv = () => { stn = 1 - stn; const b = document.getElementById('mv'); b && (b.textContent = stn ? '↓ Retroceder' : '↑ Avanzar') };
 function dispose() { if (gl) { cancelAnimationFrame(gl.raf); gl.ro && gl.ro.disconnect(); gl.r.dispose(); gl = null } }
 function label(text, color) {
   const c = document.createElement('canvas'); c.width = 512; c.height = 128; const x = c.getContext('2d');
@@ -259,52 +261,62 @@ function init3D() {
     const lb = add(new THREE.PlaneGeometry(2, .5), new THREE.MeshBasicMaterial({ map: label(room.name, '#' + hex.toString(16).padStart(6, '0')), transparent: true }), x - side * .1, 2.95, z, 0, ry);
     const pl = new THREE.PointLight(hex, 1.1, 7); pl.position.set(side * 2.2, 1.6, z); sc.add(pl); d.userData.light = pl; doors.push(d);
   });
-  const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(9, 9), tip = document.getElementById('tip'); let hov = null, mx = 0, my = 0, leaving = false, t0 = performance.now(), yaw = 0, pitch = 0, dYaw = 0, dPitch = 0, down = null, moved = 0;
+  const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(9, 9), tip = document.getElementById('tip'), pv = new THREE.Vector3();
+  /* hd = door under the cursor (light up + slight lean); sel = door clicked (turn to face it fully, then walk in) */
+  let hd = null, sel = null, leaving = false, mx = 0, my = 0, t0 = performance.now(), dYaw = 0, dPitch = 0, down = null, moved = 0;
+  let bz = stn ? STN_Z : BASE.z, lastT = performance.now(), amt = 0, eh = 0, fd = null, hdl = null, cy = 0, cp = 0, cx = 0;
   const size = () => { const w = host.clientWidth, h = host.clientHeight; r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix() };
   size(); gl = { r, ro: window.ResizeObserver ? new ResizeObserver(size) : null }; gl.ro && gl.ro.observe(host);
   const cv = r.domElement; cv.style.touchAction = 'pan-y';
-  cv.addEventListener('pointerdown', e => { const b = cv.getBoundingClientRect(); mouse.set((e.clientX - b.left) / b.width * 2 - 1, -(e.clientY - b.top) / b.height * 2 + 1); down = { x: e.clientX, y: e.clientY }; moved = 0; cv.setPointerCapture(e.pointerId) });
+  const say = d => { const rm = d && R(d.userData.id); tip.textContent = rm ? rm.name + ' · ' + rm.min + '–' + rm.max + ' jug.' + (sel ? ' · entrando…' : ' · clic para entrar') : ''; tip.style.color = d ? '#' + d.material.emissive.getHexString() : '' };
+  const setHover = d => { if (d === hd) return; hd = d; if (d) hdl = d; host.classList.toggle('hov', !!d); say(d) };
+  const setNdc = e => { const b = cv.getBoundingClientRect(); mouse.set((e.clientX - b.left) / b.width * 2 - 1, -(e.clientY - b.top) / b.height * 2 + 1) };
+  cv.addEventListener('pointerdown', e => { setNdc(e); down = { x: e.clientX, y: e.clientY }; moved = 0; cv.setPointerCapture(e.pointerId) });
   cv.addEventListener('pointerup', () => { down = null; cv.classList.remove('drag') });
   cv.addEventListener('pointermove', e => {
-    const b = cv.getBoundingClientRect(); mouse.set((e.clientX - b.left) / b.width * 2 - 1, -(e.clientY - b.top) / b.height * 2 + 1); mx = mouse.x; my = mouse.y;
-    if (down && !hov) { const dx = e.clientX - down.x, dy = e.clientY - down.y; moved += Math.abs(dx) + Math.abs(dy); if (moved > 6) cv.classList.add('drag');
+    setNdc(e); mx = mouse.x; my = mouse.y;
+    if (down && !sel) { const dx = e.clientX - down.x, dy = e.clientY - down.y; moved += Math.abs(dx) + Math.abs(dy); if (moved > 6) cv.classList.add('drag');
       dYaw = Math.max(-1.25, Math.min(1.25, dYaw - dx * .004)); dPitch = Math.max(-.3, Math.min(.3, dPitch + dy * .003)); down = { x: e.clientX, y: e.clientY } }
   });
   cv.addEventListener('pointerleave', () => { mouse.set(9, 9); mx = 0; my = 0 });
   cv.addEventListener('keydown', e => { if (e.key === 'ArrowLeft') dYaw = Math.max(-1.25, dYaw - .2); if (e.key === 'ArrowRight') dYaw = Math.min(1.25, dYaw + .2) });
   cv.addEventListener('click', () => {
     if (moved > 6 || leaving) return;
-    if (!hov) { ray.setFromCamera(mouse, cam); const h = ray.intersectObjects(doors)[0]; if (h) focusDoor(h.object, performance.now()); return }  /* touch: first tap turns to the door */
-    if (Math.abs(mouse.x) > .55) return unfocus(performance.now());
-    leaving = true; const d = hov, from = cam.position.clone(), l0 = look.clone(), start = performance.now(), to = new THREE.Vector3(d.userData.side * 1.9, 1.5, d.userData.z), tgt = new THREE.Vector3(d.userData.side * 3, 1.3, d.userData.z), f0 = cam.fov;
-    const go = () => { const k = Math.min(1, (performance.now() - start) / (RM ? 1 : 600)), e = k * k * (3 - 2 * k); cam.position.lerpVectors(from, to, e); look.lerpVectors(l0, tgt, e);
-      cam.fov = f0 + (38 - f0) * e; cam.updateProjectionMatrix(); cam.lookAt(look); if (k < 1) requestAnimationFrame(go); else { dispose(); A.pick(d.userData.id) } }; go();
+    if (sel) { sel = null; return say(hd) }                                   /* click again while turning = cancel */
+    ray.setFromCamera(mouse, cam); const h = ray.intersectObjects(doors)[0];
+    if (h) { sel = h.object; setHover(null); host.classList.add('hov'); say(sel) } else if (Math.abs(mouse.x) < .4) A.mv();
   });
-  let fov = 62;
-  let fT = 0, cdDoor = null, cdT = 0, lastT = performance.now(), amt = 0, fd = null, cy = 0, cp = 0, cx = 0;
-  const focusDoor = (d, t) => { hov = d; fT = t; host.classList.add('hov'); const rm = R(d.userData.id); tip.textContent = rm.name + ' · ' + rm.min + '–' + rm.max + ' jug. · clic para entrar'; tip.style.color = '#' + d.material.emissive.getHexString() };
-  const unfocus = t => { cdDoor = hov; cdT = t + 900; hov = null; host.classList.remove('hov'); tip.textContent = '' };
+  const enter = d => {
+    leaving = true; const from = cam.position.clone(), l0 = look.clone(), start = performance.now(), to = new THREE.Vector3(d.userData.side * 1.9, 1.5, d.userData.z), tgt = new THREE.Vector3(d.userData.side * 3, 1.3, d.userData.z), f0 = cam.fov;
+    const go = () => { const k = Math.min(1, (performance.now() - start) / (RM ? 1 : 700)), e = k * k * (3 - 2 * k); cam.position.lerpVectors(from, to, e); look.lerpVectors(l0, tgt, e);
+      cam.fov = f0 + (36 - f0) * e; cam.updateProjectionMatrix(); cam.lookAt(look); if (k < 1) requestAnimationFrame(go); else { dispose(); A.pick(d.userData.id) } }; go();
+  };
   const loop = t => {
     if (!host.isConnected) return dispose();
     gl.raf = requestAnimationFrame(loop); const tt = (t - t0) / 1000;
     if (!leaving) {
-      ray.setFromCamera(mouse, cam); const hit = ray.intersectObjects(doors)[0], over = hit && hit.object;
-      if (!hov && over && !(over === cdDoor && t < cdT)) focusDoor(over, t);
-      else if (hov && t - fT > 900 && Math.abs(mouse.x) > .55) unfocus(t);
-      /* Pose = corridor pose (mouse parallax + drag, exponentially smoothed) blended with the "facing the door" pose.
-         The blend factor ramps linearly over ~1.3 s and is eased with smoothstep, so the quarter turn starts and ends gently. */
+      /* hover: raycast to acquire; once acquired keep it while the cursor stays near the door on screen (no flicker when the camera leans) */
+      if (!sel) {
+        ray.setFromCamera(mouse, cam); const hit = ray.intersectObjects(doors)[0];
+        if (hit) setHover(hit.object);
+        else if (hd) { hd.getWorldPosition(pv); pv.y = 1.3; pv.project(cam); if (Math.abs(pv.x - mouse.x) > .35 || Math.abs(pv.y - mouse.y) > .8) setHover(null) }
+      }
       const dt = Math.min(.05, (t - lastT) / 1000), sm = 1 - Math.exp(-dt * 2.6);
-      if (hov) fd = hov;
-      amt = Math.max(0, Math.min(1, amt + (hov ? 1 : -1) * dt / (RM ? .01 : 1.3)));
+      if (sel) fd = sel;
+      bz += ((stn ? STN_Z : BASE.z) - bz) * (1 - Math.exp(-dt * 1.7));
+      amt = Math.max(0, Math.min(1, amt + (sel ? 1 : -1) * dt / (RM ? .01 : 1.2)));
+      eh += ((hd && !sel ? 1 : 0) - eh) * (1 - Math.exp(-dt * 3));
       const e = amt * amt * (3 - 2 * amt);
       cy += ((dYaw + (RM ? 0 : mx * .22)) - cy) * sm; cp += ((dPitch + (RM ? 0 : my * .07)) - cp) * sm; cx += ((RM ? 0 : mx * .25) - cx) * sm;
-      let Y = cy, P = cp, X = cx, Z = BASE.z, F = 62;
+      let Y = cy, P = cp, X = cx, Z = bz, F = 62;
+      if (hdl && !RM) { Y += (hdl.userData.side * Math.PI / 2 - Y) * .2 * eh; F -= 5 * eh }              /* hover: only a slight lean toward the door */
       if (fd) { const sd = fd.userData.side; Y += (sd * Math.PI / 2 - Y) * e; P *= 1 - e; X += (-sd * 1.9 - X) * e; Z += (fd.userData.z - Z) * e; F += (50 - F) * e }
       cam.position.set(X, 1.6 + (RM ? 0 : Math.sin(tt * .8) * .03 * (1 - e)), Z); cam.fov = F; cam.updateProjectionMatrix();
       look.set(X + Math.sin(Y) * Math.cos(P) * 10, cam.position.y + Math.sin(P) * 10, Z - Math.cos(Y) * Math.cos(P) * 10);
+      if (sel && amt > .985) enter(sel);                                                                 /* click: face the door, then walk in */
     }
     cam.lookAt(look);
-    doors.forEach(d => { const on = d === hov, k = on ? 1.6 : .25; d.userData.mat.emissiveIntensity += (k - d.userData.mat.emissiveIntensity) * .12; d.userData.light.intensity += ((on ? 2.6 : 1.1) - d.userData.light.intensity) * .12 });
+    doors.forEach(d => { const on = d === hd || d === sel, k = on ? 1.6 : .25; d.userData.mat.emissiveIntensity += (k - d.userData.mat.emissiveIntensity) * .12; d.userData.light.intensity += ((on ? 2.6 : 1.1) - d.userData.light.intensity) * .12 });
     exit.material.opacity = .7 + Math.sin(tt * 3) * .3; r.render(sc, cam); lastT = t;
   };
   gl.raf = requestAnimationFrame(loop);
