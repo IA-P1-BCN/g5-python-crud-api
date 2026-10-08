@@ -15,6 +15,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from back.app.database import Base
 
+ACTIVE_STATUSES = ("PENDING", "CONFIRMED", "IN_PROGRESS")
+
 if TYPE_CHECKING:
     from back.app.models.time_slot import TimeSlot
     from back.app.models.user import User
