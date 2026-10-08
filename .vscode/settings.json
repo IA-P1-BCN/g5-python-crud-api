@@ -1,0 +1,11 @@
+{
+  "editor.formatOnSave": true,
+  "[javascript][javascriptreact][json][jsonc][css][scss][html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "eslint.workingDirectories": ["front"],
+  "prettier.configPath": "front/.prettierrc"
+}
