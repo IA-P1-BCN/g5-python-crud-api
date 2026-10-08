@@ -25,16 +25,19 @@ Source of truth for technology choices. Changes need team agreement.
 
 ## Environment variables
 
-See `.env.example` at the project root (created in Ticket 001):
+See `.env.example` at the project root:
 
 ```
-DATABASE_URL=            # points to the PostgreSQL container
-POSTGRES_USER=
-POSTGRES_PASSWORD=
-POSTGRES_DB=
+DATABASE_URL=            # the only variable the API reads for the database
+POSTGRES_USER=           # read by the PostgreSQL container (docker-compose) only
+POSTGRES_PASSWORD=       # same
+POSTGRES_DB=             # same
+POSTGRES_HOST=           # not read by the API
+POSTGRES_PORT=           # not read by the API
 SUPABASE_URL=            # Sprint 2
 SUPABASE_JWT_SECRET=     # Sprint 2
-LOG_LEVEL=INFO
 ```
+
+The log level is fixed to `INFO` in `back/app/config/logging.py` (no `LOG_LEVEL` variable for now).
 
 Secrets go in `.env` only. The repo is **public**, so never commit keys.

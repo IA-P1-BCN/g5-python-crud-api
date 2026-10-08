@@ -6,6 +6,40 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ---
 
+## Miércoles 7 de octubre de 2026
+
+### Leandro
+
+- **Hoy:** Ticket 005 "Create user" (en curso 🔄). Implementación del endpoint de creación de usuarios, normalización de emails y tests de duplicados case-insensitive. PR actualizada y enviada para revisión.
+- **Resultado (tarde):**
+- **Bloqueos:** Esperando el merge del PR 005 para continuar con el Ticket 007 desde `develop`.
+
+### Isbel
+
+- **Hoy:** Sincronización del repositorio con develop y resolución de conflictos de merge en la rama del Ticket 019.
+Corrección de validaciones de negocio (BR-S6, BR-R4, BR-S2) y estandarización del prefijo de rutas a /api/v1/time-slots/ junto con su registro en main.py.
+Refactorización de la arquitectura para mover la lógica de negocio a controladores (controllers/time_slot.py) y actualización de esquemas a Pydantic v2.
+Ejecución y validación exitosa de toda la suite de tests unitarios e integración.
+Creación del commit y subida de los cambios al repositorio remoto.
+
+- **Resultado (tarde):** Pull Request del Ticket 019 actualizado y listo para la revisión final del equipo.
+- **Bloqueos:** Ninguno.
+
+### Carolay
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Marie-Charlotte
+
+- **Hoy:**
+  Front
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+---
+
 ## Martes 6 de octubre de 2026
 
 ### Leandro
@@ -16,9 +50,10 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ### Isbel
 
-- **Hoy:** Ticket 0-11 "Implement create room + test" (empieza el ticket 🔄)
-- **Resultado (tarde):**
-- **Bloqueos:**
+- **Hoy:** Ticket 013 completado (endpoints de habitaciones, tests y linter limpios). PR integrada en develop.
+- **Resultado (tarde):** PR integrada y rama develop actualizada.
+- **Bloqueos:** Ninguno.
+- **Siguiente:** Empezar el Ticket 015 (desactivación de habitaciones).
 
 ### Carolay
 
@@ -28,6 +63,10 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ### Marie-Charlotte
 
-- **Hoy:** Ticket 0-24 "Implement create booking + test" (empieza el ticket 🔄)
+- **Hoy:**
+- Ticket 0-24 "Implement create booking + test" (done ✅)
 - **Resultado (tarde):**
+- Ticket 025 - Implement double-booking guard (IntegrityError to 409 SLOT_TAKEN) + tests (done ✅)
+- Ticket 027 - Implement view bookings + tests (done ✅)
+- Ticket 029 - Implement modify booking (players) + tests (empieza el ticket 🔄)
 - **Bloqueos:**
