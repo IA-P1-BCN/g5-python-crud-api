@@ -4,6 +4,7 @@ Board `escape_room_project`:
 
 - **Backlog**: user stories (`US01`...), each with its acceptance criteria and the list of its tickets.
 - **Ready**: tickets (`Ticket 001`...) with Size, and labels for the Epic (`E1 - Users`) and the User Story (`US01`) they belong to. Ticket 003 (CI) was dropped: no CI pipeline for now.
+- **Labels `back` / `front`**: every ticket says which side it touches. Front tickets (064 to 085) build the React client in `front/` (see `ARCHI.md`, section Frontend).
 
 Pick a ticket by epic (filter the board by `Epic`). Assignment is decided by the team when taking a ticket.
 Each story has one **Implement ... + tests** ticket: code and tests are done together. Workflow: `CONTRIBUTING.md`.
@@ -40,6 +41,7 @@ Each story has one **Implement ... + tests** ticket: code and tests are done tog
 | 031 | Implement cancel and confirm booking + tests | E3 Bookings | US16 | Feature | M |
 | 032 | README with setup instructions and Swagger check | E0 Foundation | - | Docs | S |
 | 033 | Release Sprint 1: PR develop to main | E0 Foundation | - | Tech | S |
+| 064 | Front setup: Vite, Tailwind, providers, routes, Docker with Nginx (`front`) | E0 Foundation | - | Tech | M |
 
 ## Sprint 2 tickets (Tue Oct 13 - Mon Oct 19, presentation Oct 20)
 
@@ -62,3 +64,33 @@ Each story has one **Implement ... + tests** ticket: code and tests are done tog
 | 049 | Implement page/size and filters on the bookings and time slots lists + tests | E5 Admin | US25 | M |
 | 050 | Retrospective, final ER and documentation review | E0 Foundation | - | M |
 | 051 | Release Sprint 2: PR develop to main | E0 Foundation | - | S |
+
+## Front tickets (Sprint 2, label `front`)
+
+React client in `front/`. Ticket 064 (setup) belongs to Sprint 1 and is listed above; the rest are Sprint 2. Each ticket owns its own feature folder, so they can be taken in parallel (see `WORK_SPLIT.md`). Pure logic (prices, slot states, 24h rule, game transitions, door state machine) is written test-first.
+
+| Ticket | Title | Epic | User Story | Size | Feature folder |
+|--------|-------|------|------------|------|----------------|
+| 065 | Shared front base: Tailwind theme, room theme registry, MSW, common UI components + tests | E0 Foundation | - | M | `shared/`, `rooms/model`, `test/` |
+| 066 | Port the 3D corridor: createCorridor, Corridor component, no-WebGL fallback + tests | E2 Rooms & Slots | US10 | L | `corridor/` |
+| 067 | Rooms page with posters and room detail page + tests | E2 Rooms & Slots | US10 | M | `rooms/` |
+| 068 | Room entry transitions and atmosphere effects + tests | E2 Rooms & Slots | US10 | M | `rooms/`, `styles/` |
+| 069 | Admin: rooms form and activate / deactivate + tests | E2 Rooms & Slots | US07, US08, US09 | M | `admin-rooms/` |
+| 070 | Admin: time slots management (create, edit, block, delete) + tests | E2 Rooms & Slots | US11 | M | `admin-rooms/` |
+| 071 | Day picker and slot grid with states + tests | E3 Bookings | US12 | M | `booking/` |
+| 072 | Players dial, price and checkout + tests | E3 Bookings | US13 | M | `booking/` |
+| 073 | Booking confirmation, SLOT_TAKEN handling and draft store + tests | E3 Bookings | US13 | M | `booking/` |
+| 074 | My bookings: list and tab filters + tests | E3 Bookings | US14 | M | `my-bookings/` |
+| 075 | My bookings: modify players and cancel (24h rule) + tests | E3 Bookings | US15, US16 | M | `my-bookings/` |
+| 076 | My bookings: change slot + tests | E3 Bookings | US17 | S | `my-bookings/` |
+| 077 | Login with Google (Supabase) and AuthProvider with JWT interceptor + tests | E1 Users | US04 | M | `auth/`, `shared/api` |
+| 078 | RequireRole guard and role-based navigation + tests | E1 Users | US05 | S | `auth/`, `app/layout` |
+| 079 | Own profile page (/users/me) + tests | E1 Users | US06 | S | `profile/` |
+| 080 | Admin: users list and role change + tests | E1 Users | US03, US05 | M | `admin-users/` |
+| 081 | Staff: today's games board + tests | E4 Games | US18 | S | `staff/` |
+| 082 | Staff: start, finish and register game result + tests | E4 Games | US19, US20, US21 | M | `staff/` |
+| 083 | Client game history + tests | E4 Games | US22 | S | `my-bookings/` |
+| 084 | Admin: statistics dashboard + tests | E5 Admin | US23 | M | `admin-stats/` |
+| 085 | Admin: CSV export and pagination on lists + tests | E5 Admin | US24, US25 | S | `admin-stats/`, `shared/ui` |
+
+Dependencies: the front tickets consume the back endpoints of the same epic (`API_CONTRACT.md`). Login, roles, games, statistics and CSV (tickets 035 to 047) are Sprint 2 back tickets, so their front tickets can start with MSW mocks and switch to the real API when the endpoint is merged.
