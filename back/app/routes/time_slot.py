@@ -8,7 +8,7 @@ from back.app.database import get_db
 from back.app.models.time_slot import TimeSlot
 from back.app.schemas.time_slot import TimeSlotRead
 
-router = APIRouter(prefix="/time-slots", tags=["Time Slots"])
+router = APIRouter(prefix="", tags=["Time Slots"])
 
 
 @router.get(
@@ -65,3 +65,26 @@ def get_time_slot(
             detail="Time slot not found",
         )
     return slot
+
+@router.delete(
+    "/{slot_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a time slot by ID",
+)
+def delete_time_slot(slot_id: int, db: Session = Depends(get_db)):  # noqa: B008
+    slot = db.query(TimeSlot).filter(TimeSlot.id == slot_id).first()
+    if not slot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Time slot not found",
+        )
+
+    # Verificar si existen reservas asociadas
+    if slot.bookings:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete time slot with existing bookings",
+        )
+
+    db.delete(slot)
+    db.commit()

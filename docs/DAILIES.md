@@ -16,9 +16,14 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ### Isbel
 
-- **Hoy:**
-- **Resultado (tarde):**
-- **Bloqueos:**
+- **Hoy:** Sincronización del repositorio con develop y resolución de conflictos de merge en la rama del Ticket 019.
+Corrección de validaciones de negocio (BR-S6, BR-R4, BR-S2) y estandarización del prefijo de rutas a /api/v1/time-slots/ junto con su registro en main.py.
+Refactorización de la arquitectura para mover la lógica de negocio a controladores (controllers/time_slot.py) y actualización de esquemas a Pydantic v2.
+Ejecución y validación exitosa de toda la suite de tests unitarios e integración.
+Creación del commit y subida de los cambios al repositorio remoto.
+
+- **Resultado (tarde):** Pull Request del Ticket 019 actualizado y listo para la revisión final del equipo.
+- **Bloqueos:** Ninguno.
 
 ### Carolay
 

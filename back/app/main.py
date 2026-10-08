@@ -95,5 +95,6 @@ app.include_router(
 
 app.include_router(
     time_slot.router,
+    prefix="/api/v1/time-slots",
     tags=["Time Slots"],
 )

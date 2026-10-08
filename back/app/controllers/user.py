@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from back.app.core.errors import AppError
 from back.app.models import User
-from back.app.schemas.user import UserCreate
+from back.app.schemas.user import UserCreate, UserUpdate
 
 
 def create_user(db: Session, user_in: UserCreate) -> User:
@@ -28,6 +28,38 @@ def create_user(db: Session, user_in: UserCreate) -> User:
     )
 
     db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+
+def get_user(db: Session, user_id: int) -> User:
+    user = db.get(User, user_id)
+
+    if user is None:
+        raise AppError(
+            message="User not found",
+            code="NOT_FOUND",
+            status_code=404,
+        )
+
+    return user
+
+
+def update_user(db: Session, user_id: int, user_in: UserUpdate) -> User:
+    user = db.get(User, user_id)
+
+    if user is None:
+        raise AppError(
+            message="User not found",
+            code="NOT_FOUND",
+            status_code=404,
+        )
+
+    user.name = user_in.name
+    user.phone = user_in.phone
+
     db.commit()
     db.refresh(user)
 

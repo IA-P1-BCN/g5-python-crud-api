@@ -12,7 +12,7 @@ router = APIRouter(prefix="", tags=["Rooms"])
 SessionDep = Annotated[Session, Depends(get_db)]
 
 
-@router.post("/", response_model=RoomResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=RoomResponse, status_code=status.HTTP_201_CREATED)
 def create_room_endpoint(
     room_in: RoomCreate,
     db: SessionDep
