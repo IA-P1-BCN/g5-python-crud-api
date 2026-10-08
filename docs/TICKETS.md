@@ -18,7 +18,7 @@ Each story has one **Implement ... + tests** ticket: code and tests are done tog
 | Wed 7 - Thu 8 | Bookings (needs the others), integration, bug fixes |
 | Thu 8 - Fri 9 | README, PR `develop` to `main`, demo rehearsal |
 
-## Sprint 1 tickets
+## Sprint 1 tickets back
 
 | Ticket | Title | Epic | User Story | Kind | Size |
 |--------|-------|------|------------|------|------|
@@ -39,11 +39,12 @@ Each story has one **Implement ... + tests** ticket: code and tests are done tog
 | 027 | Implement view bookings + tests | E3 Bookings | US14 | Feature | S |
 | 029 | Implement modify booking (players) + tests | E3 Bookings | US15 | Feature | S |
 | 031 | Implement cancel and confirm booking + tests | E3 Bookings | US16 | Feature | M |
+| 040 | Implement change slot of a booking + tests | E3 Bookings | US17 | Feature | M |
 | 032 | README with setup instructions and Swagger check | E0 Foundation | - | Docs | S |
 | 033 | Release Sprint 1: PR develop to main | E0 Foundation | - | Tech | S |
 | 064 | Front setup: Vite, Tailwind, providers, routes, Docker with Nginx (`front`) | E0 Foundation | - | Tech | M |
 
-## Sprint 2 tickets (Tue Oct 13 - Mon Oct 19, presentation Oct 20)
+## Sprint 2 tickets back (Tue Oct 13 - Mon Oct 19, presentation Oct 20)
 
 | Ticket | Title | Epic | User Story | Size |
 |--------|-------|------|------------|------|
@@ -52,7 +53,6 @@ Each story has one **Implement ... + tests** ticket: code and tests are done tog
 | 037 | Implement roles and permissions + tests | E1 Users | US05 | M |
 | 038 | Implement role checks on the existing routes (matrix in BUSINESS_RULES.md) + tests | E1 Users | US05 | M |
 | 039 | Implement own profile with /users/me + tests | E1 Users | US06 | S |
-| 040 | Implement change slot of a booking + tests | E3 Bookings | US17 | M |
 | 041 | Implement today's bookings (staff) + tests | E4 Games | US18 | S |
 | 042 | Implement start game + tests | E4 Games | US19 | S |
 | 043 | Implement finish game + tests | E4 Games | US20 | S |
@@ -64,6 +64,17 @@ Each story has one **Implement ... + tests** ticket: code and tests are done tog
 | 049 | Implement page/size and filters on the bookings and time slots lists + tests | E5 Admin | US25 | M |
 | 050 | Retrospective, final ER and documentation review | E0 Foundation | - | M |
 | 051 | Release Sprint 2: PR develop to main | E0 Foundation | - | S |
+| 052 | Add IN_PROGRESS / COMPLETED booking statuses and central transition table | E4 Games | US19 | M |
+| 053 | Bootstrap the first admin (seed script or ADMIN_EMAILS) | E1 Users | US05 | S |
+| 054 | Set up Supabase project: Google provider, JWT secret, env vars | E1 Users | US04 | S |
+| 056 | Extend room with catalog fields (slug, genre, min players, difficulty, hook, story, audience) | E2 Rooms & Slots | US10 | M |
+| 057 | Implement reactivate room (admin) + tests | E2 Rooms & Slots | US09 | S |
+| 058 | Implement bulk generation of time slots for a room (admin) + tests | E2 Rooms & Slots | US11 | M |
+| 059 | Expose slot state (free / taken / blocked / past) and day board across rooms + tests | E2 Rooms & Slots | US12 | M |
+| 060 | Enrich booking responses (room, slot, user, result, can_modify) + tests | E3 Bookings | US14 | M |
+| 061 | Implement personal stats (games played, escaped, best time) + tests | E4 Games | US22 | S |
+| 062 | Expose room success rate in room responses + tests | E4 Games | US22 | S |
+| 063 | Demo seed: 4 rooms, slots, users and sample bookings | E0 Foundation | - | M |
 
 ## Front tickets (Sprint 2, label `front`)
 
