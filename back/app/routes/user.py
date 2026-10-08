@@ -29,6 +29,9 @@ def create_user_endpoint(
     response_model=list[UserResponse],
     status_code=status.HTTP_200_OK,
     summary="List users",
+    responses={
+        200: {"description": "Users retrieved successfully"},
+    },
 )
 def list_users_endpoint(
     db: SessionDep,
