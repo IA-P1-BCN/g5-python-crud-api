@@ -36,7 +36,9 @@ docs(api): document room endpoints
 
 Code and its tests can be in the same commit or in two, as you prefer.
 
-## Workflow per ticket
+## Workflow per ticket - back
+
+For tickets in `back/`. Front tickets (`front/`) follow the next section instead.
 
 1. `git checkout develop && git pull && git checkout -b feat/<ticket>-<desc>`
 2. Write the code and its tests together: one test per acceptance criterion of the User Story.
@@ -44,6 +46,8 @@ Code and its tests can be in the same commit or in two, as you prefer.
 4. Refactor if needed, tests still green.
 5. `ruff check . && ruff format .`
 6. Push, open PR **to `develop`**, link the issue (`Closes #n`).
+
+Front equivalent of steps 3 and 5: see "Workflow per ticket - front" below (`docker compose run --rm front-tools`).
 
 ## Workflow per ticket - front
 
