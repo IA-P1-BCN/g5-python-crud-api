@@ -44,39 +44,85 @@ The frontend is a separate client in `front/` that only uses this API over HTTP 
 
 React client (Vite, JavaScript), served by Nginx in Docker. It never shares code with the back: the contract is `API_CONTRACT.md`. Stack: `STACK.md`.
 
-### Structure: one folder per feature
+### Structure
 
 ```
 front/
-  Dockerfile  nginx.conf        # Node build, then Nginx: SPA fallback + /api proxy to the API
+  Dockerfile                 # Node build, then Nginx
+  nginx.conf                 # SPA fallback + /api proxy to the API
+  package.json
+  vite.config.js             # @ alias, /api dev proxy, Vitest config
   src/
-    main.jsx
-    app/        # wiring only: App, providers (QueryClient + Router), routes, layout. No business logic
-    features/   # one self-contained folder per feature
-      rooms/ corridor/ booking/ my-bookings/ auth/ profile/
-      staff/ admin-rooms/ admin-users/ admin-stats/
-    shared/     # reusable, knows no feature: api (Axios client, error mapping), hooks, lib, ui
-    styles/     # Sass: bespoke effects only (atmosphere, room gate, 3D overlay)
-    i18n/       # es.js composes one namespace per feature (i18n/es/<feature>.js)
-    test/       # setup and MSW handlers (one file per feature)
+    main.jsx                 # entry point
+    app/                     # wiring only, no business logic
+      App.jsx  providers.jsx  routes.jsx  layout/
+    features/                # one self-contained folder per feature (table below)
+    shared/                  # reusable code that knows no feature
+      api/  hooks/  lib/  ui/
+    styles/                  # Sass: bespoke animated effects only
+    i18n/                    # es.js composes i18n/es/<feature>.js
+    test/                    # setup + MSW handlers (one file per feature)
 ```
 
-Inside a feature: `api/` (Axios calls), `hooks/` (TanStack Query), `model/` (pure logic, schemas, mappers), `components/`, `pages/`, `routes.js` (its routes) and `index.js` (its public API).
+**Features** (`src/features/`):
+
+| Folder | Role | Tickets |
+|--------|------|---------|
+| `rooms` | Room catalogue, posters, room detail, entry transitions | 067, 068 |
+| `corridor` | 3D corridor and its no-WebGL fallback | 066 |
+| `booking` | Day picker, slot grid, players dial, checkout, confirmation | 071, 072, 073 |
+| `my-bookings` | Client area: list, modify, cancel, change slot, game history | 074, 075, 076, 083 |
+| `auth` | Google login, `AuthProvider`, `RequireRole` | 077, 078 |
+| `profile` | Own profile (`/users/me`) | 079 |
+| `staff` | Today's games, start, finish, result | 081, 082 |
+| `admin-rooms` | Rooms and time slots management | 069, 070 |
+| `admin-users` | Users list and role change | 080 |
+| `admin-stats` | Statistics, CSV export | 084, 085 |
+
+**Inside a feature:**
+
+```
+<feature>/
+  api/            # Axios calls
+  hooks/          # TanStack Query hooks
+  model/          # pure logic, schemas, mappers, error codes
+  components/     # presentational components
+  pages/          # one component per route
+  routes.js       # the routes of this feature
+  index.js        # public API: the only file other features may import
+```
+
+**Shared** (`src/shared/`):
+
+| Folder | Content |
+|--------|---------|
+| `api/` | The single Axios client, generic error mapping |
+| `hooks/` | `useCountdown`, `useReducedMotion`, `usePagination` |
+| `lib/` | Price and date formatting |
+| `ui/` | Button, Chip, Badge, Skeleton, Toast, Pagination |
 
 ### Rules (enforced by ESLint)
 
-```
-app  ->  features  ->  shared
+```mermaid
+flowchart LR
+    app --> features --> shared
 ```
 
-- `shared` imports no feature and no `app`; a feature never imports `app`.
-- A feature imports another feature **only through its `index.js`** (`@/features/rooms`), never its internals.
-- Imports across folders use the `@` alias (= `src/`); inside a feature use relative paths and never leave the feature with `../`.
-- Each feature owns its routes (`features/<name>/routes.js`); `app/routes.jsx` only composes them. Same for i18n and MSW handlers: one file per feature, so people working on different tickets do not edit the same file.
+| Rule | Why |
+|------|-----|
+| `shared` imports no feature and no `app`; a feature never imports `app` | Dependencies only go one way |
+| A feature imports another feature only through its `index.js` (`@/features/rooms`) | Internals can change without breaking others |
+| Imports across folders use the `@` alias (= `src/`); inside a feature, relative paths that never leave it with `../` | One obvious way to import |
+| Each feature owns its routes, its `i18n/es/<feature>.js` and its `test/mocks/handlers/<feature>.js`; `app/routes.jsx`, `i18n/es.js` and `handlers.js` only compose them | Two tickets never edit the same file |
 
 ### Data flow
 
-`Page -> custom hook (TanStack Query) -> api function -> Axios -> FastAPI`. A **mapper** turns the API response into a view model so the UI never depends on backend field names. Backend error codes (`SLOT_TAKEN`, `TOO_LATE_TO_CANCEL`...) are mapped to Spanish messages in `shared/api/errors.js` and in each feature's `model/errors.js`.
+```mermaid
+flowchart LR
+    Page --> Hook["hook (TanStack Query)"] --> Api["api function"] --> Axios --> FastAPI
+```
+
+A **mapper** turns the API response into a view model, so the UI never depends on backend field names. Backend error codes (`SLOT_TAKEN`, `TOO_LATE_TO_CANCEL`...) are mapped to Spanish messages in `shared/api/errors.js` and in each feature's `model/errors.js`.
 
 | State | Where it lives |
 |-------|----------------|
