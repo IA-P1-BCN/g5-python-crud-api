@@ -321,6 +321,36 @@ docker compose exec api ruff format .
 docker compose exec api ruff format --check .
 ```
 
+## Frontend Development Commands
+
+Lint, formatting and tests for the front run in Docker (Node 22), so everyone gets the
+same result whatever their editor settings. The style lives in the repo:
+`front/.prettierrc`, `.editorconfig`, `front/eslint.config.js` (100 characters per line).
+
+### End of ticket, before the PR
+
+```bash
+docker compose run --rm front-tools
+```
+
+This single command formats the code (Prettier), runs the linter (ESLint) and the tests
+(Vitest). It is the front equivalent of `ruff format` + `ruff check` + `pytest`.
+Commit the files it reformats along with your ticket.
+
+### Other commands
+
+```bash
+docker compose run --rm front-tools npm run format        # format only
+docker compose run --rm front-tools npm run check         # verify only (no changes), as in CI
+```
+
+`docker compose up` does not start `front-tools`: it only runs on demand.
+
+### VS Code
+
+Open the repo and accept the recommended extensions (Prettier, ESLint, Ruff). The shared
+`.vscode/settings.json` formats on save with the project rules.
+
 ## Project Documentation
 
 | Document                                 | Description                            |
