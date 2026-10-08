@@ -375,8 +375,10 @@ A **mapper** turns the API response into a view model, so the UI never depends o
 
 ### Environments
 
-- **Docker:** `docker compose up` starts `api`, `db` and `front` (http://localhost:3000). Nginx proxies `/api/` to the API, so the browser talks to one origin and no CORS setup is needed.
-- **Dev:** `npm run dev` in `front/` (Vite, hot reload) with the proxy `/api` -> `localhost:8000`, same relative URL as in Docker.
+- **Docker, final result:** `docker compose up` starts `api`, `db` and `front` (http://localhost:3000). Nginx proxies `/api/` to the API, so the browser talks to one origin and no CORS setup is needed. No hot reload: it is the production build.
+- **Docker, development:** `docker compose up front-dev` runs the Vite dev server with hot reload (http://localhost:5173). `./front` is mounted in the container, so saving a file updates the browser. The `/api` proxy targets `http://api:8000` (variable `VITE_API_PROXY_TARGET`), and file watching uses polling because Docker bind mounts do not always forward file events.
+- **Healthcheck:** the `api` container checks `/health`; `front` and `front-dev` start only once it answers.
+- **Without Docker:** `npm run dev` in `front/` with the proxy `/api` -> `localhost:8000`, same relative URL as in Docker.
 
 ## Dependencies between resources
 

@@ -66,6 +66,8 @@ Same git flow as above (branch from `develop`, PR to `develop`). Differences:
    It formats the code (Prettier), runs the linter (ESLint) and the tests (Vitest): the front equivalent of `ruff format` + `ruff check` + `pytest`. It rewrites badly formatted files: commit what it changed with your ticket (check `git status`). Variants: `... front-tools npm run format` (format only), `... front-tools npm run check` (verify only, changes nothing).
 6. Open the PR to `develop` and link the issue.
 
+While you code, run `docker compose up front-dev` and open http://localhost:5173: the browser updates each time you save (`api` and `db` start with it). `docker compose up` alone starts the Nginx build on http://localhost:3000, which does not reload.
+
 The style (100 characters per line, no semicolons, single quotes) lives in the repo, so personal editor settings do not matter. VS Code: accept the recommended extensions (Prettier, ESLint, Ruff); the shared `.vscode/settings.json` formats on save.
 
 ## Pull requests
