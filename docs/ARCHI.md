@@ -367,6 +367,8 @@ A **mapper** turns the API response into a view model, so the UI never depends o
 
 `createCorridor(container, { rooms, onEnter })` is plain Three.js and returns `{ dispose }`. The React component only creates it in `useEffect` and calls `dispose()` on cleanup, so the 60 fps loop stays out of React. If WebGL is missing, or on small screens or with reduced motion, the room posters are shown instead, and the booking flow never depends on the 3D.
 
+**Doors come from the data.** The corridor is built from `GET /rooms?status=active`: one door per active room, with its name on the sign. A deactivated room (BR-R3, BR-R4) is not in the list, so it has no door; a room created by the admin (`POST /rooms`) has one the next time the list is loaded (page load or TanStack Query refetch, no real-time push). Visual themes come from the `roomThemes` registry by slug, with a **default theme** for slugs not in it, so a new room never breaks the corridor. Opening `/salas/<slug>` of an inactive room shows "room not found".
+
 ### Access control
 
 `<RequireRole role="staff">` hides routes by role in the UI. The API remains the real authority (`BUSINESS_RULES.md`).
