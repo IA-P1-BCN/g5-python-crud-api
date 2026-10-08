@@ -1,7 +1,14 @@
+import re
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    model_validator,
+)
 
 
 class BookingCreate(BaseModel):
@@ -47,12 +54,29 @@ class RoomInfo(BaseModel):
     capacity: int
     base_price: Decimal
 
+    @computed_field
+    @property
+    def slug(self) -> str:
+        """No slug column yet: derived from the name ('Faro 1923' -> 'faro-1923')."""
+        return re.sub(r"[^a-z0-9]+", "-", self.name.lower()).strip("-")
+
+
+class UserInfo(BaseModel):
+    """User info shown inside a booking detail."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+
 
 class BookingDetail(BookingRead):
-    """Booking with its slot and room, returned by GET /bookings/{id}."""
+    """Booking with slot, room, user and can_modify (GET /bookings and /{id})."""
 
     time_slot: SlotInfo
     room: RoomInfo
+    user: UserInfo
+    result: dict | None = None  # game_results arrives with ticket 044
+    can_modify: bool
 
 
 class BookingUpdate(BaseModel):
