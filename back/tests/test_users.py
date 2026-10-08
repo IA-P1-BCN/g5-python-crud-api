@@ -1,3 +1,4 @@
+from back.app.core.security import create_access_token
 from back.app.models import User
 
 URL = "/api/v1/users"
@@ -116,7 +117,9 @@ def test_create_user_missing_name_returns_422(client):
     assert response.status_code == 422
 
 
-def test_get_user_success(client):
+def test_get_user_success(client, db):
+    auth_id = "google-user-123"
+
     create_response = client.post(
         URL,
         json={
@@ -130,7 +133,18 @@ def test_get_user_success(client):
 
     user_id = create_response.json()["id"]
 
-    response = client.get(f"{URL}/{user_id}")
+    user = db.get(User, user_id)
+    assert user is not None
+
+    user.auth_id = auth_id
+    db.commit()
+
+    token = create_access_token(auth_id)
+
+    response = client.get(
+        f"{URL}/{user_id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
     assert response.status_code == 200
     assert response.json()["id"] == user_id
@@ -139,8 +153,43 @@ def test_get_user_success(client):
     assert response.json()["phone"] == "+34123456789"
 
 
-def test_get_user_not_found_returns_404(client):
-    response = client.get(f"{URL}/999999")
+def test_get_user_without_token_returns_401(client):
+    create_response = client.post(
+        URL,
+        json={
+            "name": "Alice",
+            "email": "alice@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    user_id = create_response.json()["id"]
+
+    response = client.get(f"{URL}/{user_id}")
+
+    assert response.status_code == 401
+
+
+def test_get_user_not_found_returns_404(client, db):
+    auth_id = "google-user-123"
+
+    user = User(
+        auth_id=auth_id,
+        name="Alice",
+        email="alice@example.com",
+        role="client",
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+
+    token = create_access_token(auth_id)
+
+    response = client.get(
+        f"{URL}/999999",
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
     assert response.status_code == 404
     assert response.json() == {

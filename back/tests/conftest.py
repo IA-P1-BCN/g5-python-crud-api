@@ -1,7 +1,10 @@
 import os
 
-# Configuración por defecto para que la app no falle al importar settings
+# Default configuration so the app can import settings during tests
 os.environ.setdefault("DATABASE_URL", "sqlite://")
+os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key")
+os.environ.setdefault("JWT_ALGORITHM", "HS256")
+os.environ.setdefault("JWT_EXPIRE_MINUTES", "60")
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,7 +18,7 @@ from back.app.main import app
 
 @pytest.fixture
 def db():
-    """Base de datos SQLite en memoria, totalmente nueva y aislada para cada test."""
+    """In-memory SQLite database, isolated for each test."""
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -23,6 +26,7 @@ def db():
     )
     Base.metadata.create_all(engine)
     session = sessionmaker(bind=engine, expire_on_commit=False)()
+
     try:
         yield session
     finally:
@@ -32,7 +36,8 @@ def db():
 
 @pytest.fixture
 def client(db):
-    """Cliente HTTP de FastAPI que redirige la base de datos al entorno de pruebas."""
+    """FastAPI test client using the test database."""
+
     def override_get_db():
         yield db
 
