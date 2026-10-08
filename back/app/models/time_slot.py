@@ -5,6 +5,7 @@ from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from back.app.database import Base
+from back.app.models.booking import ACTIVE_STATUSES
 
 if TYPE_CHECKING:
     from back.app.models.booking import Booking
@@ -54,9 +55,6 @@ class TimeSlot(Base):
     @property
     def is_bookable(self) -> bool:
         """BR-S5: available and without active bookings."""
-        # Deferred import: the booking controller imports the models (circular).
-        from back.app.controllers.booking import ACTIVE_STATUSES
-
         if self.status != "available":
             return False
         return not any(b.status in ACTIVE_STATUSES for b in self.bookings)

@@ -243,3 +243,28 @@ def test_update_time_slot_invalid_status(client: TestClient, db: Session):
     response = client.put(f"/api/v1/time-slots/{slots[0].id}", json={"status": "foo"})
 
     assert response.status_code == 422
+
+
+def test_is_bookable_false_with_in_progress_booking():
+    slot = TimeSlot(status="available", bookings=[Booking(status="IN_PROGRESS")])
+
+    assert slot.is_bookable is False
+
+
+def test_create_time_slot_in_the_past(client: TestClient, db: Session):
+    room = Room(name="Past Room", capacity=4, duration=60, base_price=50.00, status="active")
+    db.add(room)
+    db.commit()
+    starts_at = datetime.now(UTC) - timedelta(days=1)
+
+    response = client.post(
+        "/api/v1/time-slots/",
+        json={
+            "room_id": room.id,
+            "starts_at": starts_at.isoformat(),
+            "ends_at": (starts_at + timedelta(hours=1)).isoformat(),
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
