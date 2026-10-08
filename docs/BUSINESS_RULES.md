@@ -43,7 +43,7 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | BR-B4 | `total_price = room.base_price x players` (price per player) **(to validate)** | - |
 | BR-B5 | Statuses in Sprint 1: `PENDING`, `CONFIRMED`, `CANCELLED` | 422 on invalid change |
 | BR-B6 | **Cancel**: only `PENDING`/`CONFIRMED`, and only if the slot starts in **24h or more**. Cancelling frees the slot | 409 |
-| BR-B7 | **Modify**: only `players`, only while `PENDING`/`CONFIRMED` and 24h or more before start. Changing slot comes in Sprint 2 | 409 |
+| BR-B7 | **Modify**: `players` (and slot, see BR-L5), only while `PENDING`/`CONFIRMED` and 24h or more before start | 409 |
 | BR-B8 | Double booking is impossible: DB partial unique index on `bookings(time_slot_id)` where status in (`PENDING`,`CONFIRMED`,`IN_PROGRESS`). `IN_PROGRESS` is introduced in Sprint 2 (BR-G1): the Sprint 1 status CHECK does not accept it yet, but the index already includes it to satisfy this rule | 409 |
 
 ### Cross-cutting (technical)
