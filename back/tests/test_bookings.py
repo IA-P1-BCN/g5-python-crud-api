@@ -543,3 +543,42 @@ def test_update_booking_empty_body_returns_422(client, seed, db):
     response = client.put(f"{URL}/{booking.id}", json={})
 
     assert response.status_code == 422
+
+
+def test_change_slot_concurrent_request_returns_409(client, seed, db, monkeypatch):
+    """BR-B8: the unique index rejects a move that passed the pre-check."""
+    booking = make_booking(db, seed, seed.free_slot)
+    new_slot = add_slot(db, seed.room, LATER)
+
+    def failing_commit():
+        raise IntegrityError("UPDATE", {}, Exception("unique violation"))
+
+    monkeypatch.setattr(db, "commit", failing_commit)
+
+    response = client.put(f"{URL}/{booking.id}", json={"time_slot_id": new_slot.id})
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "SLOT_TAKEN"
+
+
+def test_update_players_only_too_late_returns_409(client, seed, db):
+    """BR-B7: players-only change is also blocked under 24h."""
+    soon_slot = add_slot(db, seed.room, datetime.now(UTC) + timedelta(hours=2))
+    booking = make_booking(db, seed, soon_slot)
+
+    response = client.put(f"{URL}/{booking.id}", json={"players": 3})
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "TOO_LATE_TO_MODIFY"
+
+
+def test_change_slot_to_same_slot_is_a_noop(client, seed, db):
+    """Sending the current time_slot_id changes nothing."""
+    booking = make_booking(db, seed, seed.free_slot)
+
+    response = client.put(
+        f"{URL}/{booking.id}", json={"time_slot_id": seed.free_slot.id}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["time_slot_id"] == seed.free_slot.id

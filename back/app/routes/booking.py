@@ -74,7 +74,8 @@ def get_booking_endpoint(
     description="Changes the number of players and/or moves the booking to "
     "another time slot. total_price is recalculated. Only PENDING or "
     "CONFIRMED bookings, 24h or more before the current slot starts. The new "
-    "slot must be bookable and 24h or more away; the old slot becomes free.",
+    "slot must be bookable and 24h or more away; the old slot becomes free. "
+    "Sending the current time_slot_id changes nothing.",
     responses={
         404: {"description": "NOT_FOUND or SLOT_NOT_FOUND"},
         409: {
