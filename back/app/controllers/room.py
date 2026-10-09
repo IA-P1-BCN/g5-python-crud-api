@@ -210,3 +210,22 @@ def get_room_by_id_or_slug(db: Session, room_id_or_slug: str) -> Room:
             status_code=404,
         )
     return room
+
+
+def activate_room(db: Session, room_id: int) -> Room:
+    room = db.get(Room, room_id)
+    if not room:
+        raise AppError(
+            message="Room not found",
+            code="NOT_FOUND",
+            status_code=404,
+        )
+    # BR-R3: Idempotent activation - if already active, return unchanged
+    if room.status == "active":
+        return room
+
+    room.status = "active"
+    db.commit()
+    db.refresh(room)
+
+    return room

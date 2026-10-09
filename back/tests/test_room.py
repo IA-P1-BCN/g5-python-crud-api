@@ -689,3 +689,59 @@ def test_criterion_4_get_room_by_slug_routing(client):
     data = response.json()
     assert data["slug"] == "faro"
     assert data["name"] == "El Faro"
+
+
+def test_activate_room_success(client):
+    """PUT /api/v1/rooms/{id}/activate sets status=active (200)."""
+    res = client.post(
+        "/api/v1/rooms",
+        json={
+            "name": "Sala para Activar",
+            "capacity": 4,
+            "duration": 60,
+            "base_price": 20.00,
+            "genre": "Terror",
+            "min_players": 2,
+            "difficulty": 3,
+            "hook": "Susto",
+            "story": "Historia",
+            "audience": "General",
+        },
+    )
+    room_id = res.json()["id"]
+    client.put(f"/api/v1/rooms/{room_id}/deactivate")
+
+    activate_res = client.put(f"/api/v1/rooms/{room_id}/activate")
+    assert activate_res.status_code == 200
+    assert activate_res.json()["status"] == "active"
+
+
+def test_activate_room_idempotent(client):
+    """An already active room is returned unchanged (idempotent)."""
+    res = client.post(
+        "/api/v1/rooms",
+        json={
+            "name": "Sala Ya Activa",
+            "capacity": 4,
+            "duration": 60,
+            "base_price": 20.00,
+            "genre": "Aventura",
+            "min_players": 1,
+            "difficulty": 2,
+            "hook": "Hook",
+            "story": "Story",
+            "audience": "General",
+        },
+    )
+    room_id = res.json()["id"]
+
+    activate_res = client.put(f"/api/v1/rooms/{room_id}/activate")
+    assert activate_res.status_code == 200
+    assert activate_res.json()["status"] == "active"
+
+
+def test_activate_room_not_found(client):
+    """Activating an unknown room returns 404 NOT_FOUND."""
+    activate_res = client.put("/api/v1/rooms/99999/activate")
+    assert activate_res.status_code == 404
+    assert activate_res.json()["code"] == "NOT_FOUND"

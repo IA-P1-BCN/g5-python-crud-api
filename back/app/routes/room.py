@@ -70,3 +70,19 @@ def get_room_endpoint(room_id_or_slug: str, db: SessionDep):
         db=db,
         room_id_or_slug=room_id_or_slug,
     )
+
+
+@router.put(
+    "/{room_id}/activate",
+    response_model=RoomResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Activate a room",
+    responses={
+        200: {
+            "description": "Room successfully activated or already active (idempotent)."
+        },
+        404: {"description": "Room not found."},
+    },
+)
+def activate_room_endpoint(room_id: int, db: SessionDep):
+    return room_controller.activate_room(db=db, room_id=room_id)
