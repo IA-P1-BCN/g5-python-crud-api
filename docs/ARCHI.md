@@ -159,7 +159,14 @@ front/
 │   │   │   │   ├── doorMachine.js         # door state machine (pure)
 │   │   │   │   └── doorPlacement.js       # position of each door (pure)
 │   │   │   ├── scene/                     # imperative Three.js, no React
-│   │   │   │   └── createCorridor.js      # returns { dispose }
+│   │   │   │   ├── createCorridor.js      # orchestrator: render loop, returns { dispose }
+│   │   │   │   ├── corridorStructure.js   # floor, walls, fog, exit sign
+│   │   │   │   ├── doorsBuilder.js        # one door + light + sign per room
+│   │   │   │   ├── pointerInput.js        # hover / click / drag on the canvas
+│   │   │   │   ├── cameraRig.js           # camera sway, lean and walk to the chosen door
+│   │   │   │   ├── labelTexture.js        # text drawn on a canvas -> texture
+│   │   │   │   ├── addMesh.js             # mesh helper
+│   │   │   │   └── math.js                # clamp, smoothstep
 │   │   │   └── index.js                   # public API of the feature (CorridorView)
 │   │   ├── my-bookings/
 │   │   │   ├── api/
