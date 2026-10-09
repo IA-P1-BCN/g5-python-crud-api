@@ -33,6 +33,9 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
   - Herramientas de estilo del front (Prettier + ESLint + Vitest) y comando de fin de ticket `docker compose run --rm front-tools`.
   - Documentación del front: tickets 064 a 085, STACK, ARCHI, WORK_SPLIT, CONTRIBUTING, PRD.
 - **Resultado (tarde):**
+*Ramarización de la rama `feature/front-setup` y PR enviada para revisión.
+*Ticket 065 hecho 
+*Rama documentación del front al dia
 - **Bloqueos:**
 
 ---

@@ -1,10 +1,10 @@
 from datetime import UTC, datetime
+
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
-from back.app.controllers.booking import ACTIVE_STATUSES
 from back.app.core.errors import AppError
-from back.app.models.booking import Booking
+from back.app.models.booking import ACTIVE_STATUSES, Booking
 from back.app.models.room import Room
 from back.app.models.time_slot import TimeSlot
 from back.app.schemas.time_slot import TimeSlotCreate, TimeSlotUpdate

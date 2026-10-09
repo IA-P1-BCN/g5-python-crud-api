@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from back.app.core.errors import AppError
 from back.app.models import Booking, TimeSlot, User
+from back.app.models.booking import ACTIVE_STATUSES
 from back.app.schemas.booking import (
     BookingCreate,
     BookingDetail,
@@ -13,7 +14,6 @@ from back.app.schemas.booking import (
     BookingUpdate,
 )
 
-ACTIVE_STATUSES = ("PENDING", "CONFIRMED", "IN_PROGRESS")
 MODIFIABLE_STATUSES = ("PENDING", "CONFIRMED")
 MIN_NOTICE = timedelta(hours=24)
 

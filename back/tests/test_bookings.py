@@ -25,9 +25,16 @@ def seed(db):
 
     user = User(name="Alice", email="alice@test.com")
     inactive_user = User(name="Bob", email="bob@test.com", is_active=False)
-    room = Room(name="Pharaoh", capacity=6, duration=60, base_price=Decimal("20.00"))
+    room = Room(
+        name="Pharaoh",
+        slug="pharaoh",
+        capacity=6,
+        duration=60,
+        base_price=Decimal("20.00"),
+    )
     closed_room = Room(
         name="Closed",
+        slug="closed",
         capacity=4,
         duration=60,
         base_price=Decimal("15.00"),
@@ -416,7 +423,11 @@ def add_slot(db, room, begin, status="available"):
 
 def add_room(db, name, capacity, base_price):
     room = Room(
-        name=name, capacity=capacity, duration=60, base_price=Decimal(base_price)
+        name=name,
+        slug=name.lower().replace(" ", "-"),
+        capacity=capacity,
+        duration=60,
+        base_price=Decimal(base_price),
     )
     db.add(room)
     db.commit()

@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Literal
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -28,3 +29,7 @@ class TimeSlotResponse(TimeSlotBase):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class TimeSlotRead(TimeSlotResponse):
+    is_bookable: bool
