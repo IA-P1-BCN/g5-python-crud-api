@@ -1,1 +1,34 @@
 @import 'tailwindcss';
+
+/* Room themes: --rc = accent, --rd = dark background. Keep in sync with
+   features/rooms/model/roomThemes.js (theme.test.js fails if they differ). */
+:root {
+  --rc: #9aa0a6;
+  --rd: #1b1d20;
+}
+[data-room='relojero'] {
+  --rc: #e0a243;
+  --rd: #2a1b0d;
+}
+[data-room='biblioteca'] {
+  --rc: #4fc48f;
+  --rd: #0c2a20;
+}
+[data-room='faro'] {
+  --rc: #5cc3e6;
+  --rd: #0a2734;
+}
+[data-room='atraco'] {
+  --rc: #ff4560;
+  --rd: #1d0b10;
+}
+[data-room='lab'] {
+  --rc: #9aa0a6;
+  --rd: #1b1d20;
+}
+
+/* Makes the variables usable as Tailwind utilities: text-room, bg-room-dark, border-room... */
+@theme inline {
+  --color-room: var(--rc);
+  --color-room-dark: var(--rd);
+}
