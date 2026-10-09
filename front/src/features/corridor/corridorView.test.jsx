@@ -8,11 +8,16 @@ import CorridorView from './CorridorView.jsx'
 vi.mock('./Corridor.jsx', async () => {
   const { createElement } = await import('react')
   return {
-    default: ({ rooms, onEnter }) =>
+    default: ({ rooms, onEnter, onError }) =>
       createElement(
-        'button',
-        { 'data-testid': 'corridor-3d', onClick: () => onEnter(rooms[0]) },
-        `3D:${rooms.map((r) => r.slug).join(',')}`,
+        'div',
+        null,
+        createElement(
+          'button',
+          { 'data-testid': 'corridor-3d', onClick: () => onEnter(rooms[0]) },
+          `3D:${rooms.map((r) => r.slug).join(',')}`,
+        ),
+        createElement('button', { 'data-testid': 'break-3d', onClick: () => onError(new Error()) }),
       ),
   }
 })
@@ -40,7 +45,27 @@ describe('CorridorView', () => {
     render(<CorridorView rooms={[faro, relojero]} onEnter={() => {}} />)
 
     expect(screen.getByTestId('corridor-3d')).toHaveTextContent('3D:faro,relojero')
-    expect(screen.queryByRole('list')).not.toBeInTheDocument()
+  })
+
+  it('keeps a keyboard and screen-reader path to the rooms next to the 3D corridor', async () => {
+    setEnvironment()
+    const onEnter = vi.fn()
+    render(<CorridorView rooms={[faro]} onEnter={onEnter} />)
+
+    await userEvent.click(screen.getByRole('button', { name: es.rooms.enter('Faro 1923') }))
+
+    expect(screen.getByRole('list', { name: es.rooms.corridorLabel })).toBeInTheDocument()
+    expect(onEnter).toHaveBeenCalledWith(faro)
+  })
+
+  it('drops the 3D corridor and shows the poster grid when the scene fails to start', async () => {
+    setEnvironment()
+    render(<CorridorView rooms={[faro]} onEnter={() => {}} />)
+
+    await userEvent.click(screen.getByTestId('break-3d'))
+
+    expect(screen.queryByTestId('corridor-3d')).not.toBeInTheDocument()
+    expect(screen.getByRole('list', { name: es.rooms.corridorLabel })).toBeInTheDocument()
   })
 
   it.each([

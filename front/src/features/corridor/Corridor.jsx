@@ -2,20 +2,29 @@
 import { useEffect, useRef } from 'react'
 import { createCorridor } from './createCorridor.js'
 
-export default function Corridor({ rooms, onEnter }) {
+export default function Corridor({ rooms, onEnter, onError }) {
   const containerRef = useRef(null)
   const onEnterRef = useRef(onEnter)
+  const onErrorRef = useRef(onError)
 
-  // Keep the latest onEnter without recreating the 3D scene when its identity changes.
+  // Keep the latest callbacks without recreating the 3D scene when their identity changes.
   useEffect(() => {
     onEnterRef.current = onEnter
+    onErrorRef.current = onError
   })
 
   useEffect(() => {
-    const corridor = createCorridor(containerRef.current, {
-      rooms,
-      onEnter: (room) => onEnterRef.current(room),
-    })
+    let corridor
+    try {
+      corridor = createCorridor(containerRef.current, {
+        rooms,
+        onEnter: (room) => onEnterRef.current(room),
+      })
+    } catch (error) {
+      // WebGL can fail even after detection (context limit, blocklisted GPU).
+      onErrorRef.current?.(error)
+      return undefined
+    }
     return () => corridor.dispose()
   }, [rooms])
 

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
@@ -13,23 +13,30 @@ import CorridorSection from './CorridorSection.jsx'
 vi.mock('@/features/corridor', async () => {
   const { createElement } = await import('react')
   return {
-    CorridorView: ({ rooms, onEnter }) =>
-      createElement(
+    CorridorView: ({ rooms, onEnter }) => {
+      seenRooms.add(rooms)
+      return createElement(
         'button',
         {
           'data-accents': rooms.map((r) => r.accent).join(','),
           onClick: () => onEnter(rooms[0]),
         },
         `corridor:${rooms.map((r) => r.slug).join(',')}`,
-      ),
+      )
+    },
   }
 })
+
+const seenRooms = new Set()
 
 const respondWith = (body, status = 200) =>
   server.use(http.get('/api/v1/rooms', () => HttpResponse.json(body, { status })))
 
+let client
+
 function renderSection(onEnter = () => {}) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  seenRooms.clear()
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
       <CorridorSection onEnter={onEnter} />
@@ -99,5 +106,18 @@ describe('CorridorSection', () => {
     renderSection()
 
     expect(await screen.findByText(es.rooms.empty)).toBeInTheDocument()
+  })
+
+  it('keeps the same rooms when a refetch changes only fields the scene does not use', async () => {
+    respondWith([roomDto({ id: 1, slug: 'faro', story: 'one' })])
+    renderSection()
+    await screen.findByRole('button', { name: 'corridor:faro' })
+
+    respondWith([roomDto({ id: 1, slug: 'faro', story: 'two' })])
+    await act(() => client.refetchQueries({ queryKey: ['rooms'] }))
+    expect(client.getQueryData(['rooms', 'active'])[0].story).toBe('two')
+
+    await waitFor(() => expect(client.getQueryState(['rooms', 'active']).fetchStatus).toBe('idle'))
+    expect(seenRooms.size).toBe(1)
   })
 })

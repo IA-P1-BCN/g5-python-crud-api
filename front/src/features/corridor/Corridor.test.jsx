@@ -69,4 +69,16 @@ describe('Corridor', () => {
     expect(first).not.toHaveBeenCalled()
     expect(second).toHaveBeenCalledWith(faro)
   })
+
+  it('reports a failure to build the scene instead of throwing', () => {
+    const failure = new Error('Error creating WebGL context')
+    createCorridor.mockImplementation(() => {
+      throw failure
+    })
+    const onError = vi.fn()
+
+    render(<Corridor rooms={[faro]} onEnter={() => {}} onError={onError} />)
+
+    expect(onError).toHaveBeenCalledWith(failure)
+  })
 })

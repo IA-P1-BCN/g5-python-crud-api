@@ -166,9 +166,11 @@ export function createCorridor(container, { rooms, onEnter }) {
     dragDistance = 0
     canvas.setPointerCapture(e.pointerId)
   })
-  canvas.addEventListener('pointerup', () => {
+  const endDrag = () => {
     dragStart = null
-  })
+  }
+  canvas.addEventListener('pointerup', endDrag)
+  canvas.addEventListener('pointercancel', endDrag) // a touch scroll cancels the pointer
   canvas.addEventListener('pointermove', (e) => {
     setPointer(e)
     mouseX = mouse.x

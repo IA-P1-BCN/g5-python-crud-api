@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMediaQuery } from '@/shared/hooks/useMediaQuery.js'
 import { useReducedMotion } from '@/shared/hooks/useReducedMotion.js'
 import Corridor from './Corridor.jsx'
@@ -13,11 +14,19 @@ export default function CorridorView({ rooms, onEnter }) {
   const reducedMotion = useReducedMotion()
   const smallScreen = useMediaQuery(SMALL_SCREEN_QUERY)
 
-  const mode = getCorridorMode({ hasWebGL, reducedMotion, smallScreen })
+  const [sceneFailed, setSceneFailed] = useState(false)
 
-  return mode === '3d' ? (
-    <Corridor rooms={rooms} onEnter={onEnter} />
-  ) : (
-    <CorridorFallback rooms={rooms} onEnter={onEnter} />
+  const mode = getCorridorMode({ hasWebGL: hasWebGL && !sceneFailed, reducedMotion, smallScreen })
+
+  if (mode !== '3d') return <CorridorFallback rooms={rooms} onEnter={onEnter} />
+
+  // The canvas is not operable by keyboard or screen reader: the poster grid stays next to it, hidden.
+  return (
+    <>
+      <Corridor rooms={rooms} onEnter={onEnter} onError={() => setSceneFailed(true)} />
+      <div className="sr-only">
+        <CorridorFallback rooms={rooms} onEnter={onEnter} />
+      </div>
+    </>
   )
 }
