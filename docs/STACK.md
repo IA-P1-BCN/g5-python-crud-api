@@ -28,7 +28,9 @@ React client in `front/`, JavaScript (no TypeScript: the team's language; data i
 | Server data | TanStack Query + Axios | One Axios instance (`/api/v1`, JWT interceptor from Sprint 2); cache and invalidation after a booking |
 | Client state | Zustand (booking draft), Context (logged-in user), URL (navigation) | Each kind of state has one home |
 | Forms | React Hook Form + Zod | Zod schemas also give the validation messages |
-| Styling | Tailwind CSS 4 + Sass (SCSS) | Tailwind for layout in the JSX; room themes are CSS variables switched by `data-room`; Sass only for bespoke animated effects. No MUI |
+| Styling | Tailwind CSS 4 + Sass (SCSS) | Tailwind for layout in the JSX; design tokens in `@theme` (see `DESIGN.md`); room themes are CSS variables switched by `data-room`; Sass only for bespoke animated effects. No MUI |
+| Fonts | `@fontsource` (self-hosted) | Big Shoulders Display, Hanken Grotesk and Share Tech Mono, bundled by Vite: no request to Google, works offline |
+| UI primitives | shadcn/ui (Dialog, Select) on Radix | Copied into `shared/ui` as JavaScript and themed with our tokens; accessible keyboard and focus handling |
 | 3D | Three.js 0.128 (pinned) | The corridor is a plain JS module wrapped by one React component, with a poster-grid fallback when WebGL is missing |
 | Texts | `i18n/es/<feature>.js` | All user-facing text is Spanish, one namespace per feature |
 | Auth (Sprint 2) | Supabase JS | Google login; the JWT is sent to the API |
@@ -37,7 +39,7 @@ React client in `front/`, JavaScript (no TypeScript: the team's language; data i
 | Format | Prettier (+ Tailwind class sorting) | 100 characters per line, no semicolons, single quotes |
 | Container | Docker: Node build, then Nginx | Nginx serves `dist/` and proxies `/api/` to the API (no CORS) |
 
-Not installed yet: `@supabase/supabase-js` (ticket 077) and shadcn/ui primitives for the back-office tables and dialogs (decided with ticket 065).
+Not installed yet: `@supabase/supabase-js` (ticket 077). More shadcn/ui primitives are added when a screen needs them (`DESIGN.md`).
 
 Known limit: `eslint-plugin-react` and `eslint-plugin-jsx-a11y` do not support ESLint 10 yet, so they are not installed. Rules of hooks and Fast Refresh are covered.
 

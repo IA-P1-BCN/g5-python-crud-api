@@ -1,0 +1,50 @@
+# Design system (front)
+
+Source of truth: the mockup `mockups/F-inmersivo.html` and `.css`. Ticket 086 (#150) turned it into tokens and shared components. Rule for everyone: **use the tokens, never the default Tailwind palette** (`bg-zinc-700`, `text-red-300`...). `shared/ui/tokensOnly.test.js` fails if a shared component does.
+
+## Tokens (`front/src/index.css`, block `@theme`)
+
+| Group | Tokens | Use |
+|---|---|---|
+| Surfaces and text | `bg`, `surface`, `surface-2`, `line`, `text`, `muted` | `bg-surface`, `text-muted`, `border-line` |
+| Primary action | `exit` (green), `on-exit` (text on it) | CTA button, selected slot |
+| Booking states | `pending`, `confirmed`, `in-progress`, `done`, `cancelled` | `Badge` tones |
+| Feedback | `error` | `Alert`, `Field`, `Toast` |
+| Shapes | `radius-xs` 4, `sm` 6, `md` 8, `lg` 10, `pill` | `rounded-sm`, `rounded-lg`, `rounded-pill` |
+| Glow | `shadow-glow` | CTA |
+| Fonts | `font-display`, `font-sans`, `font-mono` | titles, body (default), codes and labels |
+| Breakpoint | `md` = 800px | `md:flex-row` |
+| Room theme | `room`, `room-dark` (from `data-room`) | accents inside a room |
+
+## Page defaults and type scale
+
+- `body` already has the dark background, `text` colour and `font-sans` at 17px/1.55: a page needs no setup.
+- Headings and labels use utilities, not hand-made font classes: `heading-hero` (display, 38-72px), `heading-title` (display, 28px) and `label-caps` (11px, uppercase). `dimmed` greys out an inactive or full room (`opacity .38`, `grayscale .7`). Body text is the default; code and numbers use `font-mono`.
+- The `md:` breakpoint is 800px (the only one in the mockup): below it, the mobile layout.
+
+`contrast.test.js` checks every text/background pair is at least 4.5:1 (WCAG AA). When you change a colour, that test tells you if it is still readable.
+
+## Fonts
+
+Self-hosted with `@fontsource`, imported in `main.jsx`. Import without `.css` (`@fontsource/big-shoulders-display/latin-700`): some packages do not export the `.css` form and the build breaks. The 3D door signs (`labelTexture.js`) use the display font, but a canvas does not trigger font loading: if a sign shows Impact, the font was not ready yet.
+
+## Components (`front/src/shared/ui`)
+
+| Component | Notes |
+|---|---|
+| `Button` | `primary` is the CTA (green, glow); `room` uses the room colour; `secondary`, `ghost`; `loading` blocks double submits |
+| `Badge` | tones `neutral`, the five booking states and `error` |
+| `Alert` | tones `error` (`role="alert"`), `success`, `info` (`role="status"`) |
+| `Field` | label + input + error for React Hook Form: `<Field label="Email" error={errors.email?.message} {...register('email')} />` |
+| `Spinner`, `EmptyState` | `Spinner label={es.common.loading}` is a status; without a label it is decoration (a loading `Button` shows one). `EmptyState` takes `title`, `description` and an `action` |
+| `Toast`, `Chip`, `Pagination`, `Skeleton` | use the tokens; `Skeleton` respects `prefers-reduced-motion` |
+| `dialog`, `select` | shadcn/ui, lowercase file names so `shadcn add` can update them |
+
+## Adding a shadcn/ui component
+
+1. From `front/`, in Docker: `npx shadcn@latest add <name>` (`components.json` is already set up for JavaScript).
+2. Fix what the CLI gets wrong here: `import { cn } from "cn"` must be `../lib/cn.js` (and remove the fake `cn` package from `package.json`); use our `Button` (default export, variants above) instead of its own; remove `import * as React` if unused; texts come from `i18n`, not hardcoded English.
+3. The shadcn class names (`bg-background`, `text-muted-foreground`, `ring-ring`...) already point to our tokens in the second `@theme inline` block of `index.css`.
+4. Write a render test next to it, like `dialog.test.jsx`.
+
+Not built yet (the mockup has none; add them with the first screen that needs them, with shadcn): textarea, checkbox/switch, radio.
