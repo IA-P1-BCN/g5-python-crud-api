@@ -1,14 +1,16 @@
 import { cva } from 'class-variance-authority'
 import { cn } from '../lib/cn.js'
+import Spinner from './Spinner.jsx'
 
 const buttonStyles = cva(
-  'inline-flex min-h-11 items-center justify-center rounded-lg px-4 font-medium transition ' +
+  'inline-flex min-h-11 items-center justify-center rounded-sm px-5 font-bold tracking-wide transition ' +
     'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-room ' +
     'disabled:cursor-not-allowed disabled:opacity-50',
   {
     variants: {
       variant: {
-        primary: 'bg-room text-black hover:brightness-110',
+        primary: 'bg-exit text-on-exit shadow-glow hover:brightness-110',
+        room: 'bg-room text-black hover:brightness-110',
         secondary: 'border border-room text-room hover:bg-room-dark',
         ghost: 'text-room hover:bg-room-dark',
       },
@@ -24,6 +26,7 @@ export default function Button({
   disabled,
   className,
   type = 'button',
+  children,
   ...props
 }) {
   return (
@@ -33,6 +36,9 @@ export default function Button({
       aria-busy={loading || undefined}
       className={cn(buttonStyles({ variant }), className)}
       {...props}
-    />
+    >
+      {loading && <Spinner className="mr-2" />}
+      {children}
+    </button>
   )
 }
