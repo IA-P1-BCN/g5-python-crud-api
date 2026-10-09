@@ -1,56 +1,17 @@
 from datetime import UTC, datetime, timedelta
 
-import jwt
 import pytest
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
-from back.app.config.settings import settings
 from back.app.dependencies.auth import get_current_user
 from back.app.models import User
-
-TEST_SUPABASE_JWT_SECRET = "test-supabase-jwt-secret-32-bytes!"
-
-
-@pytest.fixture(autouse=True)
-def use_test_supabase_secret(monkeypatch):
-    monkeypatch.setattr(
-        settings,
-        "supabase_jwt_secret",
-        TEST_SUPABASE_JWT_SECRET,
-    )
 
 
 def make_credentials(token: str) -> HTTPAuthorizationCredentials:
     return HTTPAuthorizationCredentials(
         scheme="Bearer",
         credentials=token,
-    )
-
-
-def make_token(
-    subject: str | None = "google-user-123",
-    *,
-    expires_at: datetime | None = None,
-    audience: str | None = "authenticated",
-) -> str:
-    payload = {}
-
-    if subject is not None:
-        payload["sub"] = subject
-
-    if expires_at is not None:
-        payload["exp"] = expires_at
-    else:
-        payload["exp"] = datetime.now(UTC) + timedelta(minutes=60)
-
-    if audience is not None:
-        payload["aud"] = audience
-
-    return jwt.encode(
-        payload,
-        TEST_SUPABASE_JWT_SECRET,
-        algorithm="HS256",
     )
 
 
@@ -70,66 +31,63 @@ def test_get_current_user_invalid_token(db):
     assert exc_info.value.status_code == 401
 
 
-def test_get_current_user_expired_token(db):
+def test_get_current_user_expired_token(make_token, db):
     token = make_token(
         expires_at=datetime.now(UTC) - timedelta(minutes=1),
     )
-    credentials = make_credentials(token)
 
     with pytest.raises(HTTPException) as exc_info:
-        get_current_user(credentials=credentials, db=db)
+        get_current_user(credentials=make_credentials(token), db=db)
 
     assert exc_info.value.status_code == 401
 
 
-def test_get_current_user_missing_exp(db):
-    token = jwt.encode(
-        {
-            "sub": "google-user-123",
-            "aud": "authenticated",
-        },
-        TEST_SUPABASE_JWT_SECRET,
-        algorithm="HS256",
-    )
-    credentials = make_credentials(token)
+def test_get_current_user_missing_exp(make_token, db):
+    token = make_token(include_exp=False)
 
     with pytest.raises(HTTPException) as exc_info:
-        get_current_user(credentials=credentials, db=db)
+        get_current_user(credentials=make_credentials(token), db=db)
 
     assert exc_info.value.status_code == 401
 
 
-def test_get_current_user_missing_sub(db):
-    token = make_token(subject=None)
-    credentials = make_credentials(token)
+def test_get_current_user_missing_sub(make_token, db):
+    token = make_token(include_subject=False)
 
     with pytest.raises(HTTPException) as exc_info:
-        get_current_user(credentials=credentials, db=db)
+        get_current_user(credentials=make_credentials(token), db=db)
 
     assert exc_info.value.status_code == 401
 
 
-def test_get_current_user_invalid_audience(db):
+def test_get_current_user_invalid_audience(make_token, db):
     token = make_token(audience="wrong-audience")
-    credentials = make_credentials(token)
 
     with pytest.raises(HTTPException) as exc_info:
-        get_current_user(credentials=credentials, db=db)
+        get_current_user(credentials=make_credentials(token), db=db)
 
     assert exc_info.value.status_code == 401
 
 
-def test_get_current_user_unknown_user(db):
+def test_get_current_user_invalid_issuer(make_token, db):
+    token = make_token(issuer="https://attacker.example/auth/v1")
+
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_user(credentials=make_credentials(token), db=db)
+
+    assert exc_info.value.status_code == 401
+
+
+def test_get_current_user_unknown_user(make_token, db):
     token = make_token("google-user-123")
-    credentials = make_credentials(token)
 
     with pytest.raises(HTTPException) as exc_info:
-        get_current_user(credentials=credentials, db=db)
+        get_current_user(credentials=make_credentials(token), db=db)
 
     assert exc_info.value.status_code == 401
 
 
-def test_get_current_user_inactive_user(db):
+def test_get_current_user_inactive_user(make_token, db):
     user = User(
         auth_id="google-user-123",
         name="Inactive User",
@@ -142,15 +100,14 @@ def test_get_current_user_inactive_user(db):
     db.refresh(user)
 
     token = make_token(user.auth_id)
-    credentials = make_credentials(token)
 
     with pytest.raises(HTTPException) as exc_info:
-        get_current_user(credentials=credentials, db=db)
+        get_current_user(credentials=make_credentials(token), db=db)
 
     assert exc_info.value.status_code == 401
 
 
-def test_get_current_user_valid_token(db):
+def test_get_current_user_valid_token(make_token, db):
     user = User(
         auth_id="google-user-123",
         name="Test User",
@@ -163,11 +120,42 @@ def test_get_current_user_valid_token(db):
     db.refresh(user)
 
     token = make_token(user.auth_id)
-    credentials = make_credentials(token)
-
-    current_user = get_current_user(credentials=credentials, db=db)
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
 
     assert current_user.id == user.id
     assert current_user.auth_id == "google-user-123"
     assert current_user.email == "test@example.com"
     assert current_user.is_active is True
+
+
+def test_get_current_user_rejects_unknown_kid(make_token, db):
+    token = make_token(kid="unknown-key-id")
+
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_user(credentials=make_credentials(token), db=db)
+
+    assert exc_info.value.status_code == 401
+
+
+def test_get_current_user_rejects_wrong_signature(make_token, db):
+    from cryptography.hazmat.primitives.asymmetric import ec
+
+    wrong_private_key = ec.generate_private_key(ec.SECP256R1())
+    token = make_token(private_key=wrong_private_key)
+
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_user(credentials=make_credentials(token), db=db)
+
+    assert exc_info.value.status_code == 401
+
+
+def test_get_current_user_rejects_hs256(make_token, db):
+    token = make_token(algorithm="HS256")
+
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_user(credentials=make_credentials(token), db=db)
+
+    assert exc_info.value.status_code == 401

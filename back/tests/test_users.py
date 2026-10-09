@@ -1,41 +1,8 @@
 from datetime import UTC, datetime, timedelta
 
-import jwt
-import pytest
-
-from back.app.config.settings import settings
 from back.app.models import User
 
 URL = "/api/v1/users"
-TEST_SUPABASE_JWT_SECRET = "test-supabase-jwt-secret-32-bytes!"
-
-
-@pytest.fixture(autouse=True)
-def use_test_supabase_secret(monkeypatch):
-    monkeypatch.setattr(
-        settings,
-        "supabase_jwt_secret",
-        TEST_SUPABASE_JWT_SECRET,
-    )
-
-
-def make_token(
-    subject: str,
-    *,
-    expires_at: datetime | None = None,
-    audience: str = "authenticated",
-) -> str:
-    payload = {
-        "sub": subject,
-        "exp": expires_at or datetime.now(UTC) + timedelta(minutes=60),
-        "aud": audience,
-    }
-
-    return jwt.encode(
-        payload,
-        TEST_SUPABASE_JWT_SECRET,
-        algorithm="HS256",
-    )
 
 
 def test_create_user_success(client, db):
@@ -104,13 +71,9 @@ def test_create_user_email_is_normalized(client, db):
     )
 
     assert first_response.status_code == 201
-
-    data = first_response.json()
-
-    assert data["email"] == "alice@example.com"
+    assert first_response.json()["email"] == "alice@example.com"
 
     user = db.query(User).one()
-
     assert user.email == "alice@example.com"
 
     second_response = client.post(
@@ -151,7 +114,7 @@ def test_create_user_missing_name_returns_422(client):
     assert response.status_code == 422
 
 
-def test_get_user_success(client, db):
+def test_get_user_success(client, db, make_token):
     auth_id = "google-user-123"
 
     create_response = client.post(
@@ -166,8 +129,8 @@ def test_get_user_success(client, db):
     assert create_response.status_code == 201
 
     user_id = create_response.json()["id"]
-
     user = db.get(User, user_id)
+
     assert user is not None
 
     user.auth_id = auth_id
@@ -197,7 +160,6 @@ def test_get_user_without_token_returns_401(client):
     )
 
     assert create_response.status_code == 201
-
     user_id = create_response.json()["id"]
 
     response = client.get(f"{URL}/{user_id}")
@@ -222,7 +184,7 @@ def test_get_user_invalid_token_returns_401(client):
     }
 
 
-def test_get_user_expired_token_returns_401(client):
+def test_get_user_expired_token_returns_401(client, make_token):
     token = make_token(
         "google-user-123",
         expires_at=datetime.now(UTC) - timedelta(minutes=1),
@@ -240,7 +202,7 @@ def test_get_user_expired_token_returns_401(client):
     }
 
 
-def test_get_user_invalid_audience_returns_401(client):
+def test_get_user_invalid_audience_returns_401(client, make_token):
     token = make_token(
         "google-user-123",
         audience="wrong-audience",
@@ -258,7 +220,7 @@ def test_get_user_invalid_audience_returns_401(client):
     }
 
 
-def test_get_user_not_found_returns_404(client, db):
+def test_get_user_not_found_returns_404(client, db, make_token):
     auth_id = "google-user-123"
 
     user = User(
@@ -296,7 +258,6 @@ def test_update_user_success(client, db):
     )
 
     assert create_response.status_code == 201
-
     user_id = create_response.json()["id"]
 
     response = client.put(
@@ -334,7 +295,6 @@ def test_update_user_invalid_data_returns_422(client):
     )
 
     assert create_response.status_code == 201
-
     user_id = create_response.json()["id"]
 
     response = client.put(
@@ -359,7 +319,6 @@ def test_update_user_rejects_email_change(client):
     )
 
     assert create_response.status_code == 201
-
     user_id = create_response.json()["id"]
 
     response = client.put(
@@ -470,7 +429,6 @@ def test_deactivate_user(client, db):
     )
 
     assert create_response.status_code == 201
-
     user_id = create_response.json()["id"]
 
     response = client.put(f"{URL}/{user_id}/deactivate")
@@ -498,7 +456,6 @@ def test_deactivate_user_is_idempotent(client, db):
     )
 
     assert create_response.status_code == 201
-
     user_id = create_response.json()["id"]
 
     first_response = client.put(f"{URL}/{user_id}/deactivate")
