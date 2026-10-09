@@ -48,3 +48,9 @@ Self-hosted with `@fontsource`, imported in `main.jsx`. Import without `.css` (`
 4. Write a render test next to it, like `dialog.test.jsx`.
 
 Not built yet (the mockup has none; add them with the first screen that needs them, with shadcn): textarea, checkbox/switch, radio.
+
+## Team rules
+
+- **Colours:** only the tokens above (`bg-surface`, `text-muted`, `border-line`...), never the Tailwind palette (`bg-zinc-700`) or arbitrary values (`text-[#fff]`). `src/styles/tokensOnly.test.js` fails on every file under `src/`. No `dark:` variants: the site is always dark.
+- **Components:** use the ones in `shared/ui` before writing your own. If your screen needs a new generic one, add it there with its test.
+- **Texts:** visible texts come from `i18n/es/<feature>.js` (`es.<feature>.key`), never hard-coded in JSX. Generic ones go in `es.common`.
