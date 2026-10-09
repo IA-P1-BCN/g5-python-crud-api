@@ -17,6 +17,10 @@
   --color-exit: #3dff8f;
   --color-on-exit: #04120a;
 
+  /* Text on a room accent (bg-room), and the dark scrim behind dialogs */
+  --color-on-room: #000000;
+  --color-scrim: #00000080;
+
   /* Booking states */
   --color-pending: #ffd166;
   --color-confirmed: #3dff8f;
@@ -35,8 +39,8 @@
   --radius-pill: 99px;
   --shadow-glow: 0 0 22px #3dff8f80;
 
-  /* The mockup has one breakpoint: below 800px the layout is the mobile one */
-  --breakpoint-md: 800px;
+  /* The mockup has one breakpoint: below 800px (50rem) the layout is the mobile one */
+  --breakpoint-md: 50rem;
 
   /* Fonts (self-hosted with @fontsource, imported in main.jsx) */
   --font-display: 'Big Shoulders Display', Impact, sans-serif;

@@ -42,3 +42,52 @@ describe('colour contrast (WCAG AA)', () => {
     expect(ratio(a, b)).toBeGreaterThanOrEqual(4.5)
   })
 })
+
+// Pairs that are not plain text-on-background in @theme.
+const hexOf = (value) => value.match(/#[0-9a-f]{6}/i)?.[0]
+const mix = (fg, bg, amount) =>
+  '#' +
+  [1, 3, 5]
+    .map((i) => {
+      const a = parseInt(fg.slice(i, i + 2), 16)
+      const b = parseInt(bg.slice(i, i + 2), 16)
+      return Math.round(a * amount + b * (1 - amount))
+        .toString(16)
+        .padStart(2, '0')
+    })
+    .join('')
+
+describe('colour contrast of derived pairs (WCAG AA)', () => {
+  it('muted text on surface-2 (Select labels, Dialog description)', () => {
+    expect(ratio(colour('muted'), colour('surface-2'))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  // Badge: text-<tone> on bg-<tone>/15 over the surface.
+  it.each(['pending', 'confirmed', 'in-progress', 'done', 'cancelled', 'error'])(
+    'Badge %s text on its 15% tint',
+    (tone) => {
+      const background = mix(colour(tone), colour('surface'), 0.15)
+      expect(ratio(colour(tone), background)).toBeGreaterThanOrEqual(4.5)
+    },
+  )
+
+  // Every room theme (the default one in :root and each [data-room]): --rc accent, --rd dark.
+  const rooms = [
+    ['default', css.match(/:root\s*\{\s*--rc:\s*(#\w+);\s*--rd:\s*(#\w+);/)],
+    ...[...css.matchAll(/\[data-room='(\w+)'\]\s*\{\s*--rc:\s*(#\w+);\s*--rd:\s*(#\w+);/g)].map(
+      (m) => [m[1], [m[0], m[2], m[3]]],
+    ),
+  ]
+
+  it('finds the default theme and the room themes in index.css', () => {
+    expect(rooms.length).toBeGreaterThanOrEqual(2)
+    rooms.forEach(([, match]) => expect(match).not.toBeNull())
+  })
+
+  it.each(rooms)('room %s: on-room text on the accent, accent and text on the dark', (_, match) => {
+    const [, accent, dark] = match
+    expect(ratio(colour('on-room'), hexOf(accent))).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(hexOf(accent), hexOf(dark))).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(colour('text'), hexOf(dark))).toBeGreaterThanOrEqual(4.5)
+  })
+})

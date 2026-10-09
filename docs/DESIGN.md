@@ -50,12 +50,13 @@ The `es.booking.*` and `es.auth.*` keys are examples: add yours to your feature 
 |---|---|---|
 | Surfaces and text | `bg`, `surface`, `surface-2`, `line`, `text`, `muted` | `bg-surface`, `text-muted`, `border-line` |
 | Primary action | `exit` (green), `on-exit` (text on it) | CTA button, selected slot |
+| Room accent text, scrim | `on-room` (black text on `bg-room`), `scrim` (dark layer behind dialogs) | `Button room`, `Chip` selected, `Dialog` overlay |
 | Booking states | `pending`, `confirmed`, `in-progress`, `done`, `cancelled` | `Badge` tones |
 | Feedback | `error` | `Alert`, `Field`, `Toast` |
 | Shapes | `radius-xs` 4, `sm` 6, `md` 8, `lg` 10, `pill` | `rounded-sm`, `rounded-lg`, `rounded-pill` |
 | Glow | `shadow-glow` | CTA |
 | Fonts | `font-display`, `font-sans`, `font-mono` | titles, body (default), codes and labels |
-| Breakpoint | `md` = 800px | `md:flex-row` |
+| Breakpoint | `md` = 800px (written `50rem`) | `md:flex-row` |
 | Room theme | `room`, `room-dark` (from `data-room`) | accents inside a room |
 
 ## Page defaults and type scale
@@ -64,7 +65,7 @@ The `es.booking.*` and `es.auth.*` keys are examples: add yours to your feature 
 - Headings and labels use utilities, not hand-made font classes: `heading-hero` (display, 38-72px), `heading-title` (display, 28px) and `label-caps` (11px, uppercase). `dimmed` greys out an inactive or full room (`opacity .38`, `grayscale .7`). Body text is the default; code and numbers use `font-mono`.
 - The `md:` breakpoint is 800px (the only one in the mockup): below it, the mobile layout.
 
-`contrast.test.js` checks every text/background pair is at least 4.5:1 (WCAG AA). When you change a colour, that test tells you if it is still readable.
+`contrast.test.js` checks the text/background pairs are at least 4.5:1 (WCAG AA): the base ones, the Badge tints, and each room theme (accent, dark, `on-room`). When you change a colour, that test tells you if it is still readable.
 
 ## Fonts
 
@@ -93,6 +94,6 @@ Not built yet (the mockup has none; add them with the first screen that needs th
 
 ## Team rules
 
-- **Colours:** only the tokens above (`bg-surface`, `text-muted`, `border-line`...), never the Tailwind palette (`bg-zinc-700`) or arbitrary values (`text-[#fff]`). `src/styles/tokensOnly.test.js` fails on every file under `src/`. No `dark:` variants: the site is always dark.
+- **Colours:** only the tokens above (`bg-surface`, `text-muted`, `border-line`...), never the Tailwind palette (`bg-zinc-700`), `black`/`white` (`text-white`) or arbitrary values (`text-[#fff]`). `src/styles/tokensOnly.test.js` fails on every file under `src/`. No `dark:` variants: the site is always dark.
 - **Components:** use the ones in `shared/ui` before writing your own. If your screen needs a new generic one, add it there with its test.
 - **Texts:** visible texts come from `i18n/es/<feature>.js` (`es.<feature>.key`), never hard-coded in JSX. Generic ones go in `es.common`.

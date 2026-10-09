@@ -2,6 +2,10 @@ import { readdirSync, readFileSync } from 'node:fs'
 
 // Every component and page must use the design tokens (bg-surface, text-muted, border-error...), never the
 // default Tailwind palette (bg-zinc-700, text-red-300...). See the @theme block in index.css.
+// Pure black and white have no number, so the palette regex below misses them.
+const BLACK_WHITE =
+  /\b(?:bg|text|border|outline|ring|fill|stroke|from|via|to)-(?:black|white)(?![\w-])/
+
 const PALETTE =
   /\b(?:bg|text|border|outline|ring|fill|stroke|from|via|to)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}/
 
@@ -18,6 +22,7 @@ describe('design tokens', () => {
     const source = readFileSync(`src/${file}`, 'utf8')
     expect(source.match(PALETTE)?.[0]).toBeUndefined()
     expect(source.match(ARBITRARY)?.[0]).toBeUndefined()
+    expect(source.match(BLACK_WHITE)?.[0]).toBeUndefined()
   })
 
   // The site is always dark. `dark:` follows the OS setting, so it would style the same

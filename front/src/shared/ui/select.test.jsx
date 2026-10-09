@@ -38,4 +38,11 @@ describe('Select (shadcn)', () => {
     expect(onValueChange).toHaveBeenCalledWith('4')
     expect(screen.getByRole('combobox', { name: 'Jugadores' })).toHaveTextContent('4 jugadores')
   })
+
+  it('has the same 44px touch target as Button and Field', () => {
+    render(<Example />)
+    expect(screen.getByRole('combobox', { name: 'Jugadores' })).toHaveClass(
+      'data-[size=default]:min-h-11',
+    )
+  })
 })

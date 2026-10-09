@@ -10,7 +10,7 @@ const buttonStyles = cva(
     variants: {
       variant: {
         primary: 'bg-exit text-on-exit shadow-glow hover:brightness-110',
-        room: 'bg-room text-black hover:brightness-110',
+        room: 'bg-room text-on-room hover:brightness-110',
         secondary: 'border border-room text-room hover:bg-room-dark',
         ghost: 'text-room hover:bg-room-dark',
       },

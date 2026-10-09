@@ -32,7 +32,7 @@ describe('type scale', () => {
 })
 
 describe('layout', () => {
-  it('the md breakpoint is the 800px of the mockup', () => {
-    expect(block('@theme')).toContain('--breakpoint-md: 800px')
+  it('the md breakpoint is the 800px of the mockup, in rem like the other Tailwind breakpoints', () => {
+    expect(block('@theme')).toContain('--breakpoint-md: 50rem')
   })
 })
