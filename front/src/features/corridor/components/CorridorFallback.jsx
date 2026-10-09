@@ -9,7 +9,7 @@ export default function CorridorFallback({ rooms, onEnter }) {
         <li
           key={room.id}
           data-room={room.slug}
-          className="border-room bg-room-dark flex flex-col gap-3 rounded-xl border p-5 text-white"
+          className="border-room bg-room-dark text-text flex flex-col gap-3 rounded-xl border p-5"
         >
           <span className="text-room text-sm">{room.genre}</span>
           <h2 className="text-xl font-semibold">{room.name}</h2>

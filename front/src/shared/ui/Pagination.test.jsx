@@ -28,16 +28,26 @@ describe('Pagination', () => {
     expect(onPageChange).toHaveBeenNthCalledWith(2, 1)
   })
 
-  it('disables previous on the first page', () => {
-    setup({ page: 1 })
-    expect(screen.getByRole('button', { name: es.common.previous })).toBeDisabled()
-    expect(screen.getByRole('button', { name: es.common.next })).toBeEnabled()
+  it('marks previous as unavailable on the first page and ignores clicks', async () => {
+    const onPageChange = setup({ page: 1 })
+    const previous = screen.getByRole('button', { name: es.common.previous })
+    expect(previous).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByRole('button', { name: es.common.next })).not.toHaveAttribute(
+      'aria-disabled',
+    )
+    await userEvent.click(previous)
+    expect(onPageChange).not.toHaveBeenCalled()
   })
 
-  it('disables next on the last page', () => {
-    setup({ page: 5 })
-    expect(screen.getByRole('button', { name: es.common.next })).toBeDisabled()
-    expect(screen.getByRole('button', { name: es.common.previous })).toBeEnabled()
+  it('marks next as unavailable on the last page and ignores clicks', async () => {
+    const onPageChange = setup({ page: 5 })
+    const next = screen.getByRole('button', { name: es.common.next })
+    expect(next).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByRole('button', { name: es.common.previous })).not.toHaveAttribute(
+      'aria-disabled',
+    )
+    await userEvent.click(next)
+    expect(onPageChange).not.toHaveBeenCalled()
   })
 
   it.each([[0], [20]])('renders nothing when %i items fit in one page', (total) => {

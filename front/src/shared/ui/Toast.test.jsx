@@ -10,7 +10,7 @@ describe('Toast', () => {
   })
 
   it('announces errors immediately with role alert', () => {
-    render(<Toast tone="danger">Ese horario ya está ocupado</Toast>)
+    render(<Toast tone="error">Ese horario ya está ocupado</Toast>)
     expect(screen.getByRole('alert')).toHaveTextContent('Ese horario ya está ocupado')
   })
 

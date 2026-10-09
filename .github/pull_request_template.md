@@ -11,3 +11,4 @@ Closes #
 - [ ] Endpoints documented in Swagger
 - [ ] No secrets committed; new env vars in `.env.example`
 - [ ] Commits follow Conventional Commits
+- [ ] Front: only design tokens and `shared/ui` components (`docs/DESIGN.md`), texts in `i18n/es/`
