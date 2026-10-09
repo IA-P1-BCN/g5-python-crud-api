@@ -55,10 +55,10 @@ def _ensure_slug_is_available(
 
 
 def create_room(db: Session, room_in: RoomCreate) -> Room:
-    # BR-R1: validated here, like on update, so both return the same error shape.
+    # BR-R7: validated here, like on update, so both return the same error shape.
     if room_in.min_players > room_in.capacity:
         raise AppError(
-            message="BR-R1: min_players must be lower than or equal to capacity",
+            message="BR-R7: min_players must be lower than or equal to capacity",
             code="VALIDATION_ERROR",
             status_code=422,
         )
@@ -123,12 +123,12 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
     if "name" in update_data and update_data["name"] != room.name:
         _ensure_name_is_available(db, update_data["name"], room_id=room_id)
 
-    # BR-R1: validate against the effective room state (stored + supplied).
+    # BR-R7: validate against the effective room state (stored + supplied).
     effective_capacity = update_data.get("capacity", room.capacity)
     effective_min_players = update_data.get("min_players", room.min_players)
     if effective_min_players > effective_capacity:
         raise AppError(
-            message="BR-R1: min_players must be lower than or equal to capacity",
+            message="BR-R7: min_players must be lower than or equal to capacity",
             code="VALIDATION_ERROR",
             status_code=422,
         )

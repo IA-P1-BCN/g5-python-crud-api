@@ -10,7 +10,14 @@ from back.app.models.user import User
 
 
 def test_create_time_slot_success(client: TestClient, db: Session):
-    room = Room(name="Test Room", capacity=4, duration=60, base_price=50.00, slug="test-room", status="active")
+    room = Room(
+        name="Test Room",
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug="test-room",
+        status="active",
+    )
     db.add(room)
     db.commit()
     db.refresh(room)
@@ -36,7 +43,14 @@ def test_create_time_slot_success(client: TestClient, db: Session):
 
 
 def test_create_time_slot_room_inactive(client: TestClient, db: Session):
-    room = Room(name="Inactive Room", capacity=4, duration=60, base_price=50.00, slug="inactive-room", status="inactive")
+    room = Room(
+        name="Inactive Room",
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug="inactive-room",
+        status="inactive",
+    )
     db.add(room)
     db.commit()
     db.refresh(room)
@@ -59,7 +73,14 @@ def test_create_time_slot_room_inactive(client: TestClient, db: Session):
 
 
 def test_create_time_slot_overlap(client: TestClient, db: Session):
-    room = Room(name="Overlap Room", capacity=4, duration=60, base_price=50.00, slug="overlap-room", status="active")
+    room = Room(
+        name="Overlap Room",
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug="overlap-room",
+        status="active",
+    )
     db.add(room)
     db.commit()
     db.refresh(room)
@@ -94,14 +115,23 @@ def test_create_time_slot_overlap(client: TestClient, db: Session):
 
 
 def test_update_time_slot_success(client: TestClient, db: Session):
-    room = Room(name="Update Room", capacity=4, duration=60, base_price=50.00, slug="update-room", status="active")
+    room = Room(
+        name="Update Room",
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug="update-room",
+        status="active",
+    )
     db.add(room)
     db.commit()
     db.refresh(room)
 
     starts_at = datetime.now(UTC) + timedelta(days=1)
     ends_at = starts_at + timedelta(hours=1)
-    slot = TimeSlot(room_id=room.id, starts_at=starts_at, ends_at=ends_at, status="available")
+    slot = TimeSlot(
+        room_id=room.id, starts_at=starts_at, ends_at=ends_at, status="available"
+    )
     db.add(slot)
     db.commit()
     db.refresh(slot)
@@ -118,7 +148,14 @@ def test_update_time_slot_success(client: TestClient, db: Session):
 
 
 def test_delete_time_slot_with_active_booking(client: TestClient, db: Session):
-    room = Room(name="Booking Room", capacity=4, duration=60, base_price=50.00, slug="booking-room", status="active")
+    room = Room(
+        name="Booking Room",
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug="booking-room",
+        status="active",
+    )
     db.add(room)
     db.commit()
     db.refresh(room)
@@ -131,12 +168,20 @@ def test_delete_time_slot_with_active_booking(client: TestClient, db: Session):
 
     starts_at = datetime.now(UTC) + timedelta(days=1)
     ends_at = starts_at + timedelta(hours=1)
-    slot = TimeSlot(room_id=room.id, starts_at=starts_at, ends_at=ends_at, status="available")
+    slot = TimeSlot(
+        room_id=room.id, starts_at=starts_at, ends_at=ends_at, status="available"
+    )
     db.add(slot)
     db.commit()
     db.refresh(slot)
 
-    booking = Booking(time_slot_id=slot.id, user_id=user.id, players=2, total_price=100.0, status="CONFIRMED")
+    booking = Booking(
+        time_slot_id=slot.id,
+        user_id=user.id,
+        players=2,
+        total_price=100.0,
+        status="CONFIRMED",
+    )
     db.add(booking)
     db.commit()
 
@@ -146,12 +191,21 @@ def test_delete_time_slot_with_active_booking(client: TestClient, db: Session):
 
 
 def test_delete_time_slot_success(client: TestClient, db: Session):
-    room = Room(name="Delete Room", capacity=4, duration=60, base_price=50.00, slug="delete-room", status="active")
+    room = Room(
+        name="Delete Room",
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug="delete-room",
+        status="active",
+    )
     db.add(room)
     db.commit()
     db.refresh(room)
 
-    starts_at = datetime.now(UTC) + timedelta(days=3)  # Usamos un día distinto para evitar solapamientos
+    starts_at = datetime.now(UTC) + timedelta(
+        days=3
+    )  # Usamos un día distinto para evitar solapamientos
     ends_at = starts_at + timedelta(hours=1)
 
     slot = TimeSlot(
@@ -169,9 +223,18 @@ def test_delete_time_slot_success(client: TestClient, db: Session):
     assert db.get(TimeSlot, slot.id) is None
 
 
-def _room_with_slots(db: Session, statuses: list[str | None]) -> tuple[Room, list[TimeSlot]]:
+def _room_with_slots(
+    db: Session, statuses: list[str | None]
+) -> tuple[Room, list[TimeSlot]]:
     """One room; one slot per entry (None = no booking, else booking status)."""
-    room = Room(name="Get Room", capacity=4, duration=60, base_price=50.00, slug="get-room", status="active")
+    room = Room(
+        name="Get Room",
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug="get-room",
+        status="active",
+    )
     user = User(name="Test User", email="get@escape.com")
     db.add_all([room, user])
     db.commit()
@@ -214,7 +277,9 @@ def test_list_time_slots_available_filter(client: TestClient, db: Session):
     assert all(s["is_bookable"] for s in response.json())
 
 
-def test_list_time_slots_date_filter_excludes_other_days(client: TestClient, db: Session):
+def test_list_time_slots_date_filter_excludes_other_days(
+    client: TestClient, db: Session
+):
     room, _ = _room_with_slots(db, [None])
 
     response = client.get(f"/api/v1/time-slots/?room_id={room.id}&date=2099-01-02")
@@ -252,7 +317,14 @@ def test_is_bookable_false_with_in_progress_booking():
 
 
 def test_create_time_slot_in_the_past(client: TestClient, db: Session):
-    room = Room(name="Past Room", capacity=4, duration=60, base_price=50.00, slug="past-room", status="active")
+    room = Room(
+        name="Past Room",
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug="past-room",
+        status="active",
+    )
     db.add(room)
     db.commit()
     starts_at = datetime.now(UTC) - timedelta(days=1)

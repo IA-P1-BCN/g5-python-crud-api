@@ -40,14 +40,14 @@ class RoomBase(BaseModel):
         ..., min_length=1, max_length=100, description="Target audience"
     )
 
+
+class RoomCreate(RoomBase):
+    # Validated only on input: responses must render whatever is stored, so a
+    # legacy numeric slug cannot 500 the whole room listing.
     @field_validator("slug")
     @classmethod
     def validate_slug(cls, value: str | None) -> str | None:
         return _validate_slug(value)
-
-
-class RoomCreate(RoomBase):
-    pass
 
 
 class RoomUpdate(BaseModel):

@@ -23,10 +23,10 @@ Example total (rule BR-B4, `total_price = base_price x players`): El Relojero fo
 | Duration | `duration` (minutes, > 0) | yes | |
 | Price / player | `base_price` (Numeric 10,2, >= 0) | yes | Price per player: rule BR-B4, still marked "to validate" (D-01) |
 | Status | `status` (`active` / `inactive`) | yes | |
-| Slug, genre, players min, difficulty, hook, story, audience | new columns | **ticket 056** | Column names are proposed here; ticket 056 decides the final ones |
+| Slug, genre, players min, difficulty, hook, story, audience | `slug`, `genre`, `min_players`, `difficulty`, `hook`, `story`, `audience` | yes | Added by ticket 056 (#105); `slug` is unique, `min_players` 1..`capacity`, `difficulty` 1..5 |
 | Success rate | - | - | **Not stored**: computed from finished games (ticket 062). The percentages of the mockup are fake |
 
-Until ticket 056 is merged, only the first five rows can be inserted. The rest of this document is the data for the new columns.
+All the fields in this document can be inserted: the catalog columns from ticket 056 are merged.
 
 ## Rooms
 
@@ -126,4 +126,4 @@ In the mockup, each room's start times are spaced by `duration + 30 min` (room r
 ## Open points
 
 - Price per player or per room: rule BR-B4 says per player, still "to validate" (D-01). The mockup and the prices above assume per player.
-- Difficulty scale 1 (easy) to 5 (very hard) comes from the mockup; ticket 056 must say if it is stored as an integer with a 1-5 check.
+- Difficulty scale 1 (easy) to 5 (very hard) comes from the mockup; ticket 056 stores it as an integer with a 1-5 CHECK (BR-R2 does not cover it).

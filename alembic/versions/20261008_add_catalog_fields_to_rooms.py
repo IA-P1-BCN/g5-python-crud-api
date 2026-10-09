@@ -33,7 +33,9 @@ def _slugify(name: str) -> str:
     normalized = unicodedata.normalize("NFKD", name)
     ascii_name = normalized.encode("ascii", "ignore").decode("ascii")
     slug = re.sub(r"[^a-z0-9]+", "-", ascii_name.lower()).strip("-")
-    return slug or "room"
+    if re.search(r"[a-z]", slug):
+        return slug
+    return f"sala-{slug}" if slug else "sala"
 
 
 def upgrade() -> None:
@@ -98,7 +100,8 @@ def upgrade() -> None:
         nullable=False,
     )
 
-    # Business-rule constraints (BR-R1, BR-R2), aligned with the Room model.
+    # Business-rule constraints (BR-R7 and the 1-5 difficulty range), aligned
+    # with the Room model.
     op.create_check_constraint(
         "ck_rooms_min_players_range",
         "rooms",

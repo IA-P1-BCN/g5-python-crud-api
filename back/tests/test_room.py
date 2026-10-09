@@ -396,6 +396,41 @@ def test_create_room_generates_slug_from_name(client):
     assert response.json()["slug"] == "escape-room-alpha"
 
 
+def test_create_room_numeric_name_gets_lettered_slug(client):
+    """A digits-only name must still produce a valid slug (BR: at least one letter)."""
+    response = client.post(URL, json=_room_payload(name="1923", slug=None))
+    assert response.status_code == 201
+    assert response.json()["slug"] == "sala-1923"
+
+    listing = client.get(URL)
+    assert listing.status_code == 200
+    assert any(r["slug"] == "sala-1923" for r in listing.json())
+
+
+def test_create_room_rejects_digits_only_slug(client):
+    """A client-supplied slug without any letter is rejected with 422."""
+    response = client.post(URL, json=_room_payload(slug="1923"))
+    assert response.status_code == 422
+
+
+def test_list_rooms_survives_legacy_digits_only_slug(client, db):
+    """A stored digits-only slug (pre-fix data) no longer breaks GET /rooms."""
+    room = Room(
+        name="Legacy 1923",
+        slug="1923",
+        capacity=4,
+        duration=60,
+        base_price=Decimal("20.00"),
+        status="active",
+    )
+    db.add(room)
+    db.commit()
+
+    listing = client.get(URL)
+    assert listing.status_code == 200
+    assert any(r["slug"] == "1923" for r in listing.json())
+
+
 def test_create_room_requires_catalog_fields(client):
     """The catalog fields are required when creating a room."""
     minimal = {
@@ -479,7 +514,7 @@ def test_update_room_rejects_unknown_fields(client, db):
 
 
 def test_update_room_partial_validates_effective_state(client, db):
-    """BR-R1 is checked against stored + supplied values on partial updates."""
+    """BR-R7 is checked against stored + supplied values on partial updates."""
     room = Room(
         name="BR Room",
         capacity=4,

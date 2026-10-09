@@ -13,11 +13,17 @@ if TYPE_CHECKING:
 
 
 def generate_slug(name: str) -> str:
-    """Build a URL-friendly slug from a room name (e.g. "Escape Room Alpha")."""
+    """Build a URL-friendly slug from a room name (e.g. "Escape Room Alpha").
+
+    Slugs must contain at least one letter (see RoomCreate.validate_slug), so a
+    digits-only slug gets a "sala-" prefix: "1923" becomes "sala-1923".
+    """
     normalized = unicodedata.normalize("NFKD", name)
     ascii_name = normalized.encode("ascii", "ignore").decode("ascii")
     slug = re.sub(r"[^a-z0-9]+", "-", ascii_name.lower()).strip("-")
-    return slug or "room"
+    if re.search(r"[a-z]", slug):
+        return slug
+    return f"sala-{slug}" if slug else "sala"
 
 
 class Room(Base):
@@ -81,7 +87,7 @@ class Room(Base):
             "status IN ('active', 'inactive')",
             name="ck_rooms_status",
         ),
-        # Business Rules DB Constraints (BR-R1, BR-R2)
+        # Business Rules DB Constraints (BR-R7, difficulty 1-5)
         CheckConstraint(
             "min_players >= 1 AND min_players <= capacity",
             name="ck_rooms_min_players_range",
