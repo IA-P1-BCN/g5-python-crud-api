@@ -5,7 +5,7 @@ import Spinner from './Spinner.jsx'
 const buttonStyles = cva(
   'inline-flex min-h-11 items-center justify-center rounded-sm px-5 font-bold tracking-wide transition ' +
     'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-room ' +
-    'disabled:cursor-not-allowed disabled:opacity-50',
+    'disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
   {
     variants: {
       variant: {

@@ -3,8 +3,16 @@ import { cn } from '../lib/cn.js'
 
 // Label + input + error message. `ref` is a normal prop in React 19, so
 // <Field label="Email" error={errors.email?.message} {...register('email')} /> just works.
-export default function Field({ label, error, className, ...props }) {
-  const id = useId()
+export default function Field({
+  label,
+  error,
+  className,
+  id: idProp,
+  'aria-describedby': describedBy,
+  ...props
+}) {
+  const generatedId = useId()
+  const id = idProp ?? generatedId
   const errorId = `${id}-error`
 
   return (
@@ -15,7 +23,7 @@ export default function Field({ label, error, className, ...props }) {
       <input
         id={id}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        aria-describedby={[describedBy, error && errorId].filter(Boolean).join(' ') || undefined}
         className={cn(
           'border-line bg-surface-2 text-text min-h-11 rounded-md border px-3 ' +
             'focus-visible:outline-exit focus-visible:outline-3 focus-visible:outline-offset-2 ' +

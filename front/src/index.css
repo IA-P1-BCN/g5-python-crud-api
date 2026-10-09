@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
 /* Site design tokens, from docs/mockups/F-inmersivo.html.
    Use these (bg-surface, text-muted, rounded-lg...) instead of hardcoded Tailwind colours.
@@ -83,12 +84,15 @@
   --color-foreground: var(--color-text);
   --color-popover: var(--color-surface-2);
   --color-popover-foreground: var(--color-text);
-  --color-accent: var(--color-surface-2);
+  --color-accent: color-mix(in oklab, var(--color-exit) 15%, var(--color-surface-2));
   --color-accent-foreground: var(--color-text);
   --color-muted-foreground: var(--color-muted);
   --color-border: var(--color-line);
   --color-input: var(--color-line);
   --color-ring: var(--color-exit);
+  --color-destructive: var(--color-error);
+  --color-primary: var(--color-exit);
+  --color-primary-foreground: var(--color-on-exit);
 }
 
 /* Page defaults: every page starts dark with the body font, no per-page setup needed. */

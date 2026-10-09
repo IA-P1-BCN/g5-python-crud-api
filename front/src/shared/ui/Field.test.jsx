@@ -35,4 +35,23 @@ describe('Field', () => {
     render(<Field label="Email" className="w-full" />)
     expect(screen.getByLabelText('Email')).toHaveClass('w-full')
   })
+
+  it('keeps the label linked when the caller passes an id', () => {
+    render(<Field label="Email" id="email" error="Email inválido" />)
+    const input = screen.getByLabelText('Email')
+    expect(input).toHaveAttribute('id', 'email')
+    expect(input).toHaveAccessibleDescription('Email inválido')
+  })
+
+  it('keeps the error description next to a caller aria-describedby', () => {
+    render(
+      <>
+        <p id="hint">Usa tu email de trabajo</p>
+        <Field label="Email" aria-describedby="hint" error="Email inválido" />
+      </>,
+    )
+    expect(screen.getByLabelText('Email')).toHaveAccessibleDescription(
+      'Usa tu email de trabajo Email inválido',
+    )
+  })
 })

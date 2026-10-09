@@ -62,7 +62,9 @@ describe('Button', () => {
       </>,
     )
     expect(screen.getByRole('button', { name: 'Room' })).toHaveClass('bg-room')
-    expect(screen.getByRole('button', { name: 'Ghost' })).not.toHaveClass('bg-room', 'bg-exit')
+    const ghost = screen.getByRole('button', { name: 'Ghost' })
+    expect(ghost).not.toHaveClass('bg-room')
+    expect(ghost).not.toHaveClass('bg-exit')
   })
 
   it('keeps a 44px touch target and lets callers add or override classes', () => {

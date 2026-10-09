@@ -44,7 +44,7 @@ Self-hosted with `@fontsource`, imported in `main.jsx`. Import without `.css` (`
 
 1. From `front/`, in Docker: `npx shadcn@latest add <name>` (`components.json` is already set up for JavaScript).
 2. Fix what the CLI gets wrong here: `import { cn } from "cn"` must be `../lib/cn.js` (and remove the fake `cn` package from `package.json`); use our `Button` (default export, variants above) instead of its own; remove `import * as React` if unused; texts come from `i18n`, not hardcoded English.
-3. The shadcn class names (`bg-background`, `text-muted-foreground`, `ring-ring`...) already point to our tokens in the second `@theme inline` block of `index.css`.
+3. The shadcn class names (`bg-background`, `text-muted-foreground`, `ring-ring`...) already point to our tokens in the second `@theme inline` block of `index.css`. Careful: shadcn's `bg-muted` is a background, but our `text-muted` is a text colour, so use `bg-surface-2` for muted backgrounds. `shadcn.test.js` fails if a new alias is missing.
 4. Write a render test next to it, like `dialog.test.jsx`.
 
 Not built yet (the mockup has none; add them with the first screen that needs them, with shadcn): textarea, checkbox/switch, radio.

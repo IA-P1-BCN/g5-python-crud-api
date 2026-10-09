@@ -30,7 +30,7 @@ React client in `front/`, JavaScript (no TypeScript: the team's language; data i
 | Forms | React Hook Form + Zod | Zod schemas also give the validation messages |
 | Styling | Tailwind CSS 4 + Sass (SCSS) | Tailwind for layout in the JSX; design tokens in `@theme` (see `DESIGN.md`); room themes are CSS variables switched by `data-room`; Sass only for bespoke animated effects. No MUI |
 | Fonts | `@fontsource` (self-hosted) | Big Shoulders Display, Hanken Grotesk and Share Tech Mono, bundled by Vite: no request to Google, works offline |
-| UI primitives | shadcn/ui (Dialog, Select) on Radix | Copied into `shared/ui` as JavaScript and themed with our tokens; accessible keyboard and focus handling |
+| UI primitives | shadcn/ui (Dialog, Select) on Radix | Copied into `shared/ui` as JavaScript and themed with our tokens; accessible keyboard and focus handling. `tw-animate-css` provides their `animate-in` / `fade-in-0` classes |
 | 3D | Three.js 0.128 (pinned) | The corridor is a plain JS module wrapped by one React component, with a poster-grid fallback when WebGL is missing |
 | Texts | `i18n/es/<feature>.js` | All user-facing text is Spanish, one namespace per feature |
 | Auth (Sprint 2) | Supabase JS | Google login; the JWT is sent to the API |

@@ -19,3 +19,12 @@ describe('shared UI colours', () => {
     expect(source.match(ARBITRARY)?.[0]).toBeUndefined()
   })
 })
+
+// The site is always dark. `dark:` follows the OS setting, so it would style the same
+// component differently for people whose system is in light mode.
+describe('shared UI theme', () => {
+  it.each(components)('%s has no dark: variants', (file) => {
+    const source = readFileSync(`src/shared/ui/${file}`, 'utf8')
+    expect(source).not.toMatch(/\bdark:/)
+  })
+})
