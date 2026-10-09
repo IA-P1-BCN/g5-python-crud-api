@@ -166,7 +166,7 @@ front/
 │   │   │   │   ├── cameraRig.js           # camera sway, lean and walk to the chosen door
 │   │   │   │   ├── labelTexture.js        # text drawn on a canvas -> texture
 │   │   │   │   ├── addMesh.js             # mesh helper
-│   │   │   │   └── math.js                # clamp, smoothstep
+│   │   │   │   └── math.js                # clamp, lerp, smoothstep
 │   │   │   └── index.js                   # public API of the feature (CorridorView)
 │   │   ├── my-bookings/
 │   │   │   ├── api/
@@ -390,7 +390,7 @@ RoomsCorridor (rooms)  ->  CorridorView (corridor)  ->  Corridor.jsx -> scene/cr
 
 **Inside `corridor/`.**
 - `components/`: `CorridorView` chooses the mode (`model/corridorMode`: WebGL available, no reduced motion, width > 767 px). `Corridor` creates the scene in `useEffect` and calls `dispose()` on cleanup, so the 60 fps loop stays out of React. `CorridorFallback` is the accessible poster list.
-- `model/`: pure logic with unit tests: `doorMachine` (idle / hover / selected / entering), `doorPlacement`, `corridorMode`.
+- `model/`: pure logic with unit tests: `doorMachine` (idle / hover / selected / entering), `doorPlacement`, `corridorMode`, `frameEvents` (which event the pointer or the camera causes each frame, so the render loop only dispatches it).
 - `scene/`: plain Three.js, no React. `createCorridor(container, { rooms, onEnter })` returns `{ dispose }` and only orchestrates the render loop. The work is split in `corridorStructure` (floor, walls, exit sign), `doorsBuilder` (door, light and sign per room), `pointerInput` (hover, click, drag), `cameraRig` (sway, lean, walk to the door) and `labelTexture`. Each module has its own test; only the final rendering needs a real WebGL browser.
 
 **Robustness.**

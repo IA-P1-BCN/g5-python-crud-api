@@ -1,13 +1,16 @@
 import { PerspectiveCamera, Scene, WebGLRenderer } from 'three'
 import { initialState, transition } from '../model/doorMachine.js'
+import { getArrivalEvent, getHoverEvent } from '../model/frameEvents.js'
 import { createCameraRig } from './cameraRig.js'
 import { buildCorridorStructure } from './corridorStructure.js'
-import { buildDoors } from './doorsBuilder.js'
+import { buildDoors, IDLE_EMISSIVE, IDLE_LIGHT } from './doorsBuilder.js'
+import { lerp } from './math.js'
 import { createPointerInput } from './pointerInput.js'
 
 const MAX_PIXEL_RATIO = 2
-const ARRIVED_TURN = 0.985 // how close to facing the door counts as arrived
-const GLOW = { idle: [0.25, 1.1], active: [1.6, 2.6] } // [door emissive, door light]
+const GLOW = { idle: [IDLE_EMISSIVE, IDLE_LIGHT], active: [1.6, 2.6] } // [door emissive, door light]
+
+const GLOW_EASE = 0.12 // fraction of the way to the target glow, per frame
 
 // createCorridor(container, { rooms, onEnter }) -> { dispose }
 // rooms: [{ id, slug, name, accent }]. Calls onEnter(room) once the camera faces the chosen door.
@@ -62,23 +65,18 @@ export function createCorridor(container, { rooms, onEnter }) {
     const dt = Math.min(0.05, (now - lastTime) / 1000)
     lastTime = now
 
-    if (isChoosing()) {
-      const hit = pointer.pickDoor()
-      if (hit) {
-        const id = hit.userData.room.id
-        if (state.doorId !== id) dispatch({ type: 'HOVER', doorId: id })
-      } else if (state.status === 'hover' && !pointer.isNearDoor(doorOf(state.doorId))) {
-        dispatch({ type: 'LEAVE' })
-      }
-    }
+    const hoverEvent = getHoverEvent(state, pointer.pickDoor()?.userData.room.id ?? null, () =>
+      pointer.isNearDoor(doorOf(state.doorId)),
+    )
+    if (hoverEvent) dispatch(hoverEvent)
 
     const chosenDoor = isChoosing() ? null : doorOf(state.doorId)
     const hoverDoor = state.status === 'hover' ? doorOf(state.doorId) : null
     rig.step({ dt, elapsed, input: pointer.input, hoverDoor, chosenDoor })
 
-    // Selected door facing us: the machine moves to "entering", the page takes over.
-    if (state.status === 'selected' && rig.turn > ARRIVED_TURN) {
-      dispatch({ type: 'ARRIVED' })
+    const arrivalEvent = getArrivalEvent(state, rig.turn)
+    if (arrivalEvent) {
+      dispatch(arrivalEvent)
       onEnter(chosenDoor.userData.room)
     }
 
@@ -86,8 +84,8 @@ export function createCorridor(container, { rooms, onEnter }) {
       const { material, light, room } = door.userData
       const [emissive, intensity] =
         state.status !== 'idle' && state.doorId === room.id ? GLOW.active : GLOW.idle
-      material.emissiveIntensity += (emissive - material.emissiveIntensity) * 0.12
-      light.intensity += (intensity - light.intensity) * 0.12
+      material.emissiveIntensity = lerp(material.emissiveIntensity, emissive, GLOW_EASE)
+      light.intensity = lerp(light.intensity, intensity, GLOW_EASE)
     }
     exitSign.material.opacity = 0.7 + Math.sin(elapsed * 3) * 0.3
     renderer.render(scene, camera)
