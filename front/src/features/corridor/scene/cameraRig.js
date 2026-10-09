@@ -1,5 +1,5 @@
 import { Vector3 } from 'three'
-import { clamp, smoothstep } from './math.js'
+import { clamp, lerp, smoothstep } from './math.js'
 
 const EYE_Y = 1.6
 const START_Z = 0.4
@@ -33,24 +33,24 @@ export function createCameraRig(camera) {
       if (hoverDoor) leanDoor = hoverDoor
       const smooth = 1 - Math.exp(-dt * 2.6)
       turn = clamp(turn + (chosenDoor ? dt / TURN_SECONDS : 0), 0, 1)
-      lean += ((hoverDoor ? 1 : 0) - lean) * (1 - Math.exp(-dt * 3))
-      yaw += (input.dragYaw + input.mouseX * 0.22 - yaw) * smooth
-      pitch += (input.dragPitch + input.mouseY * 0.07 - pitch) * smooth
-      shift += (input.mouseX * 0.25 - shift) * smooth
+      lean = lerp(lean, hoverDoor ? 1 : 0, 1 - Math.exp(-dt * 3))
+      yaw = lerp(yaw, input.dragYaw + input.mouseX * 0.22, smooth)
+      pitch = lerp(pitch, input.dragPitch + input.mouseY * 0.07, smooth)
+      shift = lerp(shift, input.mouseX * 0.25, smooth)
 
       const e = smoothstep(turn)
       let [Y, P, X, Z, fov] = [yaw, pitch, shift, START_Z, FOV]
       if (leanDoor) {
-        Y += ((leanDoor.userData.side * Math.PI) / 2 - Y) * 0.2 * lean // slight lean toward the door
+        Y = lerp(Y, (leanDoor.userData.side * Math.PI) / 2, 0.2 * lean) // slight lean toward the door
         fov -= 5 * lean
       }
       if (chosenDoor) {
         const { side, z } = chosenDoor.userData
-        Y += ((side * Math.PI) / 2 - Y) * e
+        Y = lerp(Y, (side * Math.PI) / 2, e)
         P *= 1 - e
-        X += (-side * 1.9 - X) * e
-        Z += (z - Z) * e
-        fov += (FOV_SELECTED - fov) * e
+        X = lerp(X, -side * 1.9, e)
+        Z = lerp(Z, z, e)
+        fov = lerp(fov, FOV_SELECTED, e)
       }
       camera.position.set(X, EYE_Y + Math.sin(elapsed * 0.8) * 0.03 * (1 - e), Z)
       camera.fov = fov * fovScale

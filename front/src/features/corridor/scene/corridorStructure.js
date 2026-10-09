@@ -9,7 +9,7 @@ import {
 import { addMesh } from './addMesh.js'
 import { createLabel } from './labelTexture.js'
 
-export const BACKGROUND = 0x06070a
+const BACKGROUND = 0x06070a
 
 // Floor, ceiling, two walls, ambient light and the exit sign. Returns the sign (it blinks).
 export function buildCorridorStructure(scene) {
