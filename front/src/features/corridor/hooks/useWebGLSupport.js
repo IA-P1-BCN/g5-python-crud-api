@@ -3,7 +3,9 @@ import { useState } from 'react'
 
 function detectWebGL() {
   try {
-    return Boolean(document.createElement('canvas').getContext('webgl'))
+    const gl = document.createElement('canvas').getContext('webgl')
+    gl?.getExtension?.('WEBGL_lose_context')?.loseContext() // the probe must not hold a context
+    return Boolean(gl)
   } catch {
     return false
   }

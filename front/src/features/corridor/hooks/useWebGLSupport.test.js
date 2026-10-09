@@ -33,4 +33,11 @@ describe('useWebGLSupport', () => {
     const { result } = renderHook(() => useWebGLSupport())
     expect(result.current).toBe(false)
   })
+
+  it('releases the probe context so it does not count toward the browser limit', () => {
+    const loseContext = vi.fn()
+    mockGetContext(() => ({ getExtension: () => ({ loseContext }) }))
+    renderHook(() => useWebGLSupport())
+    expect(loseContext).toHaveBeenCalledTimes(1)
+  })
 })
