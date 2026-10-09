@@ -107,7 +107,7 @@ Archived room, kept to test deactivation and reactivation (ticket 057). Not show
 | `duration` | 60 |
 | `base_price` | 24.00 |
 | `difficulty` | 3 |
-| `audience` | (empty) |
+| `audience` | Para equipos experimentados |
 | `status` | inactive |
 | `hook` | Archivada. |
 | `story` | (empty) |

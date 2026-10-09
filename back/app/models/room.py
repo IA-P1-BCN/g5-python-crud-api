@@ -42,12 +42,11 @@ class Room(Base):
     slug: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
-        default=lambda ctx: generate_slug(ctx.get_current_parameters()["name"]),
     )
     genre: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
-        default="Mystery",
+        default="Misterio",
     )
     min_players: Mapped[int] = mapped_column(
         nullable=False,
@@ -70,7 +69,7 @@ class Room(Base):
     audience: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
-        default="All ages",
+        default="Público general",
     )
 
     __table_args__ = (

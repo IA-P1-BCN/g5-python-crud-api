@@ -44,7 +44,7 @@ def upgrade() -> None:
             "genre",
             sa.String(length=100),
             nullable=False,
-            server_default="Mystery",
+            server_default="Misterio",
         ),
     )
     op.add_column(
@@ -69,7 +69,7 @@ def upgrade() -> None:
             "audience",
             sa.String(length=100),
             nullable=False,
-            server_default="All ages",
+            server_default="Público general",
         ),
     )
 
@@ -79,7 +79,7 @@ def upgrade() -> None:
 
     used_slugs: set[str] = set()
     for room_id, room_name in existing_rooms:
-        base_slug = _slugify(room_name or "") or f"room-{room_id}"
+        base_slug = _slugify(room_name or "")
         slug = base_slug
         suffix = 2
         while slug in used_slugs:
@@ -97,6 +97,18 @@ def upgrade() -> None:
         existing_type=sa.String(length=255),
         nullable=False,
     )
+
+    # Business-rule constraints (BR-R1, BR-R2), aligned with the Room model.
+    op.create_check_constraint(
+        "ck_rooms_min_players_range",
+        "rooms",
+        "min_players >= 1 AND min_players <= capacity",
+    )
+    op.create_check_constraint(
+        "ck_rooms_difficulty_range",
+        "rooms",
+        "difficulty >= 1 AND difficulty <= 5",
+    )
     op.create_unique_constraint("uq_rooms_slug", "rooms", ["slug"])
 
     # Server defaults only existed to add NOT NULL columns to existing rows.
@@ -106,6 +118,8 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_constraint("uq_rooms_slug", "rooms", type_="unique")
+    op.drop_constraint("ck_rooms_difficulty_range", "rooms", type_="check")
+    op.drop_constraint("ck_rooms_min_players_range", "rooms", type_="check")
     op.drop_column("rooms", "audience")
     op.drop_column("rooms", "story")
     op.drop_column("rooms", "hook")

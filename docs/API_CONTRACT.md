@@ -30,11 +30,15 @@ Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUP
 
 | Method | Path | Sprint | Description | Success |
 |--------|------|:------:|-------------|---------|
-| POST | `/rooms` | 1 | Create room | 201 |
+| POST | `/rooms` | 1 | Create room (catalog fields required; `slug` generated from name if omitted) | 201 |
 | GET | `/rooms` | 1 | List rooms (`?status=active`) | 200 |
-| GET | `/rooms/{id}` | 1 | Get room | 200 |
-| PUT | `/rooms/{id}` | 1 | Update room | 200 |
+| GET | `/rooms/{id or slug}` | 1 | Get room by numeric ID or URL slug | 200 |
+| PUT | `/rooms/{id}` | 1 | Partial update (only sent fields). `slug` is immutable; `null` or unknown fields → 422 | 200 |
 | PUT | `/rooms/{id}/deactivate` | 1 | Deactivate | 200 |
+
+Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphens, at least one letter, immutable once created, generated from `name` when omitted), `genre`, `min_players`, `difficulty` (1 to 5, BR-R2), `hook`, `story`, `audience`.
+
+`PUT /rooms/{id}` acts as a true partial update (`exclude_unset`): fields the client does not send keep their stored value. Because every column is NOT NULL, an explicit `null` returns 422; unknown fields (including `slug`) are rejected with 422 to keep friendly URLs (`/salas/:slug`) stable.
 
 ## Time slots (E2)
 

@@ -10,7 +10,7 @@ from back.app.models.user import User
 
 
 def test_create_time_slot_success(client: TestClient, db: Session):
-    room = Room(name="Test Room", capacity=4, duration=60, base_price=50.00, status="active")
+    room = Room(name="Test Room", capacity=4, duration=60, base_price=50.00, slug="test-room", status="active")
     db.add(room)
     db.commit()
     db.refresh(room)
@@ -36,7 +36,7 @@ def test_create_time_slot_success(client: TestClient, db: Session):
 
 
 def test_create_time_slot_room_inactive(client: TestClient, db: Session):
-    room = Room(name="Inactive Room", capacity=4, duration=60, base_price=50.00, status="inactive")
+    room = Room(name="Inactive Room", capacity=4, duration=60, base_price=50.00, slug="inactive-room", status="inactive")
     db.add(room)
     db.commit()
     db.refresh(room)
@@ -59,7 +59,7 @@ def test_create_time_slot_room_inactive(client: TestClient, db: Session):
 
 
 def test_create_time_slot_overlap(client: TestClient, db: Session):
-    room = Room(name="Overlap Room", capacity=4, duration=60, base_price=50.00, status="active")
+    room = Room(name="Overlap Room", capacity=4, duration=60, base_price=50.00, slug="overlap-room", status="active")
     db.add(room)
     db.commit()
     db.refresh(room)
@@ -94,7 +94,7 @@ def test_create_time_slot_overlap(client: TestClient, db: Session):
 
 
 def test_update_time_slot_success(client: TestClient, db: Session):
-    room = Room(name="Update Room", capacity=4, duration=60, base_price=50.00, status="active")
+    room = Room(name="Update Room", capacity=4, duration=60, base_price=50.00, slug="update-room", status="active")
     db.add(room)
     db.commit()
     db.refresh(room)
@@ -118,7 +118,7 @@ def test_update_time_slot_success(client: TestClient, db: Session):
 
 
 def test_delete_time_slot_with_active_booking(client: TestClient, db: Session):
-    room = Room(name="Booking Room", capacity=4, duration=60, base_price=50.00, status="active")
+    room = Room(name="Booking Room", capacity=4, duration=60, base_price=50.00, slug="booking-room", status="active")
     db.add(room)
     db.commit()
     db.refresh(room)
@@ -146,7 +146,7 @@ def test_delete_time_slot_with_active_booking(client: TestClient, db: Session):
 
 
 def test_delete_time_slot_success(client: TestClient, db: Session):
-    room = Room(name="Delete Room", capacity=4, duration=60, base_price=50.00, status="active")
+    room = Room(name="Delete Room", capacity=4, duration=60, base_price=50.00, slug="delete-room", status="active")
     db.add(room)
     db.commit()
     db.refresh(room)
@@ -171,7 +171,7 @@ def test_delete_time_slot_success(client: TestClient, db: Session):
 
 def _room_with_slots(db: Session, statuses: list[str | None]) -> tuple[Room, list[TimeSlot]]:
     """One room; one slot per entry (None = no booking, else booking status)."""
-    room = Room(name="Get Room", capacity=4, duration=60, base_price=50.00, status="active")
+    room = Room(name="Get Room", capacity=4, duration=60, base_price=50.00, slug="get-room", status="active")
     user = User(name="Test User", email="get@escape.com")
     db.add_all([room, user])
     db.commit()
@@ -252,7 +252,7 @@ def test_is_bookable_false_with_in_progress_booking():
 
 
 def test_create_time_slot_in_the_past(client: TestClient, db: Session):
-    room = Room(name="Past Room", capacity=4, duration=60, base_price=50.00, status="active")
+    room = Room(name="Past Room", capacity=4, duration=60, base_price=50.00, slug="past-room", status="active")
     db.add(room)
     db.commit()
     starts_at = datetime.now(UTC) - timedelta(days=1)

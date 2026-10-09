@@ -24,6 +24,7 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | BR-R4 | Inactive rooms are hidden from client listings and accept no new slots or bookings | 409 |
 | BR-R5 | A room with future active bookings cannot be deactivated **(to validate)** | 409 |
 | BR-R6 | A room is shown to clients only if it is active **and** has at least one upcoming time slot, free or taken. A fully booked room stays visible (shown as full); a room with no upcoming slot is hidden. The API exposes it as `has_upcoming_slots` **(to validate)** | - |
+| BR-R7 | `min_players` between 1 and room `capacity` | 422 |
 
 ### Time slots (E2)
 | ID | Rule | Error |
@@ -108,4 +109,4 @@ Payments, discounts, loyalty points, `booking_players` (team members), pending-b
 | D-02 | Where does the role live? | Our `users` table (BR-A3) |
 | D-03 | Room with future bookings: block deactivation or cancel them? | Block (BR-R5) |
 | D-05 | When is a room visible to clients? | Active and with at least one upcoming slot, even if all are taken (BR-R6) |
-| D-04 | Do we need a minimum number of players? | No, only max `capacity` |
+| D-04 | Does each room define a minimum number of players? | Yes: `min_players` (Ticket 056) |

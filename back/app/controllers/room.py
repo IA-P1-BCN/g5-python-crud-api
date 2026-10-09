@@ -11,6 +11,20 @@ from back.app.schemas.room import RoomCreate, RoomUpdate
 
 ACTIVE_STATUSES = ("PENDING", "CONFIRMED", "IN_PROGRESS")
 
+DUPLICATE_CONSTRAINTS = ("uq_rooms_slug", "rooms_name_key")
+
+
+def _is_unique_violation(exc: IntegrityError) -> bool:
+    """Return True only for name/slug unique-constraint failures."""
+    diag = getattr(exc.orig, "diag", None)
+    constraint_name = getattr(diag, "constraint_name", None)
+    message = str(exc.orig)
+    return (
+        constraint_name in DUPLICATE_CONSTRAINTS
+        or "rooms.slug" in message
+        or "rooms.name" in message
+    )
+
 
 def _ensure_name_is_available(
     db: Session, name: str, room_id: int | None = None
@@ -41,6 +55,14 @@ def _ensure_slug_is_available(
 
 
 def create_room(db: Session, room_in: RoomCreate) -> Room:
+    # BR-R1: validated here, like on update, so both return the same error shape.
+    if room_in.min_players > room_in.capacity:
+        raise AppError(
+            message="BR-R1: min_players must be lower than or equal to capacity",
+            code="VALIDATION_ERROR",
+            status_code=422,
+        )
+
     slug = room_in.slug or generate_slug(room_in.name)
 
     _ensure_name_is_available(db, room_in.name)
@@ -63,8 +85,10 @@ def create_room(db: Session, room_in: RoomCreate) -> Room:
     db.add(room)
     try:
         db.commit()
-    except IntegrityError:
+    except IntegrityError as exc:
         db.rollback()
+        if not _is_unique_violation(exc):
+            raise
         raise AppError(
             message="Room with this name or slug already exists",
             code="DUPLICATE",
@@ -84,18 +108,20 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
             status_code=404,
         )
 
-    # Only apply fields the client actually sent; None values are ignored so a
-    # partial update never nulls a NOT NULL column.
-    update_data = {
-        key: value
-        for key, value in room_in.model_dump(exclude_unset=True).items()
-        if value is not None
-    }
+    # Only apply fields the client actually sent (partial update). NULL values on
+    # NOT NULL columns are rejected above, so none reach the ORM object.
+    raw_updates = room_in.model_dump(exclude_unset=True)
+    for field_name, value in raw_updates.items():
+        if value is None:
+            raise AppError(
+                message=f"{field_name} cannot be null",
+                code="VALIDATION_ERROR",
+                status_code=422,
+            )
+    update_data = raw_updates
 
     if "name" in update_data and update_data["name"] != room.name:
         _ensure_name_is_available(db, update_data["name"], room_id=room_id)
-    if "slug" in update_data and update_data["slug"] != room.slug:
-        _ensure_slug_is_available(db, update_data["slug"], room_id=room_id)
 
     # BR-R1: validate against the effective room state (stored + supplied).
     effective_capacity = update_data.get("capacity", room.capacity)
@@ -112,10 +138,12 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
 
     try:
         db.commit()
-    except IntegrityError:
+    except IntegrityError as exc:
         db.rollback()
+        if not _is_unique_violation(exc):
+            raise
         raise AppError(
-            message="Room with this name or slug already exists",
+            message="Room with this name already exists",
             code="DUPLICATE",
             status_code=409,
         )
@@ -166,7 +194,9 @@ def list_rooms(db: Session, status: str | None = None) -> list[Room]:
 
 
 def get_room_by_id_or_slug(db: Session, room_id_or_slug: str) -> Room:
-    if room_id_or_slug.isdigit():
+    # isascii() rules out unicode digits ("²".isdigit() is True) and slugs always
+    # contain at least one letter, so a pure number is an ID.
+    if room_id_or_slug.isascii() and room_id_or_slug.isdigit():
         room = db.get(Room, int(room_id_or_slug))
     else:
         room = db.execute(
