@@ -534,3 +534,214 @@ def test_update_room_partial_validates_effective_state(client, db):
     capacity_below_min = client.put(f"{URL}/{room.id}", json={"capacity": 1})
     assert capacity_below_min.status_code == 422
     assert capacity_below_min.json()["code"] == "VALIDATION_ERROR"
+
+
+def test_criterion_1_catalog_fields_and_defaults(client):
+    """
+    Criterion 1: Room has slug (unique), genre, min_players, difficulty (1 to 5),
+    hook, story and audience. Omitting optional fields applies safe defaults.
+    """
+    response = client.post(
+        "/api/v1/rooms",
+        json={
+            "name": "Sala de Prueba Catálogo",
+            "capacity": 8,
+            "duration": 60,
+            "base_price": 20.00,
+            "genre": "Terror",
+            "min_players": 2,
+            "difficulty": 4,
+            "hook": "Un misterio oscuro...",
+            "story": "Historia detallada de la sala...",
+            "audience": "Adultos",
+        },
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["slug"] == "sala-de-prueba-catalogo"
+    assert data["genre"] == "Terror"
+    assert data["min_players"] == 2
+    assert data["difficulty"] == 4
+    assert data["hook"] == "Un misterio oscuro..."
+    assert data["story"] == "Historia detallada de la sala..."
+    assert data["audience"] == "Adultos"
+
+
+def test_criterion_2_crud_accepts_and_returns_catalog_fields(client):
+    """
+    Criterion 2: Create / edit / get / list rooms accept and return the new fields.
+    """
+    # 1. Create
+    create_res = client.post(
+        "/api/v1/rooms",
+        json={
+            "name": "Sala CRUD Completa",
+            "capacity": 5,
+            "duration": 60,
+            "base_price": 25.00,
+            "genre": "Aventura",
+            "min_players": 1,
+            "difficulty": 3,
+            "hook": "Hook inicial",
+            "story": "Story inicial",
+            "audience": "Todo público",
+        },
+    )
+    assert create_res.status_code == 201
+    room_id = create_res.json()["id"]
+
+    # 2. Get by ID
+    get_res = client.get(f"/api/v1/rooms/{room_id}")
+    assert get_res.status_code == 200
+    assert get_res.json()["genre"] == "Aventura"
+
+    # 3. Edit (partial PUT)
+    update_res = client.put(
+        f"/api/v1/rooms/{room_id}",
+        json={"genre": "Ciencia Ficción", "difficulty": 5},
+    )
+    assert update_res.status_code == 200
+    assert update_res.json()["genre"] == "Ciencia Ficción"
+    assert update_res.json()["difficulty"] == 5
+
+    # 4. List rooms
+    list_res = client.get("/api/v1/rooms")
+    assert list_res.status_code == 200
+    rooms = list_res.json()
+    assert any(r["id"] == room_id and r["genre"] == "Ciencia Ficción" for r in rooms)
+
+
+def test_criterion_3_business_validations_and_duplicate_slug(client):
+    """
+    Criterion 3: Validation: min_players between 1 and capacity, difficulty 1-5,
+    slug unique (409 DUPLICATE).
+    """
+    payload_base = {
+        "capacity": 4,
+        "duration": 60,
+        "base_price": 20.00,
+        "genre": "Misterio",
+        "min_players": 2,
+        "difficulty": 3,
+        "hook": "Test hook",
+        "story": "Test story",
+        "audience": "General",
+    }
+
+    # Create the first room to force a duplicate slug
+    res1 = client.post(
+        "/api/v1/rooms",
+        json={**payload_base, "name": "Sala Única", "slug": "sala-unica"},
+    )
+    assert res1.status_code == 201
+
+    # Attempt 1: Duplicate slug -> 409 DUPLICATE
+    res_dup = client.post(
+        "/api/v1/rooms",
+        json={**payload_base, "name": "Otra Sala", "slug": "sala-unica"},
+    )
+    assert res_dup.status_code == 409
+    assert res_dup.json()["code"] == "DUPLICATE"
+
+    # Attempt 2: min_players > capacity -> 422 VALIDATION_ERROR (BR-R7)
+    res_min = client.post(
+        "/api/v1/rooms",
+        json={
+            **payload_base,
+            "name": "Sala Min Invalido",
+            "capacity": 2,
+            "min_players": 5,
+        },
+    )
+    assert res_min.status_code == 422
+
+    # Attempt 3: difficulty out of range (> 5) -> 422
+    res_diff = client.post(
+        "/api/v1/rooms",
+        json={**payload_base, "name": "Sala Diff Invalida", "difficulty": 6},
+    )
+    assert res_diff.status_code == 422
+
+
+def test_criterion_4_get_room_by_slug_routing(client):
+    """
+    Criterion 4: GET /api/v1/rooms/{slug} so the front can route /salas/faro.
+    """
+    client.post(
+        "/api/v1/rooms",
+        json={
+            "name": "El Faro",
+            "slug": "faro",
+            "capacity": 6,
+            "duration": 60,
+            "base_price": 30.00,
+            "genre": "Suspense",
+            "min_players": 2,
+            "difficulty": 3,
+            "hook": "Luz en la oscuridad",
+            "story": "Historia del faro",
+            "audience": "General",
+        },
+    )
+
+    response = client.get("/api/v1/rooms/faro")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["slug"] == "faro"
+    assert data["name"] == "El Faro"
+
+
+def test_activate_room_success(client):
+    """PUT /api/v1/rooms/{id}/activate sets status=active (200)."""
+    res = client.post(
+        "/api/v1/rooms",
+        json={
+            "name": "Sala para Activar",
+            "capacity": 4,
+            "duration": 60,
+            "base_price": 20.00,
+            "genre": "Terror",
+            "min_players": 2,
+            "difficulty": 3,
+            "hook": "Susto",
+            "story": "Historia",
+            "audience": "General",
+        },
+    )
+    room_id = res.json()["id"]
+    client.put(f"/api/v1/rooms/{room_id}/deactivate")
+
+    activate_res = client.put(f"/api/v1/rooms/{room_id}/activate")
+    assert activate_res.status_code == 200
+    assert activate_res.json()["status"] == "active"
+
+
+def test_activate_room_idempotent(client):
+    """An already active room is returned unchanged (idempotent)."""
+    res = client.post(
+        "/api/v1/rooms",
+        json={
+            "name": "Sala Ya Activa",
+            "capacity": 4,
+            "duration": 60,
+            "base_price": 20.00,
+            "genre": "Aventura",
+            "min_players": 1,
+            "difficulty": 2,
+            "hook": "Hook",
+            "story": "Story",
+            "audience": "General",
+        },
+    )
+    room_id = res.json()["id"]
+
+    activate_res = client.put(f"/api/v1/rooms/{room_id}/activate")
+    assert activate_res.status_code == 200
+    assert activate_res.json()["status"] == "active"
+
+
+def test_activate_room_not_found(client):
+    """Activating an unknown room returns 404 NOT_FOUND."""
+    activate_res = client.put("/api/v1/rooms/99999/activate")
+    assert activate_res.status_code == 404
+    assert activate_res.json()["code"] == "NOT_FOUND"

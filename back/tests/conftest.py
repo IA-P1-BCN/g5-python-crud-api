@@ -1,6 +1,6 @@
 import os
 
-# Configuración por defecto para que la app no falle al importar settings
+# Default configuration so the app does not fail when importing settings
 os.environ.setdefault("DATABASE_URL", "sqlite://")
 
 import pytest
@@ -15,7 +15,7 @@ from back.app.main import app
 
 @pytest.fixture
 def db():
-    """Base de datos SQLite en memoria, totalmente nueva y aislada para cada test."""
+    """In-memory SQLite database, brand new and isolated for each test."""
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -32,7 +32,8 @@ def db():
 
 @pytest.fixture
 def client(db):
-    """Cliente HTTP de FastAPI que redirige la base de datos al entorno de pruebas."""
+    """FastAPI HTTP client that points the database to the test environment."""
+
     def override_get_db():
         yield db
 
