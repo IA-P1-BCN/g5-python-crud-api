@@ -160,7 +160,7 @@ def test_delete_time_slot_with_active_booking(client: TestClient, db: Session):
     db.commit()
     db.refresh(room)
 
-    # Creamos un usuario real usando los campos correctos del modelo (name y email)
+    # Create a real user using the correct model fields (name and email)
     user = User(name="Test User", email="test@escape.com")
     db.add(user)
     db.commit()
@@ -205,7 +205,7 @@ def test_delete_time_slot_success(client: TestClient, db: Session):
 
     starts_at = datetime.now(UTC) + timedelta(
         days=3
-    )  # Usamos un día distinto para evitar solapamientos
+    )  # Use a different day to avoid overlaps
     ends_at = starts_at + timedelta(hours=1)
 
     slot = TimeSlot(
