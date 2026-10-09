@@ -1,6 +1,6 @@
 // React wrapper: useEffect creates the corridor, cleanup calls dispose(). No 60fps state in React.
 import { useEffect, useRef } from 'react'
-import { createCorridor } from './createCorridor.js'
+import { createCorridor } from '../scene/createCorridor.js'
 
 export default function Corridor({ rooms, onEnter, onError }) {
   const containerRef = useRef(null)

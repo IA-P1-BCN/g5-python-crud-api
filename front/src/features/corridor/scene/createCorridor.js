@@ -16,8 +16,8 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three'
-import { initialState, transition } from './doorMachine.js'
-import { getDoorPlacement } from './doorPlacement.js'
+import { initialState, transition } from '../model/doorMachine.js'
+import { getDoorPlacement } from '../model/doorPlacement.js'
 
 const BACKGROUND = 0x06070a
 const EYE_Y = 1.6

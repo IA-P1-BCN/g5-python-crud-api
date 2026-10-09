@@ -3,8 +3,8 @@ import { useMediaQuery } from '@/shared/hooks/useMediaQuery.js'
 import { useReducedMotion } from '@/shared/hooks/useReducedMotion.js'
 import Corridor from './Corridor.jsx'
 import CorridorFallback from './CorridorFallback.jsx'
-import { getCorridorMode } from './corridorMode.js'
-import { useWebGLSupport } from './useWebGLSupport.js'
+import { getCorridorMode } from '../model/corridorMode.js'
+import { useWebGLSupport } from '../hooks/useWebGLSupport.js'
 
 // Below Tailwind's `md` breakpoint (768px).
 const SMALL_SCREEN_QUERY = '(max-width: 767px)'

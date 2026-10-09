@@ -147,16 +147,20 @@ front/
 │   │   │   │   └── ConfirmationPage.jsx   # confirmation
 │   │   │   ├── index.js                   # public API of the feature
 │   │   │   └── routes.js                  # routes of this feature
-│   │   ├── corridor/
-│   │   │   ├── Corridor.jsx               # useEffect: create / dispose()
-│   │   │   ├── CorridorFallback.jsx       # poster grid when no WebGL
-│   │   │   ├── CorridorView.jsx           # chooses 3D or fallback
-│   │   │   ├── corridorMode.js            # '3d' | 'fallback' (pure)
-│   │   │   ├── createCorridor.js          # pure Three.js, returns { dispose }
-│   │   │   ├── doorMachine.js             # door state machine (pure)
-│   │   │   ├── doorPlacement.js           # position of each door (pure)
-│   │   │   ├── index.js                   # public API of the feature (CorridorView)
-│   │   │   └── useWebGLSupport.js         # WebGL detection
+│   │   ├── corridor/                      # HOW rooms are presented (no data fetching)
+│   │   │   ├── components/
+│   │   │   │   ├── Corridor.jsx           # useEffect: create / dispose()
+│   │   │   │   ├── CorridorFallback.jsx   # poster grid (also kept hidden next to the 3D, for a11y)
+│   │   │   │   └── CorridorView.jsx       # chooses 3D or fallback
+│   │   │   ├── hooks/
+│   │   │   │   └── useWebGLSupport.js     # WebGL detection
+│   │   │   ├── model/
+│   │   │   │   ├── corridorMode.js        # '3d' | 'fallback' (pure)
+│   │   │   │   ├── doorMachine.js         # door state machine (pure)
+│   │   │   │   └── doorPlacement.js       # position of each door (pure)
+│   │   │   ├── scene/                     # imperative Three.js, no React
+│   │   │   │   └── createCorridor.js      # returns { dispose }
+│   │   │   └── index.js                   # public API of the feature (CorridorView)
 │   │   ├── my-bookings/
 │   │   │   ├── api/
 │   │   │   │   └── myBookingsApi.js       # list, update, cancel, change slot, history
@@ -304,8 +308,8 @@ front/
 
 | Folder | Role | Tickets |
 |--------|------|---------|
-| `rooms` | Room catalogue, posters, room detail, entry transitions | 067, 068 |
-| `corridor` | 3D corridor and its no-WebGL fallback | 066 |
+| `rooms` | Room DATA and pages: catalogue, posters, room detail, entry transitions. Fetches rooms and feeds the corridor (`CorridorSection`) | 067, 068 |
+| `corridor` | Room PRESENTATION: 3D corridor and its no-WebGL fallback. Receives `rooms` as props, never fetches | 066 |
 | `booking` | Day picker, slot grid, players dial, checkout, confirmation | 071, 072, 073 |
 | `my-bookings` | Client area: list, modify, cancel, change slot, game history | 074, 075, 076, 083 |
 | `auth` | Google login, `AuthProvider`, `RequireRole` | 077, 078 |
