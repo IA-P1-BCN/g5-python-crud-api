@@ -210,7 +210,7 @@ front/
 │   │   │   │   └── roomsApi.js            # GET /rooms ...
 │   │   │   ├── components/
 │   │   │   │   ├── Atmosphere.jsx         # clock / beam / dust / lasers
-│   │   │   │   ├── CorridorSection.jsx    # loads rooms, adds accent, renders CorridorView
+│   │   │   │   ├── RoomsCorridor.jsx    # loads rooms, adds accent, renders the corridor (CorridorView)
 │   │   │   │   ├── GateTransition.jsx     # room entrance animation
 │   │   │   │   ├── RoomHero.jsx           # room detail header
 │   │   │   │   └── RoomPoster.jsx         # room card
@@ -315,7 +315,7 @@ front/
 
 | Folder | Role | Tickets |
 |--------|------|---------|
-| `rooms` | Room DATA and pages: catalogue, posters, room detail, entry transitions. Fetches rooms and feeds the corridor (`CorridorSection`) | 067, 068 |
+| `rooms` | Room DATA and pages: catalogue, posters, room detail, entry transitions. Fetches rooms and feeds the corridor (`RoomsCorridor`) | 067, 068 |
 | `corridor` | Room PRESENTATION: 3D corridor and its no-WebGL fallback. Receives `rooms` as props, never fetches | 066 |
 | `booking` | Day picker, slot grid, players dial, checkout, confirmation | 071, 072, 073 |
 | `my-bookings` | Client area: list, modify, cancel, change slot, game history | 074, 075, 076, 083 |
@@ -381,9 +381,25 @@ A **mapper** turns the API response into a view model, so the UI never depends o
 
 ### 3D corridor
 
-`createCorridor(container, { rooms, onEnter })` is plain Three.js and returns `{ dispose }`. The React component only creates it in `useEffect` and calls `dispose()` on cleanup, so the 60 fps loop stays out of React. If WebGL is missing, on small screens (width ≤ 767 px) or with reduced motion, `CorridorView` shows the room posters (`CorridorFallback`) instead, and the booking flow never depends on the 3D.
+**Two features, two jobs.** `rooms` owns the DATA (it fetches the rooms and decides which are visible); `corridor` owns the PRESENTATION (it draws whatever rooms it is given, and never fetches). `RoomsCorridor` (in `rooms`) is the glue: it loads the visible rooms with `useRooms`, adds an `accent` colour from `roomThemes` to each one, and renders `CorridorView`. `corridor` never imports `rooms`, so there is no cycle. The corridor receives `{ id, slug, name, genre, accent }` and calls `onEnter(room)`; it never knows the router: the page does the `navigate`.
 
-**Who does what.** `CorridorSection` (in `rooms`) loads the visible rooms with `useRooms` and adds an `accent` colour from `roomThemes` to each one, so `corridor` never imports `rooms` (no cycle). The corridor receives `{ id, slug, name, accent }`. Pointer events and the door state (`doorMachine`) live inside `createCorridor`; `onEnter(room)` is called once, when the camera faces the chosen door. The corridor never knows the router: the page does the `navigate`. The walk-in animation is ticket 068 and "full" rooms are 067. The 3D is checked manually, not by unit tests; keyboard access exists only in the fallback.
+```
+RoomsCorridor (rooms)  ->  CorridorView (corridor)  ->  Corridor.jsx -> scene/createCorridor.js   (3D)
+ data, loading, error        3D or fallback              CorridorFallback.jsx                       (poster list)
+```
+
+**Inside `corridor/`.**
+- `components/`: `CorridorView` chooses the mode (`model/corridorMode`: WebGL available, no reduced motion, width > 767 px). `Corridor` creates the scene in `useEffect` and calls `dispose()` on cleanup, so the 60 fps loop stays out of React. `CorridorFallback` is the accessible poster list.
+- `model/`: pure logic with unit tests: `doorMachine` (idle / hover / selected / entering), `doorPlacement`, `corridorMode`.
+- `scene/`: plain Three.js, no React. `createCorridor(container, { rooms, onEnter })` returns `{ dispose }` and only orchestrates the render loop. The work is split in `corridorStructure` (floor, walls, exit sign), `doorsBuilder` (door, light and sign per room), `pointerInput` (hover, click, drag), `cameraRig` (sway, lean, walk to the door) and `labelTexture`. Each module has its own test; only the final rendering needs a real WebGL browser.
+
+**Robustness.**
+- *Accessibility:* the canvas is not usable with keyboard or screen reader, so in 3D mode `CorridorView` also renders the poster list visually hidden (`sr-only`). Keyboard and assistive-tech users always have buttons to enter a room.
+- *WebGL fails after detection* (context limit, blocklisted GPU): `Corridor` catches the error from the scene constructor and `CorridorView` switches to the visible poster list instead of a blank page.
+- *Refetch:* `useRooms` has a one-minute `staleTime`, and `RoomsCorridor` gives the scene a new `rooms` array only when a field the scene draws (`id`, `slug`, `name`, `genre`) changes. Otherwise a refetch on window focus would rebuild the WebGL context and lose the camera.
+- *Cleanup:* `dispose()` stops the loop and the resize observer, removes the canvas listeners (one `AbortController`), frees geometries, materials and textures, and loses the WebGL context.
+
+**Known limits.** The walk-in animation after `entering` is ticket 068 (until then the scene stays on the chosen door), "full" rooms are 067, and the corridor is 30 m long (about 9 rooms). The final look of the 3D is checked manually in a browser.
 
 **Doors come from the data.** The corridor is built from `GET /rooms?status=active`: one door per room the API returns, with its name on the sign. The API returns every room with its `status` and a `has_upcoming_slots` flag (true if it has at least one upcoming time slot, free or taken: BR-R6, ticket 059), and the front keeps only the rooms that are active **and** have that flag. So a deactivated room (BR-R3, BR-R4) has no door, a new room has none until the admin has created slots for it, and a fully booked room keeps its door and is shown as full. A room created by the admin (`POST /rooms`) appears the next time the list is loaded (page load or TanStack Query refetch, no real-time push). Visual themes come from the `roomThemes` registry by slug, with a **default theme** for slugs not in it, so a new room never breaks the corridor. Opening `/salas/<slug>` of an inactive room shows "room not found".
 

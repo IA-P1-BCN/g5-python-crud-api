@@ -7,7 +7,7 @@ import es from '@/i18n/es.js'
 import { server } from '@/test/mocks/server.js'
 import { roomDto } from '@/test/mocks/handlers/rooms.js'
 import { DEFAULT_THEME, ROOM_THEMES } from '../model/roomThemes.js'
-import CorridorSection from './CorridorSection.jsx'
+import RoomsCorridor from './RoomsCorridor.jsx'
 
 // The corridor itself is tested elsewhere: here a stub is enough.
 vi.mock('@/features/corridor', async () => {
@@ -39,12 +39,12 @@ function renderSection(onEnter = () => {}) {
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
-      <CorridorSection onEnter={onEnter} />
+      <RoomsCorridor onEnter={onEnter} />
     </QueryClientProvider>,
   )
 }
 
-describe('CorridorSection', () => {
+describe('RoomsCorridor', () => {
   it('shows a loading status while the rooms are being fetched', () => {
     respondWith([roomDto()])
     renderSection()
