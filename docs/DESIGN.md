@@ -1,6 +1,55 @@
 # Design system (front)
 
-Source of truth: the mockup `mockups/F-inmersivo.html` and `.css`. Ticket 086 (#150) turned it into tokens and shared components. Rule for everyone: **use the tokens, never the default Tailwind palette** (`bg-zinc-700`, `text-red-300`...). `shared/ui/tokensOnly.test.js` fails if a shared component does.
+Source of truth: the mockup `mockups/F-inmersivo.html` and `.css`. Ticket 086 (#150) turned it into tokens and shared components. Rule for everyone: **use the tokens, never the default Tailwind palette** (`bg-zinc-700`, `text-red-300`...). `src/styles/tokensOnly.test.js` fails if any file under `src/` does.
+
+## Start here (guide for the team)
+
+**What you get for free.** Every page is already dark, with the right font and text size. You never set a background, a font or a colour by hand: you use a token, a utility or a component from this page.
+
+**Where to find what**
+
+| I need... | Look at |
+|---|---|
+| A colour, radius, font or breakpoint | Tokens table below, or the `@theme` block in `front/src/index.css` |
+| A title, label or "greyed out" style | `heading-hero`, `heading-title`, `label-caps`, `dimmed` (section "Page defaults and type scale") |
+| A button, badge, form field, alert, dialog, select... | Components table below, files in `front/src/shared/ui/`, usage in the `*.test.jsx` next to each one |
+| The look of a screen | Mockup `docs/mockups/F-inmersivo.html` and `.css` (open the HTML in a browser) |
+| A visible text | `front/src/i18n/es/<feature>.js`, used as `es.<feature>.key` |
+| Where my files go, import rules | `ARCHI.md` (Frontend) |
+| Which tools and libraries are decided | `STACK.md` |
+| What to do per ticket, Definition of Done | `CONTRIBUTING.md` (Workflow per ticket - front) |
+| Who owns which folder | `WORK_SPLIT.md` |
+
+**Three examples**
+
+```jsx
+import Button from '@/shared/ui/Button.jsx'
+import Badge from '@/shared/ui/Badge.jsx'
+import EmptyState from '@/shared/ui/EmptyState.jsx'
+import Field from '@/shared/ui/Field.jsx'
+import es from '@/i18n/es.js'
+
+// A page: title with the type scale, a state badge, a CTA
+<h1 className="heading-title">{es.rooms.corridorLabel}</h1>
+<Badge tone="confirmed">{es.booking.confirmed}</Badge>   // tone = the booking status
+<Button>{es.booking.reserve}</Button>                     // primary = green CTA
+<Button variant="room">...</Button>                       // uses the room colour
+
+// A form field with React Hook Form
+<Field label={es.auth.email} error={errors.email?.message} {...register('email')} />
+
+// An empty list
+<EmptyState title={es.rooms.empty} action={<Button>...</Button>} />
+```
+
+(The `es.booking.*` and `es.auth.*` keys above are examples: add yours to your feature file.)
+
+**Tips**
+- Add a one-off style with `className` (`<Button className="w-full">`): the component keeps its own classes and yours win.
+- Colours inside a room: `text-room`, `bg-room`, `bg-room-dark` follow the room's `data-room` theme.
+- Unknown Tailwind classes are ignored without any error. If a style does nothing, check the name against the tokens table.
+- Before opening the PR: `docker compose run --rm front-tools` (format, lint, tests). See the real result at http://localhost:3000 with `docker compose up`.
+- After pulling new dependencies, restart the front: `docker compose restart front`.
 
 ## Tokens (`front/src/index.css`, block `@theme`)
 
