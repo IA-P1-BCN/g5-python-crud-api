@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     database_url: str
     shared_database_url: str | None = None
+    supabase_url: str
 
     @property
     def effective_database_url(self) -> str:

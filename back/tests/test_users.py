@@ -1,3 +1,5 @@
+from datetime import UTC, datetime, timedelta
+
 from back.app.models import User
 
 URL = "/api/v1/users"
@@ -69,13 +71,9 @@ def test_create_user_email_is_normalized(client, db):
     )
 
     assert first_response.status_code == 201
-
-    data = first_response.json()
-
-    assert data["email"] == "alice@example.com"
+    assert first_response.json()["email"] == "alice@example.com"
 
     user = db.query(User).one()
-
     assert user.email == "alice@example.com"
 
     second_response = client.post(
@@ -116,7 +114,9 @@ def test_create_user_missing_name_returns_422(client):
     assert response.status_code == 422
 
 
-def test_get_user_success(client):
+def test_get_user_success(client, db, make_token):
+    auth_id = "google-user-123"
+
     create_response = client.post(
         URL,
         json={
@@ -129,8 +129,19 @@ def test_get_user_success(client):
     assert create_response.status_code == 201
 
     user_id = create_response.json()["id"]
+    user = db.get(User, user_id)
 
-    response = client.get(f"{URL}/{user_id}")
+    assert user is not None
+
+    user.auth_id = auth_id
+    db.commit()
+
+    token = make_token(auth_id)
+
+    response = client.get(
+        f"{URL}/{user_id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
     assert response.status_code == 200
     assert response.json()["id"] == user_id
@@ -139,8 +150,95 @@ def test_get_user_success(client):
     assert response.json()["phone"] == "+34123456789"
 
 
-def test_get_user_not_found_returns_404(client):
-    response = client.get(f"{URL}/999999")
+def test_get_user_without_token_returns_401(client):
+    create_response = client.post(
+        URL,
+        json={
+            "name": "Alice",
+            "email": "alice@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+    user_id = create_response.json()["id"]
+
+    response = client.get(f"{URL}/{user_id}")
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Not authenticated",
+        "code": "UNAUTHORIZED",
+    }
+
+
+def test_get_user_invalid_token_returns_401(client):
+    response = client.get(
+        f"{URL}/1",
+        headers={"Authorization": "Bearer invalid-token"},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Invalid or expired token",
+        "code": "UNAUTHORIZED",
+    }
+
+
+def test_get_user_expired_token_returns_401(client, make_token):
+    token = make_token(
+        "google-user-123",
+        expires_at=datetime.now(UTC) - timedelta(minutes=1),
+    )
+
+    response = client.get(
+        f"{URL}/1",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Invalid or expired token",
+        "code": "UNAUTHORIZED",
+    }
+
+
+def test_get_user_invalid_audience_returns_401(client, make_token):
+    token = make_token(
+        "google-user-123",
+        audience="wrong-audience",
+    )
+
+    response = client.get(
+        f"{URL}/1",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Invalid or expired token",
+        "code": "UNAUTHORIZED",
+    }
+
+
+def test_get_user_not_found_returns_404(client, db, make_token):
+    auth_id = "google-user-123"
+
+    user = User(
+        auth_id=auth_id,
+        name="Alice",
+        email="alice@example.com",
+        role="client",
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+
+    token = make_token(auth_id)
+
+    response = client.get(
+        f"{URL}/999999",
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
     assert response.status_code == 404
     assert response.json() == {
@@ -160,7 +258,6 @@ def test_update_user_success(client, db):
     )
 
     assert create_response.status_code == 201
-
     user_id = create_response.json()["id"]
 
     response = client.put(
@@ -198,7 +295,6 @@ def test_update_user_invalid_data_returns_422(client):
     )
 
     assert create_response.status_code == 201
-
     user_id = create_response.json()["id"]
 
     response = client.put(
@@ -223,7 +319,6 @@ def test_update_user_rejects_email_change(client):
     )
 
     assert create_response.status_code == 201
-
     user_id = create_response.json()["id"]
 
     response = client.put(
@@ -334,7 +429,6 @@ def test_deactivate_user(client, db):
     )
 
     assert create_response.status_code == 201
-
     user_id = create_response.json()["id"]
 
     response = client.put(f"{URL}/{user_id}/deactivate")
@@ -362,7 +456,6 @@ def test_deactivate_user_is_idempotent(client, db):
     )
 
     assert create_response.status_code == 201
-
     user_id = create_response.json()["id"]
 
     first_response = client.put(f"{URL}/{user_id}/deactivate")
