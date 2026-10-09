@@ -11,7 +11,7 @@ export default function Chip({ selected = false, className, type = 'button', ...
         'focus-visible:outline-room focus-visible:outline-3 focus-visible:outline-offset-2',
         selected
           ? 'border-room bg-room text-black'
-          : 'hover:border-room hover:text-room border-zinc-600 text-zinc-300',
+          : 'hover:border-room hover:text-room border-line text-muted',
         className,
       )}
       {...props}

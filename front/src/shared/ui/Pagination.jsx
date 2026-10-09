@@ -12,7 +12,7 @@ export default function Pagination({ page, size, total, onPageChange }) {
       <Button variant="secondary" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
         {es.common.previous}
       </Button>
-      <span className="text-sm text-zinc-300">{es.common.pageOf(page, pages)}</span>
+      <span className="text-muted text-sm">{es.common.pageOf(page, pages)}</span>
       <Button variant="secondary" disabled={page >= pages} onClick={() => onPageChange(page + 1)}>
         {es.common.next}
       </Button>
