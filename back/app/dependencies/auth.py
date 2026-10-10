@@ -51,9 +51,7 @@ def get_current_user(
     auth_id = subject.strip()
 
     # First, look for a user already associated with this auth identity.
-    user = db.execute(
-        select(User).where(User.auth_id == auth_id)
-    ).scalar_one_or_none()
+    user = db.execute(select(User).where(User.auth_id == auth_id)).scalar_one_or_none()
 
     if user is not None:
         if not user.is_active:
@@ -68,9 +66,7 @@ def get_current_user(
         raise unauthorized("Token is missing a valid email")
 
     try:
-        email = str(
-            email_adapter.validate_python(email_claim.strip())
-        ).lower()
+        email = str(email_adapter.validate_python(email_claim.strip())).lower()
     except ValidationError:
         raise unauthorized("Token is missing a valid email") from None
 
@@ -80,9 +76,7 @@ def get_current_user(
         metadata = {}
 
     name_claim = (
-        metadata.get("full_name")
-        or metadata.get("name")
-        or payload.get("name")
+        metadata.get("full_name") or metadata.get("name") or payload.get("name")
     )
 
     if not isinstance(name_claim, str):

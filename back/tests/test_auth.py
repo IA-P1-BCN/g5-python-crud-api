@@ -394,3 +394,89 @@ def test_get_current_user_strips_spaces_from_subject(make_token, db):
 
     assert current_user.auth_id == "google-user-123"
     assert current_user.email == "spaced-sub@example.com"
+
+
+def test_get_current_user_rejects_email_claimed_during_concurrent_login(
+    make_token,
+    db,
+    monkeypatch,
+):
+    from sqlalchemy.exc import IntegrityError
+
+    token = make_token(
+        subject="new-google-user",
+        email="claimed@example.com",
+        user_metadata={"full_name": "New User"},
+    )
+
+    original_commit = db.commit
+
+    def commit_with_competing_email():
+        db.rollback()
+
+        competing_user = User(
+            auth_id="different-google-user",
+            name="Existing User",
+            email="claimed@example.com",
+            role="client",
+            is_active=True,
+        )
+        db.add(competing_user)
+        original_commit()
+
+        raise IntegrityError(
+            "INSERT INTO users",
+            {},
+            Exception("unique constraint violation"),
+        )
+
+    monkeypatch.setattr(db, "commit", commit_with_competing_email)
+
+    with pytest.raises(AppError) as exc_info:
+        get_current_user(
+            credentials=make_credentials(token),
+            db=db,
+        )
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.code == "DUPLICATE"
+
+    users = db.scalars(select(User)).all()
+    assert len(users) == 1
+    assert users[0].auth_id == "different-google-user"
+    assert users[0].email == "claimed@example.com"
+
+
+def test_get_current_user_reraises_unrelated_integrity_error(
+    make_token,
+    db,
+    monkeypatch,
+):
+    from sqlalchemy.exc import IntegrityError
+
+    token = make_token(
+        subject="google-user-123",
+        email="new-user@example.com",
+        user_metadata={"full_name": "New User"},
+    )
+
+    original_error = IntegrityError(
+        "INSERT INTO users",
+        {},
+        Exception("unrelated integrity error"),
+    )
+
+    def commit_with_unrelated_integrity_error():
+        raise original_error
+
+    monkeypatch.setattr(db, "commit", commit_with_unrelated_integrity_error)
+
+    with pytest.raises(IntegrityError) as exc_info:
+        get_current_user(
+            credentials=make_credentials(token),
+            db=db,
+        )
+
+    assert exc_info.value is original_error
+    assert str(exc_info.value.orig) == "unrelated integrity error"
+    assert db.query(User).count() == 0
