@@ -254,3 +254,143 @@ def test_get_current_user_rejects_hs256(make_token, db):
         get_current_user(credentials=make_credentials(token), db=db)
 
     assert exc_info.value.status_code == 401
+
+
+def test_get_current_user_recovers_from_concurrent_first_login(
+    make_token,
+    db,
+    monkeypatch,
+):
+    from sqlalchemy.exc import IntegrityError
+
+    token = make_token(
+        subject="google-user-123",
+        email="new-user@example.com",
+        user_metadata={"full_name": "First Request"},
+    )
+
+    # Simulate another request winning the insert race.
+    original_commit = db.commit
+
+    def commit_with_concurrent_insert():
+        db.rollback()
+
+        concurrent_user = User(
+            auth_id="google-user-123",
+            name="Concurrent User",
+            email="new-user@example.com",
+            role="client",
+            is_active=True,
+        )
+        db.add(concurrent_user)
+        original_commit()
+
+        # The competing request has committed the user.
+        # Simulate the unique-constraint error of our insert.
+        raise IntegrityError(
+            "INSERT INTO users",
+            {},
+            Exception("unique constraint violation"),
+        )
+
+    monkeypatch.setattr(db, "commit", commit_with_concurrent_insert)
+
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
+
+    assert current_user.auth_id == "google-user-123"
+    assert current_user.name == "Concurrent User"
+    assert current_user.email == "new-user@example.com"
+    assert current_user.role == "client"
+    assert db.query(User).count() == 1
+
+
+def test_get_current_user_rejects_invalid_email(make_token, db):
+    token = make_token(
+        email="not-an-email",
+        user_metadata={"full_name": "Invalid Email User"},
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_user(credentials=make_credentials(token), db=db)
+
+    assert exc_info.value.status_code == 401
+    assert db.query(User).count() == 0
+
+
+def test_get_current_user_rejects_name_over_100_characters(
+    make_token,
+    db,
+):
+    token = make_token(
+        user_metadata={"full_name": "A" * 101},
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_user(credentials=make_credentials(token), db=db)
+
+    assert exc_info.value.status_code == 401
+    assert db.query(User).count() == 0
+
+
+def test_get_current_user_prefers_full_name(make_token, db):
+    token = make_token(
+        user_metadata={
+            "full_name": "Full Name",
+            "name": "Metadata Name",
+        },
+        name="Top Level Name",
+    )
+
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
+
+    assert current_user.name == "Full Name"
+
+
+def test_get_current_user_falls_back_to_metadata_name(make_token, db):
+    token = make_token(
+        user_metadata={"name": "Metadata Name"},
+        name="Top Level Name",
+    )
+
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
+
+    assert current_user.name == "Metadata Name"
+
+
+def test_get_current_user_falls_back_to_top_level_name(make_token, db):
+    token = make_token(
+        include_user_metadata=False,
+        name="Top Level Name",
+    )
+
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
+
+    assert current_user.name == "Top Level Name"
+
+
+def test_get_current_user_strips_spaces_from_subject(make_token, db):
+    token = make_token(
+        subject="  google-user-123  ",
+        email="spaced-sub@example.com",
+        user_metadata={"full_name": "Spaced Subject"},
+    )
+
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
+
+    assert current_user.auth_id == "google-user-123"
+    assert current_user.email == "spaced-sub@example.com"

@@ -5,6 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import PyJWTError
 from pydantic import EmailStr, TypeAdapter, ValidationError
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from back.app.core.errors import AppError
@@ -73,8 +74,7 @@ def get_current_user(
     except ValidationError:
         raise unauthorized("Token is missing a valid email") from None
 
-    # Prefer the Google/Supabase full_name metadata, then name metadata,
-    # and finally the top-level name claim.
+    # Prefer full_name, then metadata name, then the top-level name claim.
     metadata = payload.get("user_metadata")
     if not isinstance(metadata, dict):
         metadata = {}
@@ -118,8 +118,33 @@ def get_current_user(
         db.add(user)
         db.commit()
         db.refresh(user)
-    except Exception:
+    except IntegrityError:
         db.rollback()
+
+        # Another request may have created this identity concurrently.
+        concurrent_user = db.execute(
+            select(User).where(User.auth_id == auth_id)
+        ).scalar_one_or_none()
+
+        if concurrent_user is not None:
+            if not concurrent_user.is_active:
+                raise unauthorized("User is inactive")
+
+            return concurrent_user
+
+        # A different identity may have claimed this email concurrently.
+        conflicting_email_user = db.execute(
+            select(User).where(User.email == email)
+        ).scalar_one_or_none()
+
+        if conflicting_email_user is not None:
+            raise AppError(
+                message="User with this email already exists",
+                code="DUPLICATE",
+                status_code=409,
+            )
+
+        # Do not hide integrity errors unrelated to these conflicts.
         raise
 
     return user
