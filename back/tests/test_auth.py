@@ -3,7 +3,9 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
+from sqlalchemy import select
 
+from back.app.core.errors import AppError
 from back.app.dependencies.auth import get_current_user
 from back.app.models import User
 
@@ -78,13 +80,106 @@ def test_get_current_user_invalid_issuer(make_token, db):
     assert exc_info.value.status_code == 401
 
 
-def test_get_current_user_unknown_user(make_token, db):
-    token = make_token("google-user-123")
+def test_get_current_user_first_login_creates_client(make_token, db):
+    token = make_token(
+        subject="google-user-123",
+        email="New.User@example.com",
+        user_metadata={"full_name": "New User"},
+    )
+
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
+
+    assert current_user.id is not None
+    assert current_user.auth_id == "google-user-123"
+    assert current_user.name == "New User"
+    assert current_user.email == "new.user@example.com"
+    assert current_user.role == "client"
+    assert current_user.is_active is True
+
+    users = db.scalars(select(User)).all()
+    assert len(users) == 1
+
+
+def test_get_current_user_existing_user(make_token, db):
+    user = User(
+        auth_id="google-user-123",
+        name="Existing User",
+        email="existing@example.com",
+        role="client",
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    token = make_token(
+        subject="google-user-123",
+        email="different@example.com",
+    )
+
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
+
+    assert current_user.id == user.id
+    assert current_user.email == "existing@example.com"
+    assert db.query(User).count() == 1
+
+
+def test_get_current_user_unknown_user_without_email(make_token, db):
+    token = make_token(include_email=False)
 
     with pytest.raises(HTTPException) as exc_info:
         get_current_user(credentials=make_credentials(token), db=db)
 
     assert exc_info.value.status_code == 401
+    assert db.query(User).count() == 0
+
+
+def test_get_current_user_unknown_user_without_name(make_token, db):
+    token = make_token(
+        include_user_metadata=False,
+        name=None,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_user(credentials=make_credentials(token), db=db)
+
+    assert exc_info.value.status_code == 401
+    assert db.query(User).count() == 0
+
+
+def test_get_current_user_duplicate_email_does_not_link(
+    make_token,
+    db,
+):
+    existing_user = User(
+        auth_id=None,
+        name="Existing User",
+        email="new-user@example.com",
+        role="client",
+        is_active=True,
+    )
+    db.add(existing_user)
+    db.commit()
+
+    token = make_token(
+        subject="different-google-user",
+        email="new-user@example.com",
+    )
+
+    with pytest.raises(AppError) as exc_info:
+        get_current_user(credentials=make_credentials(token), db=db)
+
+    assert exc_info.value.status_code == 409
+
+    db.refresh(existing_user)
+    assert existing_user.auth_id is None
+    assert db.query(User).count() == 1
 
 
 def test_get_current_user_inactive_user(make_token, db):

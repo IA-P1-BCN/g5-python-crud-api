@@ -40,7 +40,11 @@ class FakeJWKClient:
 
 @pytest.fixture(autouse=True)
 def configure_test_jwks(monkeypatch):
-    monkeypatch.setattr(settings, "supabase_url", "https://test.supabase.co")
+    monkeypatch.setattr(
+        settings,
+        "supabase_url",
+        "https://test.supabase.co",
+    )
     monkeypatch.setattr(security, "SUPABASE_ISSUER", TEST_ISSUER)
     monkeypatch.setattr(
         security,
@@ -63,8 +67,14 @@ def make_token():
         algorithm="ES256",
         include_exp=True,
         include_subject=True,
+        email="new-user@example.com",
+        include_email=True,
+        user_metadata=None,
+        include_user_metadata=True,
+        name=None,
     ):
         now = datetime.now(UTC)
+
         payload = {
             "aud": audience,
             "iss": issuer,
@@ -75,7 +85,21 @@ def make_token():
             payload["sub"] = subject
 
         if include_exp:
-            payload["exp"] = expires_at or now + timedelta(minutes=60)
+            payload["exp"] = (
+                expires_at or now + timedelta(minutes=60)
+            )
+
+        if include_email:
+            payload["email"] = email
+
+        if include_user_metadata:
+            if user_metadata is None:
+                user_metadata = {"full_name": "New User"}
+
+            payload["user_metadata"] = user_metadata
+
+        if name is not None:
+            payload["name"] = name
 
         signing_key = private_key
 
@@ -101,7 +125,10 @@ def db():
         poolclass=StaticPool,
     )
     Base.metadata.create_all(engine)
-    session = sessionmaker(bind=engine, expire_on_commit=False)()
+    session = sessionmaker(
+        bind=engine,
+        expire_on_commit=False,
+    )()
 
     try:
         yield session
