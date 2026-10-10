@@ -593,3 +593,74 @@ def test_change_slot_to_same_slot_is_a_noop(client, seed, db):
 
     assert response.status_code == 200
     assert response.json()["time_slot_id"] == seed.free_slot.id
+
+
+def test_get_booking_includes_nested_fields(client, seed):
+    booking_id = client.get(URL).json()[0]["id"]
+
+    data = client.get(f"{URL}/{booking_id}").json()
+
+    assert data["room"]["id"] == seed.room.id
+    assert data["room"]["slug"] == "pharaoh"
+    assert data["time_slot"]["starts_at"]
+    assert data["time_slot"]["ends_at"]
+    assert data["user"] == {"name": "Alice"}
+    assert data["result"] is None
+
+
+def test_list_bookings_includes_nested_fields(client, seed):
+    item = client.get(URL).json()[0]
+
+    assert item["room"]["name"] == "Pharaoh"
+    assert item["user"]["name"] == "Alice"
+    assert "can_modify" in item
+
+
+def test_can_modify_true_when_live_and_24h_away(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot)
+
+    assert client.get(f"{URL}/{booking.id}").json()["can_modify"] is True
+
+
+def test_can_modify_false_under_24h(client, seed, db):
+    soon_slot = add_slot(db, seed.room, datetime.now(UTC) + timedelta(hours=2))
+    booking = make_booking(db, seed, soon_slot)
+
+    assert client.get(f"{URL}/{booking.id}").json()["can_modify"] is False
+
+
+def test_can_modify_false_when_cancelled(client, seed, db):
+    booking = make_booking(db, seed, seed.free_slot, status="CANCELLED")
+
+    assert client.get(f"{URL}/{booking.id}").json()["can_modify"] is False
+
+
+def test_list_bookings_filter_date_from(client, seed, db):
+    make_booking(db, seed, add_slot(db, seed.room, LATER))  # 2030-01-02
+
+    data = client.get(URL, params={"date_from": "2030-01-02"}).json()
+
+    assert len(data) == 1  # the seed booking is on 2030-01-01
+
+
+def test_list_bookings_filter_date_to_is_inclusive(client, seed, db):
+    make_booking(db, seed, add_slot(db, seed.room, LATER))
+
+    only_first_day = client.get(URL, params={"date_to": "2030-01-01"}).json()
+    both_days = client.get(URL, params={"date_to": "2030-01-02"}).json()
+
+    assert len(only_first_day) == 1
+    assert len(both_days) == 2
+
+
+def test_list_bookings_cancelled_tab(client, seed, db):
+    make_booking(db, seed, seed.free_slot, status="CANCELLED")
+
+    data = client.get(URL, params={"status": "CANCELLED"}).json()
+
+    assert len(data) == 1
+    assert data[0]["can_modify"] is False
+
+
+def test_list_bookings_invalid_date_returns_422(client, seed):
+    assert client.get(URL, params={"date_from": "nope"}).status_code == 422
