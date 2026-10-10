@@ -55,7 +55,7 @@ Same git flow as above (branch from `develop`, PR to `develop`). Differences:
 
 1. Branch from `develop`, e.g. `feat/071-day-picker-slot-grid`. Commit scope: the feature (`feat(booking): ...`).
 2. Write the code and its tests together: one test per acceptance criterion of the User Story (pure logic such as prices, slot states, 24h rule, game transitions, mappers and schemas gets unit tests; components use Testing Library + MSW).
-3. Texts go in `front/src/i18n/es/<feature>.js` (Spanish), never hard-coded in components.
+3. Texts go in `front/src/i18n/es/<feature>.js` (Spanish), never hard-coded in components. Colours, shared components and the rest of the visual rules: `DESIGN.md` (tokens only, no Tailwind palette).
 4. Respect the import rules (`ARCHI.md`, Frontend): use `@/...`, another feature only through its `index.js`. ESLint fails otherwise.
 5. At the **end of the ticket, before the PR**, from the project root:
 

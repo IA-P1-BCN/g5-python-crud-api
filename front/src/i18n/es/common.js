@@ -2,6 +2,7 @@
 
 export default {
   close: 'Cerrar',
+  loading: 'Cargando',
   previous: 'Anterior',
   next: 'Siguiente',
   pagination: 'Paginación',

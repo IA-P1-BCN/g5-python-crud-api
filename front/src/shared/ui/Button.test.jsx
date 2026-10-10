@@ -40,15 +40,31 @@ describe('Button', () => {
     expect(onClick).not.toHaveBeenCalled()
   })
 
-  it('uses the room accent colour for the primary variant only', () => {
+  it('shows a spinner only while loading', () => {
+    const { rerender } = render(<Button>Reservar</Button>)
+    expect(screen.getByRole('button').querySelector('[data-slot="spinner"]')).toBeNull()
+    rerender(<Button loading>Reservar</Button>)
+    expect(screen.getByRole('button').querySelector('[data-slot="spinner"]')).not.toBeNull()
+  })
+
+  it('primary is the site CTA: exit green with dark text and glow', () => {
+    render(<Button>Reservar</Button>)
+    const button = screen.getByRole('button')
+    expect(button).toHaveClass('bg-exit', 'text-on-exit', 'shadow-glow')
+    expect(button).not.toHaveClass('bg-room')
+  })
+
+  it('room variant uses the room accent; ghost has no solid background', () => {
     render(
       <>
-        <Button>Primary</Button>
+        <Button variant="room">Room</Button>
         <Button variant="ghost">Ghost</Button>
       </>,
     )
-    expect(screen.getByRole('button', { name: 'Primary' })).toHaveClass('bg-room')
-    expect(screen.getByRole('button', { name: 'Ghost' })).not.toHaveClass('bg-room')
+    expect(screen.getByRole('button', { name: 'Room' })).toHaveClass('bg-room')
+    const ghost = screen.getByRole('button', { name: 'Ghost' })
+    expect(ghost).not.toHaveClass('bg-room')
+    expect(ghost).not.toHaveClass('bg-exit')
   })
 
   it('keeps a 44px touch target and lets callers add or override classes', () => {

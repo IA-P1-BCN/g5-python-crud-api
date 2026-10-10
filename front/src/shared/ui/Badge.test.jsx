@@ -8,15 +8,18 @@ describe('Badge', () => {
   })
 
   it('uses the neutral tone by default', () => {
-    render(<Badge>Pendiente</Badge>)
-    expect(screen.getByText('Pendiente')).toHaveClass('text-zinc-300')
+    render(<Badge>Estado</Badge>)
+    expect(screen.getByText('Estado')).toHaveClass('text-muted')
   })
 
   it.each([
-    ['success', 'text-emerald-300'],
-    ['warning', 'text-amber-300'],
-    ['danger', 'text-red-300'],
-  ])('uses a distinct colour for the %s tone', (tone, colour) => {
+    ['pending', 'text-pending'],
+    ['confirmed', 'text-confirmed'],
+    ['in-progress', 'text-in-progress'],
+    ['done', 'text-done'],
+    ['cancelled', 'text-cancelled'],
+    ['error', 'text-error'],
+  ])('uses the %s colour for the %s tone', (tone, colour) => {
     render(<Badge tone={tone}>Estado</Badge>)
     expect(screen.getByText('Estado')).toHaveClass(colour)
   })

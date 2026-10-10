@@ -1,4 +1,52 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* Site design tokens, from docs/mockups/F-inmersivo.html.
+   Use these (bg-surface, text-muted, rounded-lg...) instead of hardcoded Tailwind colours.
+   contrast.test.js checks the text/background pairs stay readable (WCAG AA). */
+@theme {
+  /* Surfaces and text */
+  --color-bg: #0a0b0d;
+  --color-surface: #121418;
+  --color-surface-2: #1a1d23;
+  --color-line: #ffffff1f;
+  --color-text: #eceae4;
+  --color-muted: #a4a39b;
+
+  /* Primary action ("exit" green) and the text that sits on it */
+  --color-exit: #3dff8f;
+  --color-on-exit: #04120a;
+
+  /* Text on a room accent (bg-room), and the dark scrim behind dialogs */
+  --color-on-room: #000000;
+  --color-scrim: #00000080;
+
+  /* Booking states */
+  --color-pending: #ffd166;
+  --color-confirmed: #3dff8f;
+  --color-in-progress: #7cc4ff;
+  --color-done: #c4a6ff;
+  --color-cancelled: #ff8a98;
+
+  /* Feedback */
+  --color-error: #ff5a6e;
+
+  /* Shapes */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-pill: 99px;
+  --shadow-glow: 0 0 22px #3dff8f80;
+
+  /* The mockup has one breakpoint: below 800px (50rem) the layout is the mobile one */
+  --breakpoint-md: 50rem;
+
+  /* Fonts (self-hosted with @fontsource, imported in main.jsx) */
+  --font-display: 'Big Shoulders Display', Impact, sans-serif;
+  --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-mono: 'Share Tech Mono', ui-monospace, monospace;
+}
 
 /* Room themes: --rc = accent, --rd = dark background. Keep in sync with
    features/rooms/model/roomThemes.js (theme.test.js fails if they differ). */
@@ -31,4 +79,60 @@
 @theme inline {
   --color-room: var(--rc);
   --color-room-dark: var(--rd);
+}
+
+/* Aliases for the shadcn/ui components in shared/ui (dialog, select): their class names
+   (bg-background, text-muted-foreground...) resolve to our tokens, so they match the mockup. */
+@theme inline {
+  --color-background: var(--color-surface);
+  --color-foreground: var(--color-text);
+  --color-popover: var(--color-surface-2);
+  --color-popover-foreground: var(--color-text);
+  --color-accent: color-mix(in oklab, var(--color-exit) 15%, var(--color-surface-2));
+  --color-accent-foreground: var(--color-text);
+  --color-muted-foreground: var(--color-muted);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line);
+  --color-ring: var(--color-exit);
+  --color-destructive: var(--color-error);
+  --color-primary: var(--color-exit);
+  --color-primary-foreground: var(--color-on-exit);
+}
+
+/* Page defaults: every page starts dark with the body font, no per-page setup needed. */
+@layer base {
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.55;
+  }
+}
+
+/* Type scale from the mockup. Use these instead of composing font-display + sizes by hand. */
+@utility heading-hero {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(38px, 6vw, 72px);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+@utility heading-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 28px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+@utility label-caps {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Inactive or full room: dimmed and desaturated, as in the mockup (.dim). */
+@utility dimmed {
+  opacity: 0.38;
+  filter: grayscale(0.7);
 }

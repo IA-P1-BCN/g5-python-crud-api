@@ -17,7 +17,7 @@ from back.app.schemas.time_slot import (
     TimeSlotUpdate,
 )
 
-router = APIRouter(prefix="/api/v1/time-slots", tags=["time-slots"])
+router = APIRouter(prefix="/api/v1/time-slots")
 
 SessionDep = Annotated[Session, Depends(get_db)]
 
