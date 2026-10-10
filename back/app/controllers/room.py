@@ -220,7 +220,7 @@ def activate_room(db: Session, room_id: int) -> Room:
             code="NOT_FOUND",
             status_code=404,
         )
-    # BR-R3: Idempotent activation - if already active, return unchanged
+    # Idempotent: an already active room is returned unchanged
     if room.status == "active":
         return room
 

@@ -271,6 +271,15 @@ def _room_payload(**overrides) -> dict:
     return payload
 
 
+def _create_room(client, **overrides) -> dict:
+    """Create a room through the API and return its JSON body."""
+    payload = _room_payload(**overrides)
+    payload.pop("slug", None)
+    response = client.post(URL, json=payload)
+    assert response.status_code == 201
+    return response.json()
+
+
 def test_ac_01_schema_defaults_and_fields(db):
     """AC-01: catalog columns exist and get their default values."""
     room = Room(
@@ -691,53 +700,56 @@ def test_criterion_4_get_room_by_slug_routing(client):
     assert data["name"] == "El Faro"
 
 
-def test_activate_room_success(client):
+def test_activate_room_success(client, db):
     """PUT /api/v1/rooms/{id}/activate sets status=active (200)."""
-    res = client.post(
-        "/api/v1/rooms",
-        json={
-            "name": "Sala para Activar",
-            "capacity": 4,
-            "duration": 60,
-            "base_price": 20.00,
-            "genre": "Terror",
-            "min_players": 2,
-            "difficulty": 3,
-            "hook": "Susto",
-            "story": "Historia",
-            "audience": "General",
-        },
-    )
-    room_id = res.json()["id"]
-    client.put(f"/api/v1/rooms/{room_id}/deactivate")
+    room_id = _create_room(client, name="Sala para Activar")["id"]
+    client.put(f"{URL}/{room_id}/deactivate")
 
-    activate_res = client.put(f"/api/v1/rooms/{room_id}/activate")
+    activate_res = client.put(f"{URL}/{room_id}/activate")
     assert activate_res.status_code == 200
     assert activate_res.json()["status"] == "active"
+    assert db.get(Room, room_id).status == "active"
 
 
-def test_activate_room_idempotent(client):
+def test_activate_room_idempotent(client, db):
     """An already active room is returned unchanged (idempotent)."""
-    res = client.post(
-        "/api/v1/rooms",
-        json={
-            "name": "Sala Ya Activa",
-            "capacity": 4,
-            "duration": 60,
-            "base_price": 20.00,
-            "genre": "Aventura",
-            "min_players": 1,
-            "difficulty": 2,
-            "hook": "Hook",
-            "story": "Story",
-            "audience": "General",
-        },
-    )
-    room_id = res.json()["id"]
+    room_id = _create_room(client, name="Sala Ya Activa")["id"]
 
-    activate_res = client.put(f"/api/v1/rooms/{room_id}/activate")
+    activate_res = client.put(f"{URL}/{room_id}/activate")
     assert activate_res.status_code == 200
     assert activate_res.json()["status"] == "active"
+    assert db.get(Room, room_id).status == "active"
+
+
+def test_activate_room_with_past_bookings(client, db):
+    """A room whose only bookings are in the past can be reactivated (200)."""
+    from back.app.models import Booking, TimeSlot, User
+
+    room_id = _create_room(client, name="Sala con Historial")["id"]
+    client.put(f"{URL}/{room_id}/deactivate")
+
+    user = User(email="history@example.com", name="Past Client")
+    past = datetime.now(UTC) - timedelta(days=2)
+    slot = TimeSlot(
+        room_id=room_id,
+        starts_at=past,
+        ends_at=past + timedelta(minutes=60),
+        status="available",
+    )
+    booking = Booking(
+        user=user,
+        time_slot=slot,
+        players=2,
+        total_price=Decimal("40.00"),
+        status="CONFIRMED",
+    )
+    db.add_all([user, slot, booking])
+    db.commit()
+
+    activate_res = client.put(f"{URL}/{room_id}/activate")
+    assert activate_res.status_code == 200
+    assert activate_res.json()["status"] == "active"
+    assert db.get(Room, room_id).status == "active"
 
 
 def test_activate_room_not_found(client):

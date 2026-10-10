@@ -35,6 +35,7 @@ Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUP
 | GET | `/rooms/{id or slug}` | 1 | Get room by numeric ID or URL slug | 200 |
 | PUT | `/rooms/{id}` | 1 | Partial update (only sent fields). `slug` is immutable; `null` or unknown fields → 422 | 200 |
 | PUT | `/rooms/{id}/deactivate` | 1 | Deactivate | 200 |
+| PUT | `/rooms/{id}/activate` | 1 | Activate (idempotent) | 200 |
 
 Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphens, at least one letter, immutable once created, generated from `name` when omitted; a digits-only name gets a `sala-` prefix, e.g. `sala-1923`), `genre`, `min_players`, `difficulty` (1 to 5), `hook`, `story`, `audience`.
 
