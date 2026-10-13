@@ -114,7 +114,7 @@ Archived room, kept to test deactivation and reactivation (ticket 057). Not show
 
 ## Time slots
 
-In the mockup, each room's start times are spaced by `duration + 30 min` (room reset), from 10:00 to 20:30 at the latest. This is a demo convention, not a business rule: real slots are created by the admin (tickets 019, 058).
+Each room's start times are spaced by `duration + 30 min` (room reset), from 10:00 to 20:30 at the latest. The admin creates real slots through `POST /rooms/{id}/time-slots/generate` (tickets 019, 058), which follows the same step (BR-S7).
 
 | Room | Step | Start times |
 |------|------|-------------|
