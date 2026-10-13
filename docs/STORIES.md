@@ -81,23 +81,24 @@ Business rules: -
 **As a** administrator, **I want** create a room, **so that** the room can be offered to clients.
 
 Acceptance criteria:
-- `POST /rooms` with `name`, `capacity`, `duration`, `base_price` returns 201, `status=active`
+- `POST /rooms` with `name`, `capacity`, `duration`, `base_price` and the catalog fields (`genre`, `min_players`, `difficulty`, `hook`, `story`, `audience`) returns 201, `status=active`
+- `slug` is optional: generated from `name` when omitted (a digits-only name gets a `sala-` prefix); a client-supplied `slug` must be lowercase with at least one letter
 - Duplicate name returns 409; `capacity` < 1, `duration` <= 0 or negative price returns 422
 - Tests: success, duplicate name, each invalid field
 
-Business rules: BR-R1, BR-R2
+Business rules: BR-R1, BR-R2, BR-R7
 
 ### US08 - Edit room (Sprint 1)
 
 **As a** administrator, **I want** edit a room, **so that** the offer stays up to date.
 
 Acceptance criteria:
-- `PUT /rooms/{id}` updates name, capacity, duration, base_price
+- `PUT /rooms/{id}` updates `name`, `capacity`, `duration`, `base_price` and the catalog fields (`genre`, `min_players`, `difficulty`, `hook`, `story`, `audience`); partial update, `slug` is immutable
 - 404 if missing; same validations as creation
 - Renaming to an existing name returns 409
 - Tests: success, 404, duplicate name, invalid values
 
-Business rules: BR-R1, BR-R2
+Business rules: BR-R1, BR-R2, BR-R7
 
 ### US09 - Deactivate room (Sprint 1)
 

@@ -1,6 +1,7 @@
 import logging
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import JSONResponse
 
 from back.app.config.logging import setup_logging
@@ -45,6 +46,24 @@ async def app_error_handler(request: Request, exc: AppError):
             "code": exc.code,
         },
     )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler_override(
+    request: Request,
+    exc: HTTPException,
+):
+    if exc.status_code == 401:
+        return JSONResponse(
+            status_code=401,
+            content={
+                "detail": str(exc.detail),
+                "code": "UNAUTHORIZED",
+            },
+            headers=exc.headers,
+        )
+
+    return await http_exception_handler(request, exc)
 
 
 @app.exception_handler(Exception)

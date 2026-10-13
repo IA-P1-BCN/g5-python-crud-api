@@ -48,6 +48,7 @@ Out of scope for now: payments, discounts, loyalty, team members per booking, we
 | File | Purpose |
 |------|---------|
 | `STACK.md` | Technology choices (back and front) |
+| `DESIGN.md` | Front design tokens and shared components |
 | `ARCHI.md` | Folder structure, layers, frontend architecture, test strategy |
 | `BUSINESS_RULES.md` | Rules per sprint, permissions, open decisions |
 | `STORIES.md` | User stories with acceptance criteria |

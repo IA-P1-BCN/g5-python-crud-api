@@ -1,1 +1,4 @@
-// MSW server for Vitest (setupServer(...handlers)). Started from test/setup.js.
+import { setupServer } from 'msw/node'
+import { handlers } from './handlers.js'
+
+export const server = setupServer(...handlers)
