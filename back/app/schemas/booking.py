@@ -58,12 +58,19 @@ class UserInfo(BaseModel):
 
 
 class GameResultInfo(BaseModel):
-    """Game result (BR-G4); filled once game_results exists (ticket 044)."""
+    """Game result of a booking (BR-G4)."""
 
     model_config = ConfigDict(from_attributes=True)
 
     completed: bool
     completion_time: int
+
+
+class GameResultCreate(BaseModel):
+    """Data staff sends to register a game result (BR-G4)."""
+
+    completed: bool
+    completion_time: int = Field(ge=0)
 
 
 class BookingDetail(BookingRead):
@@ -72,7 +79,7 @@ class BookingDetail(BookingRead):
     time_slot: SlotInfo
     room: RoomInfo
     user: UserInfo
-    result: GameResultInfo | None = None  # always None until ticket 044
+    result: GameResultInfo | None = None
     can_modify: bool
 
 

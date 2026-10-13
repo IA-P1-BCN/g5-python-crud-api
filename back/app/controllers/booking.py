@@ -5,13 +5,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from back.app.core.errors import AppError
-from back.app.models import Booking, TimeSlot, User
+from back.app.models import Booking, GameResult, TimeSlot, User
 from back.app.models.booking import ACTIVE_STATUSES
 from back.app.schemas.booking import (
     BookingCreate,
     BookingDetail,
     BookingRead,
     BookingUpdate,
+    GameResultCreate,
 )
 
 MODIFIABLE_STATUSES = ("PENDING", "CONFIRMED")
@@ -53,7 +54,7 @@ def _to_detail(booking: Booking) -> BookingDetail:
         time_slot=booking.time_slot,
         room=booking.time_slot.room,
         user=booking.user,
-        result=None,
+        result=booking.result,
         can_modify=can_modify,
     )
 
@@ -163,6 +164,7 @@ def list_bookings(
         .options(
             joinedload(Booking.time_slot).joinedload(TimeSlot.room),
             joinedload(Booking.user),
+            joinedload(Booking.result),
         )
         .order_by(Booking.id)
     )
@@ -319,3 +321,31 @@ def finish_booking(db: Session, booking_id: int) -> Booking:
     db.commit()
     db.refresh(booking)
     return booking
+
+
+def register_result(
+    db: Session, booking_id: int, result_in: GameResultCreate
+) -> GameResult:
+    booking = _get_booking_or_404(db, booking_id)
+
+    if booking.status != "COMPLETED":
+        raise AppError(
+            f"Cannot register a result on a {booking.status} booking",
+            code="INVALID_TRANSITION",
+            status_code=409,
+        )
+    duplicate = AppError(
+        "A result is already registered", code="DUPLICATE", status_code=409
+    )
+    if booking.result is not None:
+        raise duplicate
+
+    result = GameResult(booking_id=booking.id, **result_in.model_dump())
+    db.add(result)
+    try:
+        db.commit()
+    except IntegrityError:  # two requests at once: the unique index wins (BR-G4)
+        db.rollback()
+        raise duplicate from None
+    db.refresh(booking)  # reload booking.result
+    return result
