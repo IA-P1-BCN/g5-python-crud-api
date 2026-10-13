@@ -44,15 +44,36 @@ class RoomInfo(BaseModel):
 
     id: int
     name: str
+    slug: str
     capacity: int
     base_price: Decimal
 
 
+class UserInfo(BaseModel):
+    """User info shown inside a booking detail."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+
+
+class GameResultInfo(BaseModel):
+    """Game result (BR-G4); filled once game_results exists (ticket 044)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    completed: bool
+    completion_time: int
+
+
 class BookingDetail(BookingRead):
-    """Booking with its slot and room, returned by GET /bookings/{id}."""
+    """Booking with slot, room, user and can_modify (GET /bookings and /{id})."""
 
     time_slot: SlotInfo
     room: RoomInfo
+    user: UserInfo
+    result: GameResultInfo | None = None  # always None until ticket 044
+    can_modify: bool
 
 
 class BookingUpdate(BaseModel):

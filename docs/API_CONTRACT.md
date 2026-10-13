@@ -55,8 +55,8 @@ Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphe
 | Method | Path | Sprint | Description | Success |
 |--------|------|:------:|-------------|---------|
 | POST | `/bookings` | 1 | Create (`user_id`, `time_slot_id`, `players`) | 201 |
-| GET | `/bookings` | 1 | List (`?user_id=&status=`) | 200 |
-| GET | `/bookings/{id}` | 1 | Get booking | 200 |
+| GET | `/bookings` | 1 | List with room, slot, user, can_modify (`?user_id=&status=&date_from=&date_to=`) | 200 |
+| GET | `/bookings/{id}` | 1 | Get booking with room, slot, user, can_modify | 200 |
 | PUT | `/bookings/{id}` | 1 | Change `players` and/or `time_slot_id` (BR-B7, BR-L5) | 200 |
 | PUT | `/bookings/{id}/confirm` | 1 | PENDING -> CONFIRMED | 200 |
 | PUT | `/bookings/{id}/cancel` | 1 | Cancel (BR-B6) | 200 |
@@ -65,6 +65,10 @@ Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphe
 | PUT | `/bookings/{id}/finish` | 2 | IN_PROGRESS -> COMPLETED | 200 |
 | POST | `/bookings/{id}/result` | 2 | Register result | 201 |
 | GET | `/bookings/export.csv` | 2 | CSV export (admin) | 200 |
+
+`GET /bookings` and `GET /bookings/{id}` return a `BookingDetail`: the booking fields plus `time_slot` (id, starts_at, ends_at, status), `room` (id, name, `slug` as stored in the room, capacity, base_price), `user` (`name`), `result` (`null` until game results exist, ticket 044; then `completed` + `completion_time`) and `can_modify` (status `PENDING`/`CONFIRMED` and slot 24h or more away: same rule as modify and cancel, BR-B6/BR-B7).
+
+`date_from` / `date_to` filter on `time_slot.starts_at` as inclusive UTC days. `date_from` after `date_to` returns 422 `VALIDATION_ERROR`. Tabs: Upcoming = `date_from=today`, Past = `date_to=yesterday`, Cancelled = `status=CANCELLED`.
 
 ## Health (E0)
 

@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, Depends
@@ -40,24 +41,35 @@ def create_booking_endpoint(
 
 @router.get(
     "",
-    response_model=list[BookingRead],
+    response_model=list[BookingDetail],
     summary="List bookings",
-    description="Lists bookings, optionally filtered by user_id and status.",
-    responses={422: {"description": "Invalid status filter"}},
+    description="Lists bookings with room, slot, user and can_modify. Filters: "
+    "user_id, status, and date_from/date_to (inclusive days, on the slot "
+    "start). Use date_from=today for Upcoming, date_to=yesterday for Past, "
+    "status=CANCELLED for Cancelled.",
+    responses={422: {"description": "Invalid status or date filter"}},
 )
 def list_bookings_endpoint(
     user_id: int | None = None,
     status: Literal["PENDING", "CONFIRMED", "CANCELLED"] | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
     db: Session = Depends(get_db),  # noqa: B008
 ):
-    return booking_controller.list_bookings(db=db, user_id=user_id, status=status)
+    return booking_controller.list_bookings(
+        db=db,
+        user_id=user_id,
+        status=status,
+        date_from=date_from,
+        date_to=date_to,
+    )
 
 
 @router.get(
     "/{booking_id}",
     response_model=BookingDetail,
     summary="Get a booking",
-    description="Returns a booking with its time slot and room.",
+    description="Returns a booking with slot, room, user and can_modify.",
     responses={404: {"description": "NOT_FOUND"}},
 )
 def get_booking_endpoint(

@@ -1,8 +1,8 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from back.app.core.errors import AppError
 from back.app.models import Booking, TimeSlot, User
@@ -40,6 +40,22 @@ def _get_booking_or_404(db: Session, booking_id: int) -> Booking:
     if booking is None:
         raise AppError("Booking not found", code="NOT_FOUND", status_code=404)
     return booking
+
+
+def _to_detail(booking: Booking) -> BookingDetail:
+    """Enriched view; can_modify uses the same rule as update/cancel."""
+    can_modify = (
+        booking.status in MODIFIABLE_STATUSES
+        and _starts_at_utc(booking) - _utcnow() >= MIN_NOTICE
+    )
+    return BookingDetail(
+        **BookingRead.model_validate(booking).model_dump(),
+        time_slot=booking.time_slot,
+        room=booking.time_slot.room,
+        user=booking.user,
+        result=None,
+        can_modify=can_modify,
+    )
 
 
 def _ensure_slot_can_receive_booking(db: Session, slot: TimeSlot) -> None:
@@ -129,26 +145,42 @@ def create_booking(db: Session, booking_in: BookingCreate) -> Booking:
 
 
 def list_bookings(
-    db: Session, user_id: int | None = None, status: str | None = None
-) -> list[Booking]:
-    stmt = select(Booking).order_by(Booking.id)
+    db: Session,
+    user_id: int | None = None,
+    status: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+) -> list[BookingDetail]:
+    if date_from is not None and date_to is not None and date_from > date_to:
+        raise AppError(
+            "date_from must not be after date_to",
+            code="VALIDATION_ERROR",
+            status_code=422,
+        )
+    stmt = (
+        select(Booking)
+        .join(TimeSlot)
+        .options(
+            joinedload(Booking.time_slot).joinedload(TimeSlot.room),
+            joinedload(Booking.user),
+        )
+        .order_by(Booking.id)
+    )
     if user_id is not None:
         stmt = stmt.where(Booking.user_id == user_id)
     if status is not None:
         stmt = stmt.where(Booking.status == status)
-    return list(db.scalars(stmt))
+    if date_from is not None:
+        start = datetime(date_from.year, date_from.month, date_from.day, tzinfo=UTC)
+        stmt = stmt.where(TimeSlot.starts_at >= start)
+    if date_to is not None:
+        end = datetime(date_to.year, date_to.month, date_to.day, tzinfo=UTC)
+        stmt = stmt.where(TimeSlot.starts_at < end + timedelta(days=1))
+    return [_to_detail(b) for b in db.scalars(stmt)]
 
 
 def get_booking(db: Session, booking_id: int) -> BookingDetail:
-    booking = db.get(Booking, booking_id)
-    if booking is None:
-        raise AppError("Booking not found", code="NOT_FOUND", status_code=404)
-
-    return BookingDetail(
-        **BookingRead.model_validate(booking).model_dump(),
-        time_slot=booking.time_slot,
-        room=booking.time_slot.room,
-    )
+    return _to_detail(_get_booking_or_404(db, booking_id))
 
 
 def update_booking(db: Session, booking_id: int, booking_in: BookingUpdate) -> Booking:
