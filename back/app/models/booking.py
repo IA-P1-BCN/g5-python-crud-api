@@ -13,9 +13,30 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from back.app.core.errors import AppError
 from back.app.database import Base
 
 ACTIVE_STATUSES = ("PENDING", "CONFIRMED", "IN_PROGRESS")
+
+# BR-G2: the only allowed status changes. Final states map to an empty set.
+TRANSITIONS: dict[str, set[str]] = {
+    "PENDING": {"CONFIRMED", "CANCELLED"},
+    "CONFIRMED": {"IN_PROGRESS", "CANCELLED"},
+    "IN_PROGRESS": {"COMPLETED"},
+    "COMPLETED": set(),
+    "CANCELLED": set(),
+}
+
+
+def ensure_transition(current: str, new: str, action: str) -> None:
+    """Raise 409 INVALID_TRANSITION unless current -> new is in the table."""
+    if new not in TRANSITIONS[current]:
+        raise AppError(
+            f"Cannot {action} a {current} booking",
+            code="INVALID_TRANSITION",
+            status_code=409,
+        )
+
 
 if TYPE_CHECKING:
     from back.app.models.game_result import GameResult

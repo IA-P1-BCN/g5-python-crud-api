@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from back.app.core.errors import AppError
 from back.app.models import Booking, GameResult, TimeSlot, User
-from back.app.models.booking import ACTIVE_STATUSES
+from back.app.models.booking import ACTIVE_STATUSES, ensure_transition
 from back.app.schemas.booking import (
     BookingCreate,
     BookingDetail,
@@ -248,12 +248,7 @@ def update_booking(db: Session, booking_id: int, booking_in: BookingUpdate) -> B
 def cancel_booking(db: Session, booking_id: int) -> Booking:
     booking = _get_booking_or_404(db, booking_id)
 
-    if booking.status not in MODIFIABLE_STATUSES:
-        raise AppError(
-            f"Cannot cancel a {booking.status} booking",
-            code="INVALID_TRANSITION",
-            status_code=409,
-        )
+    ensure_transition(booking.status, "CANCELLED", "cancel")
 
     if _starts_at_utc(booking) - _utcnow() < MIN_NOTICE:
         raise AppError(
@@ -271,12 +266,7 @@ def cancel_booking(db: Session, booking_id: int) -> Booking:
 def confirm_booking(db: Session, booking_id: int) -> Booking:
     booking = _get_booking_or_404(db, booking_id)
 
-    if booking.status != "PENDING":
-        raise AppError(
-            f"Cannot confirm a {booking.status} booking",
-            code="INVALID_TRANSITION",
-            status_code=409,
-        )
+    ensure_transition(booking.status, "CONFIRMED", "confirm")
 
     booking.status = "CONFIRMED"
     db.commit()
@@ -287,12 +277,7 @@ def confirm_booking(db: Session, booking_id: int) -> Booking:
 def start_booking(db: Session, booking_id: int) -> Booking:
     booking = _get_booking_or_404(db, booking_id)
 
-    if booking.status != "CONFIRMED":
-        raise AppError(
-            f"Cannot start a {booking.status} booking",
-            code="INVALID_TRANSITION",
-            status_code=409,
-        )
+    ensure_transition(booking.status, "IN_PROGRESS", "start")
 
     if _starts_at_utc(booking).date() != _utcnow().date():
         raise AppError(
@@ -310,12 +295,7 @@ def start_booking(db: Session, booking_id: int) -> Booking:
 def finish_booking(db: Session, booking_id: int) -> Booking:
     booking = _get_booking_or_404(db, booking_id)
 
-    if booking.status != "IN_PROGRESS":
-        raise AppError(
-            f"Cannot finish a {booking.status} booking",
-            code="INVALID_TRANSITION",
-            status_code=409,
-        )
+    ensure_transition(booking.status, "COMPLETED", "finish")
 
     booking.status = "COMPLETED"
     db.commit()
