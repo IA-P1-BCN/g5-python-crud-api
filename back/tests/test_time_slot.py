@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -160,7 +160,6 @@ def test_delete_time_slot_with_active_booking(client: TestClient, db: Session):
     db.commit()
     db.refresh(room)
 
-    # Create a real user using the correct model fields (name and email)
     user = User(name="Test User", email="test@escape.com")
     db.add(user)
     db.commit()
@@ -203,9 +202,7 @@ def test_delete_time_slot_success(client: TestClient, db: Session):
     db.commit()
     db.refresh(room)
 
-    starts_at = datetime.now(UTC) + timedelta(
-        days=3
-    )  # Use a different day to avoid overlaps
+    starts_at = datetime.now(UTC) + timedelta(days=3)
     ends_at = starts_at + timedelta(hours=1)
 
     slot = TimeSlot(
@@ -226,7 +223,6 @@ def test_delete_time_slot_success(client: TestClient, db: Session):
 def _room_with_slots(
     db: Session, statuses: list[str | None]
 ) -> tuple[Room, list[TimeSlot]]:
-    """One room; one slot per entry (None = no booking, else booking status)."""
     room = Room(
         name="Get Room",
         capacity=4,
@@ -340,3 +336,157 @@ def test_create_time_slot_in_the_past(client: TestClient, db: Session):
 
     assert response.status_code == 422
     assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+def test_bulk_generate_time_slots_one_day(client: TestClient, db: Session):
+    room = Room(
+        name="Bulk Room One Day",
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug="bulk-room-one-day",
+        status="active",
+        genre="Mystery",
+        min_players=2,
+        difficulty=3,
+        hook="A thrilling test",
+        story="Long story...",
+        audience="Adults",
+    )
+    db.add(room)
+    db.commit()
+    db.refresh(room)
+
+    tomorrow_date = (datetime.now(UTC) + timedelta(days=1)).date()
+    response = client.post(
+        f"/api/v1/rooms/{room.id}/time-slots/generate",
+        json={
+            "date_from": tomorrow_date.isoformat(),
+            "date_to": tomorrow_date.isoformat(),
+            "first_start": "09:00:00",
+            "last_start": "11:00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["created_count"] > 0
+    assert data["skipped_count"] == 0
+
+
+def test_bulk_generate_time_slots_several_days(client: TestClient, db: Session):
+    room = Room(
+        name="Bulk Room Several Days",
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug="bulk-room-several-days",
+        status="active",
+        genre="Mystery",
+        min_players=2,
+        difficulty=3,
+        hook="A thrilling test",
+        story="Long story...",
+        audience="Adults",
+    )
+    db.add(room)
+    db.commit()
+    db.refresh(room)
+
+    day_from = (datetime.now(UTC) + timedelta(days=1)).date()
+    day_to = (datetime.now(UTC) + timedelta(days=3)).date()
+    response = client.post(
+        f"/api/v1/rooms/{room.id}/time-slots/generate",
+        json={
+            "date_from": day_from.isoformat(),
+            "date_to": day_to.isoformat(),
+            "first_start": "10:00:00",
+            "last_start": "11:30:00",  
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["created_count"] == 6  
+    assert data["skipped_count"] == 0
+
+def test_bulk_generate_time_slots_skips_existing_overlaps(client: TestClient, db: Session):
+    room = Room(
+        name="Bulk Room Overlaps",
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug="bulk-room-overlaps",
+        status="active",
+        genre="Mystery",
+        min_players=2,
+        difficulty=3,
+        hook="A thrilling test",
+        story="Long story...",
+        audience="Adults",
+    )
+    db.add(room)
+    db.commit()
+    db.refresh(room)
+
+    target_date = datetime.now(UTC) + timedelta(days=1)
+    slot_start = datetime.combine(target_date.date(), time(10, 0), tzinfo=UTC)
+    slot_end = slot_start + timedelta(minutes=60)
+
+    existing_slot = TimeSlot(
+        room_id=room.id,
+        starts_at=slot_start,
+        ends_at=slot_end,
+        status="available",
+    )
+    db.add(existing_slot)
+    db.commit()
+
+    response = client.post(
+        f"/api/v1/rooms/{room.id}/time-slots/generate",
+        json={
+            "date_from": target_date.date().isoformat(),
+            "date_to": target_date.date().isoformat(),
+            "first_start": "10:00:00",
+            "last_start": "10:00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["created_count"] == 0
+    assert data["skipped_count"] == 1
+
+
+def test_bulk_generate_time_slots_inactive_room(client: TestClient, db: Session):
+    room = Room(
+        name="Inactive Bulk Room",
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug="inactive-bulk-room",
+        status="inactive",
+        genre="Mystery",
+        min_players=2,
+        difficulty=3,
+        hook="A thrilling test",
+        story="Long story...",
+        audience="Adults",
+    )
+    db.add(room)
+    db.commit()
+    db.refresh(room)
+
+    tomorrow_date = (datetime.now(UTC) + timedelta(days=1)).date()
+    response = client.post(
+        f"/api/v1/rooms/{room.id}/time-slots/generate",
+        json={
+            "date_from": tomorrow_date.isoformat(),
+            "date_to": tomorrow_date.isoformat(),
+            "first_start": "09:00:00",
+            "last_start": "11:00:00",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["code"] == "ROOM_INACTIVE"

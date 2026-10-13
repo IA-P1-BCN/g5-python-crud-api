@@ -5,7 +5,13 @@ from sqlalchemy.orm import Session
 
 from back.app.controllers import room as room_controller
 from back.app.database import get_db
-from back.app.schemas.room import RoomCreate, RoomResponse, RoomUpdate
+from back.app.schemas.room import (
+    RoomCreate,
+    RoomResponse,
+    RoomUpdate,
+    TimeSlotBulkGenerateRequest,
+    TimeSlotBulkGenerateResponse,
+)
 
 router = APIRouter(prefix="", tags=["Rooms"])
 
@@ -86,3 +92,19 @@ def get_room_endpoint(room_id_or_slug: str, db: SessionDep):
 )
 def activate_room_endpoint(room_id: int, db: SessionDep):
     return room_controller.activate_room(db=db, room_id=room_id)
+
+
+@router.post(
+    "/{room_id}/time-slots/generate",
+    response_model=TimeSlotBulkGenerateResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Bulk generate time slots for a room",
+    responses={
+        400: {"description": "Room is inactive or invalid parameters."},
+        404: {"description": "Room not found."},
+    },
+)
+def bulk_generate_time_slots_endpoint(
+    room_id: int, payload: TimeSlotBulkGenerateRequest, db: SessionDep
+):
+    return room_controller.bulk_generate_time_slots(db=db, room_id=room_id, payload=payload)
