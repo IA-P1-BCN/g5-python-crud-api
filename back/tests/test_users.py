@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 
-from back.app.models import User
+from back.app.models import Booking, GameResult, Room, TimeSlot, User
 
 URL = "/api/v1/users"
 
@@ -480,3 +481,101 @@ def test_deactivate_unknown_user_returns_404(client):
         "detail": "User not found",
         "code": "NOT_FOUND",
     }
+
+
+def _history_setup(db, make_token):
+    """Alice (client), Bob (client), Staff; Alice owns 2 slots."""
+    alice = User(name="Alice", email="a@h.com", auth_id="alice-sub")
+    bob = User(name="Bob", email="b@h.com", auth_id="bob-sub")
+    staff = User(name="Sam", email="s@h.com", auth_id="staff-sub", role="staff")
+    room = Room(
+        name="Hist", slug="hist", capacity=6, duration=60, base_price=Decimal(20)
+    )
+    db.add_all([alice, bob, staff, room])
+    db.commit()
+    slots = []
+    for day in (1, 2):
+        begin = datetime(2030, 1, day, 10, tzinfo=UTC)
+        slots.append(
+            TimeSlot(
+                room_id=room.id, starts_at=begin, ends_at=begin + timedelta(hours=1)
+            )
+        )
+    db.add_all(slots)
+    db.commit()
+    return alice, bob, staff, slots
+
+
+def _booking(db, user, slot, status="COMPLETED", result=True):
+    b = Booking(
+        user_id=user.id,
+        time_slot_id=slot.id,
+        players=2,
+        total_price=Decimal("40.00"),
+        status=status,
+    )
+    db.add(b)
+    db.commit()
+    if result:
+        db.add(GameResult(booking_id=b.id, completed=True, completion_time=1800))
+        db.commit()
+    return b
+
+
+def _auth(make_token, user):
+    return {"Authorization": f"Bearer {make_token(subject=user.auth_id)}"}
+
+
+def test_my_history_returns_only_completed_with_result(client, db, make_token):
+    alice, _, _, (s1, s2) = _history_setup(db, make_token)
+    _booking(db, alice, s1)
+    _booking(db, alice, s2, status="PENDING", result=False)
+
+    r = client.get(f"{URL}/me/history", headers=_auth(make_token, alice))
+
+    assert r.status_code == 200
+    assert len(r.json()) == 1
+    assert r.json()[0]["result"] == {"completed": True, "completion_time": 1800}
+
+
+def test_history_without_result_has_null_result(client, db, make_token):
+    alice, _, _, (s1, _) = _history_setup(db, make_token)
+    _booking(db, alice, s1, result=False)
+
+    r = client.get(f"{URL}/me/history", headers=_auth(make_token, alice))
+
+    assert r.status_code == 200
+    assert r.json()[0]["result"] is None
+
+
+def test_history_is_most_recent_first(client, db, make_token):
+    alice, _, _, (s1, s2) = _history_setup(db, make_token)
+    _booking(db, alice, s1)
+    _booking(db, alice, s2)
+
+    r = client.get(f"{URL}/{alice.id}/history", headers=_auth(make_token, alice))
+
+    assert [b["time_slot"]["id"] for b in r.json()] == [s2.id, s1.id]
+
+
+def test_history_of_other_user_is_403(client, db, make_token):
+    alice, bob, _, _ = _history_setup(db, make_token)
+
+    r = client.get(f"{URL}/{bob.id}/history", headers=_auth(make_token, alice))
+
+    assert r.status_code == 403
+    assert r.json()["code"] == "FORBIDDEN"
+
+
+def test_staff_can_read_any_history(client, db, make_token):
+    alice, _, staff, (s1, _) = _history_setup(db, make_token)
+    _booking(db, alice, s1)
+
+    r = client.get(f"{URL}/{alice.id}/history", headers=_auth(make_token, staff))
+
+    assert r.status_code == 200
+    assert len(r.json()) == 1
+
+
+def test_history_requires_authentication(client):
+    assert client.get(f"{URL}/me/history").status_code == 401

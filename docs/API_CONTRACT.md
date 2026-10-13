@@ -25,6 +25,8 @@ Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUP
 | PUT | `/users/{id}/deactivate` | 1 | Deactivate | 200 |
 | PUT | `/users/{id}/role` | 2 | Change role (admin) | 200 |
 | GET | `/users/me` | 2 | Current user from JWT | 200 |
+| GET | `/users/me/history` | 2 | My finished games (COMPLETED) with result, most recent first | 200 |
+| GET | `/users/{id}/history` | 2 | Same for a user: own history, or any for staff/admin (else 403 `FORBIDDEN`) | 200 |
 
 ## Rooms (E2)
 

@@ -349,3 +349,15 @@ def register_result(
         raise duplicate from None
     db.refresh(booking)  # reload booking.result
     return result
+
+
+def list_user_history(
+    db: Session, user_id: int, current_user: User
+) -> list[BookingDetail]:
+    """Finished games of a user, most recent first (BR-G5)."""
+    if current_user.id != user_id and current_user.role not in ("staff", "admin"):
+        raise AppError(
+            "You can only see your own history", code="FORBIDDEN", status_code=403
+        )
+    games = list_bookings(db, user_id=user_id, status="COMPLETED")
+    return sorted(games, key=lambda b: b.time_slot.starts_at, reverse=True)
