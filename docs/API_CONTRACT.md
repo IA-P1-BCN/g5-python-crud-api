@@ -61,7 +61,7 @@ Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphe
 | PUT | `/bookings/{id}` | 1 | Change `players` and/or `time_slot_id` (BR-B7, BR-L5) | 200 |
 | PUT | `/bookings/{id}/confirm` | 1 | PENDING -> CONFIRMED | 200 |
 | PUT | `/bookings/{id}/cancel` | 1 | Cancel (BR-B6) | 200 |
-| GET | `/bookings/today` | 2 | Today's bookings (staff) | 200 |
+| GET | `/bookings/today` | 2 | Today's bookings (staff, admin), ordered by slot start, cancelled excluded | 200 |
 | PUT | `/bookings/{id}/start` | 2 | CONFIRMED -> IN_PROGRESS | 200 |
 | PUT | `/bookings/{id}/finish` | 2 | IN_PROGRESS -> COMPLETED | 200 |
 | POST | `/bookings/{id}/result` | 2 | Register result | 201 |

@@ -220,7 +220,7 @@ Business rules: BR-L5, BR-B7
 **As a** staff member, **I want** see today's bookings, **so that** I can organise the games.
 
 Acceptance criteria:
-- `GET /bookings/today` returns bookings whose slot starts today, ordered by time
+- `GET /bookings/today` returns bookings whose slot starts today (UTC), ordered by time; `CANCELLED` bookings are left out
 - Allowed for staff and admin only
 - Tests: today only, ordering, role check
 

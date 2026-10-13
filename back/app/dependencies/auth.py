@@ -142,3 +142,18 @@ def get_current_user(
         raise
 
     return user
+
+
+def require_role(*roles: str):
+    """Dependency factory: lets only the given roles through (403 FORBIDDEN)."""
+
+    def checker(user: Annotated[User, Depends(get_current_user)]) -> User:
+        if user.role not in roles:
+            raise AppError(
+                message="You do not have permission to do this",
+                code="FORBIDDEN",
+                status_code=403,
+            )
+        return user
+
+    return checker
