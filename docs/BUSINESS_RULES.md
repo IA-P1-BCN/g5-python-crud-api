@@ -46,7 +46,7 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | BR-B5 | Statuses in Sprint 1: `PENDING`, `CONFIRMED`, `CANCELLED` | 422 on invalid change |
 | BR-B6 | **Cancel**: only `PENDING`/`CONFIRMED`, and only if the slot starts in **24h or more**. Cancelling frees the slot | 409 |
 | BR-B7 | **Modify**: `players` (and slot, see BR-L5), only while `PENDING`/`CONFIRMED` and 24h or more before start | 409 |
-| BR-B8 | Double booking is impossible: DB partial unique index on `bookings(time_slot_id)` where status in (`PENDING`,`CONFIRMED`,`IN_PROGRESS`). `IN_PROGRESS` is introduced in Sprint 2 (BR-G1): the Sprint 1 status CHECK does not accept it yet, but the index already includes it to satisfy this rule | 409 |
+| BR-B8 | Double booking is impossible: DB partial unique index on `bookings(time_slot_id)` where status in (`PENDING`,`CONFIRMED`,`IN_PROGRESS`). `IN_PROGRESS` is introduced in Sprint 2 (BR-G1): the status CHECK now accepts `IN_PROGRESS` and `COMPLETED` (ticket 042 onwards), and the index has included it from the start | 409 |
 
 ### Cross-cutting (technical)
 | ID | Rule |
@@ -88,7 +88,7 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | BR-G2 | Allowed transitions: `PENDING`->`CONFIRMED`->`IN_PROGRESS`->`COMPLETED`. `PENDING`/`CONFIRMED`->`CANCELLED`. Anything else is 409 |
 | BR-G3 | A game can only start on the booking's date, from `CONFIRMED` |
 | BR-G4 | A result (`completed` bool, `completion_time` seconds) can be registered once, only when `COMPLETED` |
-| BR-G5 | Client can see the result of their own booking |
+| BR-G5 | Client can see the result of their own booking: in `result` of the booking detail and in their game history (`GET /users/me/history`, `GET /users/{id}/history`). A client reading another user's history gets 403 `FORBIDDEN`; staff and admin can read any **(to validate)** |
 
 ### Lists and reporting (E5)
 | ID | Rule |

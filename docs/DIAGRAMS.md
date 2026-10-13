@@ -4,13 +4,14 @@ All diagrams are Mermaid: GitHub renders them directly.
 
 ## 1. ER diagram - MVP (Sprint 1)
 
-Changes vs the team's full ER: `users` gets `role` + `is_active` (+ `auth_id` in Sprint 2); `time_slots.status` is only `available`/`blocked` (booked is computed, see BR-S5).
+Changes vs the team's full ER: `users` gets `role` + `is_active` (+ `auth_id` in Sprint 2); `time_slots.status` is only `available`/`blocked` (booked is computed, see BR-S5). Sprint 2 adds the `game_results` table and the booking statuses `IN_PROGRESS` / `COMPLETED`.
 
 ```mermaid
 erDiagram
     USERS ||--o{ BOOKINGS : makes
     ROOMS ||--o{ TIME_SLOTS : has
     TIME_SLOTS ||--o{ BOOKINGS : "is booked in"
+    BOOKINGS ||--o| GAME_RESULTS : "ends with"
 
     USERS {
         int id PK
@@ -43,7 +44,14 @@ erDiagram
         int time_slot_id FK
         int players
         decimal total_price
-        string status "PENDING | CONFIRMED | CANCELLED"
+        string status "PENDING | CONFIRMED | IN_PROGRESS | COMPLETED | CANCELLED"
+        datetime created_at
+    }
+    GAME_RESULTS {
+        int id PK
+        int booking_id FK "UK"
+        bool completed
+        int completion_time "seconds, >= 0"
         datetime created_at
     }
 ```
@@ -57,7 +65,7 @@ erDiagram
     USERS ||--o{ BOOKINGS : makes
     ROOMS ||--o{ TIME_SLOTS : has
     TIME_SLOTS ||--o{ BOOKINGS : "is booked in"
-    BOOKINGS ||--o| GAME_RESULTS : "ends with (Sprint 2)"
+    BOOKINGS ||--o| GAME_RESULTS : "ends with (implemented, Sprint 2)"
     BOOKINGS ||--o{ PAYMENTS : "paid by"
     BOOKINGS ||--o{ BOOKING_PLAYERS : includes
     USERS ||--o{ BOOKING_PLAYERS : "plays as"
@@ -68,9 +76,10 @@ erDiagram
 
     GAME_RESULTS {
         int id PK
-        int booking_id FK
+        int booking_id FK "UK"
         bool completed
         int completion_time "seconds"
+        datetime created_at
     }
     PAYMENTS {
         int id PK

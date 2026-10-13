@@ -12,7 +12,7 @@ The browser client (`front/`) calls the relative path `/api/v1/...` on its own o
 { "detail": "Time slot is already booked", "code": "SLOT_TAKEN" }
 ```
 
-Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUPLICATE`, `SLOT_TAKEN`, `SLOT_NOT_AVAILABLE`, `SLOT_OVERLAP`, `ROOM_INACTIVE`, `USER_INACTIVE`, `INVALID_PLAYERS`, `TOO_LATE_TO_CANCEL`, `TOO_LATE_TO_MODIFY`, `INVALID_TRANSITION`, `FORBIDDEN`, `INTERNAL_ERROR` (unexpected 500, message is always "Internal server error").
+Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUPLICATE`, `SLOT_TAKEN`, `SLOT_NOT_AVAILABLE`, `SLOT_OVERLAP`, `ROOM_INACTIVE`, `USER_INACTIVE`, `INVALID_PLAYERS`, `TOO_LATE_TO_CANCEL`, `TOO_LATE_TO_MODIFY`, `INVALID_TRANSITION`, `UNAUTHORIZED` (401, missing or invalid token), `FORBIDDEN`, `INTERNAL_ERROR` (unexpected 500, message is always "Internal server error").
 
 ## Users (E1)
 
@@ -24,7 +24,7 @@ Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUP
 | PUT | `/users/{id}` | 1 | Update name, phone | 200 |
 | PUT | `/users/{id}/deactivate` | 1 | Deactivate | 200 |
 | PUT | `/users/{id}/role` | 2 | Change role (admin) | 200 |
-| GET | `/users/me` | 2 | Current user from JWT | 200 |
+| GET | `/users/me` | 2 | Current user from JWT (**not built yet**) | 200 |
 | GET | `/users/me/history` | 2 | My finished games (COMPLETED) with result, most recent first | 200 |
 | GET | `/users/{id}/history` | 2 | Same for a user: own history, or any for staff/admin (else 403 `FORBIDDEN`) | 200 |
 
@@ -64,10 +64,12 @@ Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphe
 | PUT | `/bookings/{id}/confirm` | 1 | PENDING -> CONFIRMED | 200 |
 | PUT | `/bookings/{id}/cancel` | 1 | Cancel (BR-B6) | 200 |
 | GET | `/bookings/today` | 2 | Today's bookings (staff, admin), ordered by slot start, cancelled excluded | 200 |
-| PUT | `/bookings/{id}/start` | 2 | CONFIRMED -> IN_PROGRESS | 200 |
-| PUT | `/bookings/{id}/finish` | 2 | IN_PROGRESS -> COMPLETED | 200 |
+| PUT | `/bookings/{id}/start` | 2 | CONFIRMED -> IN_PROGRESS (staff, admin; only on the day of the slot, UTC: BR-G3) | 200 |
+| PUT | `/bookings/{id}/finish` | 2 | IN_PROGRESS -> COMPLETED (staff, admin) | 200 |
 | POST | `/bookings/{id}/result` | 2 | Register result (`completed`, `completion_time` in seconds ≥ 0; staff, admin). Only once, only when `COMPLETED`: otherwise 409 `INVALID_TRANSITION` / `DUPLICATE` | 201 |
 | GET | `/bookings/export.csv` | 2 | CSV export (admin) | 200 |
+
+The staff/admin endpoints above answer 401 `UNAUTHORIZED` without a valid token and 403 `FORBIDDEN` for a client.
 
 `GET /bookings` and `GET /bookings/{id}` return a `BookingDetail`: the booking fields plus `time_slot` (id, starts_at, ends_at, status), `room` (id, name, `slug` as stored in the room, capacity, base_price), `user` (`name`), `result` (`null` until a result is registered, then `completed` + `completion_time`) and `can_modify` (status `PENDING`/`CONFIRMED` and slot 24h or more away: same rule as modify and cancel, BR-B6/BR-B7).
 
