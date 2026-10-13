@@ -179,6 +179,14 @@ def list_bookings(
     return [_to_detail(b) for b in db.scalars(stmt)]
 
 
+def list_today_bookings(db: Session) -> list[BookingDetail]:
+    """Today's (UTC) games for the staff, earliest first, cancelled ones hidden."""
+    today = _utcnow().date()
+    bookings = list_bookings(db, date_from=today, date_to=today)
+    active = [b for b in bookings if b.status != "CANCELLED"]
+    return sorted(active, key=lambda b: b.time_slot.starts_at)
+
+
 def get_booking(db: Session, booking_id: int) -> BookingDetail:
     return _to_detail(_get_booking_or_404(db, booking_id))
 

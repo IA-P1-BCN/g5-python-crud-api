@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from back.app.controllers import booking as booking_controller
 from back.app.database import get_db
+from back.app.dependencies.auth import require_role
 from back.app.schemas.booking import (
     BookingCreate,
     BookingDetail,
@@ -63,6 +64,25 @@ def list_bookings_endpoint(
         date_from=date_from,
         date_to=date_to,
     )
+
+
+@router.get(
+    "/today",
+    response_model=list[BookingDetail],
+    summary="Today's bookings (staff)",
+    description="Bookings whose slot starts today (UTC), earliest first. "
+    "Cancelled bookings are left out. Staff and admin only. Declared before "
+    "/{booking_id} so 'today' is not read as an id.",
+    responses={
+        401: {"description": "Missing or invalid token"},
+        403: {"description": "FORBIDDEN: role is not staff or admin"},
+    },
+    dependencies=[Depends(require_role("staff", "admin"))],
+)
+def today_bookings_endpoint(
+    db: Session = Depends(get_db),  # noqa: B008
+):
+    return booking_controller.list_today_bookings(db=db)
 
 
 @router.get(

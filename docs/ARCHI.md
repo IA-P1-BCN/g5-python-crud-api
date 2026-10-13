@@ -28,7 +28,8 @@ back/
     schemas/             # user.py  room.py  time_slot.py  booking.py
     controllers/         # user.py  room.py  time_slot.py  booking.py
     routes/              # user.py  room.py  time_slot.py  booking.py
-    core/                # errors.py (BR-X1), security.py (Sprint 2: JWT, roles)
+    dependencies/        # auth.py: get_current_user (JWT), require_role(*roles) -> 403 FORBIDDEN
+    core/                # errors.py (BR-X1), security.py (JWT decoding)
   tests/
     conftest.py          # shared fixtures: db session, client
     test_users.py  test_rooms.py  test_time_slots.py  test_bookings.py
