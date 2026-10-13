@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, time, timedelta
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -7,6 +8,26 @@ from back.app.models.booking import Booking
 from back.app.models.room import Room
 from back.app.models.time_slot import TimeSlot
 from back.app.models.user import User
+
+
+@pytest.fixture
+def login(db: Session, make_token):
+    """Creates a user with the given role and returns auth headers for it."""
+
+    def _login(role: str) -> dict[str, str]:
+        sub = f"auth-{role}"
+        db.add(
+            User(
+                name=role.title(),
+                email=f"{role}@test.com",
+                role=role,
+                auth_id=sub,
+            )
+        )
+        db.commit()
+        return {"Authorization": f"Bearer {make_token(subject=sub)}"}
+
+    return _login
 
 
 def test_create_time_slot_success(client: TestClient, db: Session):
@@ -160,6 +181,7 @@ def test_delete_time_slot_with_active_booking(client: TestClient, db: Session):
     db.commit()
     db.refresh(room)
 
+    # Create a real user using the correct model fields (name and email)
     user = User(name="Test User", email="test@escape.com")
     db.add(user)
     db.commit()
@@ -202,7 +224,9 @@ def test_delete_time_slot_success(client: TestClient, db: Session):
     db.commit()
     db.refresh(room)
 
-    starts_at = datetime.now(UTC) + timedelta(days=3)
+    starts_at = datetime.now(UTC) + timedelta(
+        days=3
+    )  # Use a different day to avoid overlaps
     ends_at = starts_at + timedelta(hours=1)
 
     slot = TimeSlot(
@@ -223,6 +247,7 @@ def test_delete_time_slot_success(client: TestClient, db: Session):
 def _room_with_slots(
     db: Session, statuses: list[str | None]
 ) -> tuple[Room, list[TimeSlot]]:
+    """One room; one slot per entry (None = no booking, else booking status)."""
     room = Room(
         name="Get Room",
         capacity=4,
@@ -338,7 +363,7 @@ def test_create_time_slot_in_the_past(client: TestClient, db: Session):
     assert response.json()["code"] == "VALIDATION_ERROR"
 
 
-def test_bulk_generate_time_slots_one_day(client: TestClient, db: Session):
+def test_bulk_generate_time_slots_one_day(client: TestClient, db: Session, login):
     room = Room(
         name="Bulk Room One Day",
         capacity=4,
@@ -360,6 +385,7 @@ def test_bulk_generate_time_slots_one_day(client: TestClient, db: Session):
     tomorrow_date = (datetime.now(UTC) + timedelta(days=1)).date()
     response = client.post(
         f"/api/v1/rooms/{room.id}/time-slots/generate",
+        headers=login("admin"),
         json={
             "date_from": tomorrow_date.isoformat(),
             "date_to": tomorrow_date.isoformat(),
@@ -370,11 +396,12 @@ def test_bulk_generate_time_slots_one_day(client: TestClient, db: Session):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["created_count"] > 0
+    # duration 60 + 30 min buffer = 90 min step: starts at 09:00 and 10:30.
+    assert data["created_count"] == 2
     assert data["skipped_count"] == 0
 
 
-def test_bulk_generate_time_slots_several_days(client: TestClient, db: Session):
+def test_bulk_generate_time_slots_several_days(client: TestClient, db: Session, login):
     room = Room(
         name="Bulk Room Several Days",
         capacity=4,
@@ -397,20 +424,25 @@ def test_bulk_generate_time_slots_several_days(client: TestClient, db: Session):
     day_to = (datetime.now(UTC) + timedelta(days=3)).date()
     response = client.post(
         f"/api/v1/rooms/{room.id}/time-slots/generate",
+        headers=login("admin"),
         json={
             "date_from": day_from.isoformat(),
             "date_to": day_to.isoformat(),
             "first_start": "10:00:00",
-            "last_start": "11:30:00",  
+            "last_start": "11:30:00",
         },
     )
 
     assert response.status_code == 200
     data = response.json()
-    assert data["created_count"] == 6  
+    # 90 min step: 10:00 and 11:30, two slots per day over three days.
+    assert data["created_count"] == 6
     assert data["skipped_count"] == 0
 
-def test_bulk_generate_time_slots_skips_existing_overlaps(client: TestClient, db: Session):
+
+def test_bulk_generate_time_slots_skips_existing_overlaps(
+    client: TestClient, db: Session, login
+):
     room = Room(
         name="Bulk Room Overlaps",
         capacity=4,
@@ -444,6 +476,7 @@ def test_bulk_generate_time_slots_skips_existing_overlaps(client: TestClient, db
 
     response = client.post(
         f"/api/v1/rooms/{room.id}/time-slots/generate",
+        headers=login("admin"),
         json={
             "date_from": target_date.date().isoformat(),
             "date_to": target_date.date().isoformat(),
@@ -458,7 +491,7 @@ def test_bulk_generate_time_slots_skips_existing_overlaps(client: TestClient, db
     assert data["skipped_count"] == 1
 
 
-def test_bulk_generate_time_slots_inactive_room(client: TestClient, db: Session):
+def test_bulk_generate_time_slots_inactive_room(client: TestClient, db: Session, login):
     room = Room(
         name="Inactive Bulk Room",
         capacity=4,
@@ -480,6 +513,7 @@ def test_bulk_generate_time_slots_inactive_room(client: TestClient, db: Session)
     tomorrow_date = (datetime.now(UTC) + timedelta(days=1)).date()
     response = client.post(
         f"/api/v1/rooms/{room.id}/time-slots/generate",
+        headers=login("admin"),
         json={
             "date_from": tomorrow_date.isoformat(),
             "date_to": tomorrow_date.isoformat(),
@@ -488,5 +522,188 @@ def test_bulk_generate_time_slots_inactive_room(client: TestClient, db: Session)
         },
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 409
     assert response.json()["code"] == "ROOM_INACTIVE"
+
+
+def _create_bulk_room(db: Session, *, status: str = "active", **overrides) -> Room:
+    fields = {
+        "name": "Bulk Room Base",
+        "capacity": 4,
+        "duration": 60,
+        "base_price": 50.00,
+        "slug": "bulk-room-base",
+        "status": status,
+        "genre": "Mystery",
+        "min_players": 2,
+        "difficulty": 3,
+        "hook": "A thrilling test",
+        "story": "Long story...",
+        "audience": "Adults",
+    }
+    fields.update(overrides)
+    room = Room(**fields)
+    db.add(room)
+    db.commit()
+    db.refresh(room)
+    return room
+
+
+def test_bulk_generate_time_slots_room_not_found(
+    client: TestClient, db: Session, login
+):
+    response = client.post(
+        "/api/v1/rooms/999999/time-slots/generate",
+        headers=login("admin"),
+        json={
+            "date_from": (datetime.now(UTC) + timedelta(days=1)).date().isoformat(),
+            "date_to": (datetime.now(UTC) + timedelta(days=1)).date().isoformat(),
+            "first_start": "09:00:00",
+            "last_start": "11:00:00",
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "NOT_FOUND"
+
+
+def test_bulk_generate_time_slots_skips_past_dates(
+    client: TestClient, db: Session, login
+):
+    room = _create_bulk_room(db, slug="bulk-room-past")
+
+    yesterday = (datetime.now(UTC) - timedelta(days=1)).date()
+    response = client.post(
+        f"/api/v1/rooms/{room.id}/time-slots/generate",
+        headers=login("admin"),
+        json={
+            "date_from": yesterday.isoformat(),
+            "date_to": yesterday.isoformat(),
+            "first_start": "09:00:00",
+            "last_start": "11:00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["created_count"] == 0
+    assert data["skipped_count"] == 2
+
+
+def test_bulk_generate_time_slots_midnight_boundary(
+    client: TestClient, db: Session, login
+):
+    """Regression: stepping with time() wrapped past midnight (infinite loop)."""
+    room = _create_bulk_room(db, slug="bulk-room-midnight")
+
+    tomorrow = (datetime.now(UTC) + timedelta(days=1)).date()
+    response = client.post(
+        f"/api/v1/rooms/{room.id}/time-slots/generate",
+        headers=login("admin"),
+        json={
+            "date_from": tomorrow.isoformat(),
+            "date_to": tomorrow.isoformat(),
+            "first_start": "22:00:00",
+            "last_start": "23:30:00",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    # 90 min step: 22:00 and 23:30, then the next candidate (01:00) is out of range.
+    assert data["created_count"] == 2
+    assert data["skipped_count"] == 0
+
+
+def test_bulk_generate_time_slots_invalid_date_range(
+    client: TestClient, db: Session, login
+):
+    room = _create_bulk_room(db, slug="bulk-room-bad-date")
+
+    response = client.post(
+        f"/api/v1/rooms/{room.id}/time-slots/generate",
+        headers=login("admin"),
+        json={
+            "date_from": "2099-01-03",
+            "date_to": "2099-01-01",
+            "first_start": "09:00:00",
+            "last_start": "11:00:00",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+def test_bulk_generate_time_slots_invalid_time_range(
+    client: TestClient, db: Session, login
+):
+    room = _create_bulk_room(db, slug="bulk-room-bad-time")
+
+    response = client.post(
+        f"/api/v1/rooms/{room.id}/time-slots/generate",
+        headers=login("admin"),
+        json={
+            "date_from": "2099-01-01",
+            "date_to": "2099-01-01",
+            "first_start": "12:00:00",
+            "last_start": "09:00:00",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+def test_bulk_generate_time_slots_requires_admin(client: TestClient, db: Session):
+    response = client.post(
+        "/api/v1/rooms/1/time-slots/generate",
+        json={
+            "date_from": "2099-01-01",
+            "date_to": "2099-01-01",
+            "first_start": "09:00:00",
+            "last_start": "11:00:00",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json()["code"] == "UNAUTHORIZED"
+
+
+def test_bulk_generate_time_slots_forbidden_for_client(
+    client: TestClient, db: Session, login
+):
+    response = client.post(
+        "/api/v1/rooms/1/time-slots/generate",
+        headers=login("client"),
+        json={
+            "date_from": "2099-01-01",
+            "date_to": "2099-01-01",
+            "first_start": "09:00:00",
+            "last_start": "11:00:00",
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.json()["code"] == "FORBIDDEN"
+
+
+def test_bulk_generate_time_slots_range_too_long(
+    client: TestClient, db: Session, login
+):
+    room = _create_bulk_room(db, slug="bulk-room-too-long")
+
+    start = datetime.now(UTC).date()
+    response = client.post(
+        f"/api/v1/rooms/{room.id}/time-slots/generate",
+        headers=login("admin"),
+        json={
+            "date_from": start.isoformat(),
+            "date_to": (start + timedelta(days=91)).isoformat(),
+            "first_start": "09:00:00",
+            "last_start": "11:00:00",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"

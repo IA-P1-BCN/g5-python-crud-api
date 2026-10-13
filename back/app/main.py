@@ -2,6 +2,7 @@ import logging
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exception_handlers import http_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from back.app.config.logging import setup_logging
@@ -44,6 +45,25 @@ async def app_error_handler(request: Request, exc: AppError):
         content={
             "detail": exc.message,
             "code": exc.code,
+        },
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError,
+):
+    """BR-X1: keep the shared error shape for schema validation failures too."""
+    errors = exc.errors()
+    message = errors[0].get("msg", "Invalid request") if errors else "Invalid request"
+    message = message.removeprefix("Value error, ")
+
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": message,
+            "code": "VALIDATION_ERROR",
         },
     )
 
