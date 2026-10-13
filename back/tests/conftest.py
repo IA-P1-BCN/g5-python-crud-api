@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+# Default configuration so the app does not fail when importing settings
 os.environ.setdefault("DATABASE_URL", "sqlite://")
 os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
 
@@ -94,7 +95,7 @@ def make_token():
 
 @pytest.fixture
 def db():
-    """In-memory SQLite database, isolated for each test."""
+    """In-memory SQLite database, brand new and isolated for each test."""
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -112,7 +113,7 @@ def db():
 
 @pytest.fixture
 def client(db):
-    """FastAPI test client using the test database."""
+    """FastAPI HTTP client that points the database to the test environment."""
 
     def override_get_db():
         yield db

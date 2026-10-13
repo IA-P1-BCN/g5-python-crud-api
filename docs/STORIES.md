@@ -100,15 +100,17 @@ Acceptance criteria:
 
 Business rules: BR-R1, BR-R2, BR-R7
 
-### US09 - Deactivate room (Sprint 1)
+### US09 - Deactivate and reactivate room (Sprint 1)
 
-**As a** administrator, **I want** deactivate a room, **so that** it is no longer offered without losing its history.
+**As a** administrator, **I want** deactivate and reactivate a room, **so that** it is no longer offered without losing its history.
 
 Acceptance criteria:
 - `PUT /rooms/{id}/deactivate` sets `status=inactive`
 - A room with future active bookings returns 409 (to validate, D-03)
+- `PUT /rooms/{id}/activate` sets `status=active`; an already active room is returned unchanged (idempotent)
+- Activating a room that does not exist returns 404
 - Inactive room accepts no new slots or bookings (tested in US11 / US13)
-- Tests: deactivate ok, with future bookings, unknown id
+- Tests: deactivate ok, with future bookings, unknown id; activate inactive room, already active room, room with past bookings, unknown id
 
 Business rules: BR-R3, BR-R4, BR-R5
 
