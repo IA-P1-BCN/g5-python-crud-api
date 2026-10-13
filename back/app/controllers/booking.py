@@ -303,3 +303,19 @@ def start_booking(db: Session, booking_id: int) -> Booking:
     db.commit()
     db.refresh(booking)
     return booking
+
+
+def finish_booking(db: Session, booking_id: int) -> Booking:
+    booking = _get_booking_or_404(db, booking_id)
+
+    if booking.status != "IN_PROGRESS":
+        raise AppError(
+            f"Cannot finish a {booking.status} booking",
+            code="INVALID_TRANSITION",
+            status_code=409,
+        )
+
+    booking.status = "COMPLETED"
+    db.commit()
+    db.refresh(booking)
+    return booking

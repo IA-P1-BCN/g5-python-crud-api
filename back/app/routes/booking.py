@@ -52,7 +52,8 @@ def create_booking_endpoint(
 )
 def list_bookings_endpoint(
     user_id: int | None = None,
-    status: Literal["PENDING", "CONFIRMED", "CANCELLED"] | None = None,
+    status: Literal["PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
+    | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
     db: Session = Depends(get_db),  # noqa: B008
@@ -184,3 +185,23 @@ def start_booking_endpoint(
     db: Session = Depends(get_db),  # noqa: B008
 ):
     return booking_controller.start_booking(db=db, booking_id=booking_id)
+
+
+@router.put(
+    "/{booking_id}/finish",
+    response_model=BookingRead,
+    summary="Finish a game (staff)",
+    description="Moves an IN_PROGRESS booking to COMPLETED. Staff and admin only.",
+    responses={
+        401: {"description": "Missing or invalid token"},
+        403: {"description": "FORBIDDEN: role is not staff or admin"},
+        404: {"description": "NOT_FOUND"},
+        409: {"description": "INVALID_TRANSITION (not IN_PROGRESS)"},
+    },
+    dependencies=[Depends(require_role("staff", "admin"))],
+)
+def finish_booking_endpoint(
+    booking_id: int,
+    db: Session = Depends(get_db),  # noqa: B008
+):
+    return booking_controller.finish_booking(db=db, booking_id=booking_id)

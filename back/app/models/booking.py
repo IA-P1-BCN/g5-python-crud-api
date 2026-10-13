@@ -56,10 +56,10 @@ class Booking(Base):
             name="ck_bookings_players_positive",
         ),
         CheckConstraint(
-            "status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS', 'CANCELLED')",
+            "status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')",
             name="ck_bookings_status",
         ),
-        # IN_PROGRESS was added by ticket 042 (COMPLETED comes with 043).
+        # COMPLETED was added by ticket 043.
         Index(
             "uq_bookings_active_time_slot",
             "time_slot_id",
