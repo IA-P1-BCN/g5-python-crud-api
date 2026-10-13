@@ -160,3 +160,27 @@ def confirm_booking_endpoint(
     db: Session = Depends(get_db),  # noqa: B008
 ):
     return booking_controller.confirm_booking(db=db, booking_id=booking_id)
+
+
+@router.put(
+    "/{booking_id}/start",
+    response_model=BookingRead,
+    summary="Start a game (staff)",
+    description="Moves a CONFIRMED booking to IN_PROGRESS. Only on the day of "
+    "the booking (UTC). Staff and admin only.",
+    responses={
+        401: {"description": "Missing or invalid token"},
+        403: {"description": "FORBIDDEN: role is not staff or admin"},
+        404: {"description": "NOT_FOUND"},
+        409: {
+            "description": "INVALID_TRANSITION (not CONFIRMED, or not the "
+            "booking's day)"
+        },
+    },
+    dependencies=[Depends(require_role("staff", "admin"))],
+)
+def start_booking_endpoint(
+    booking_id: int,
+    db: Session = Depends(get_db),  # noqa: B008
+):
+    return booking_controller.start_booking(db=db, booking_id=booking_id)
