@@ -7,6 +7,7 @@ from back.app.models import Booking, Room, TimeSlot, User
 
 URL = "/api/v1/bookings/today"
 START_URL = "/api/v1/bookings/{}/start"
+FINISH_URL = "/api/v1/bookings/{}/finish"
 
 
 def day_at(offset_days: int, hour: int) -> datetime:
@@ -168,3 +169,49 @@ def test_start_requires_authentication(client, add_booking):
     booking = add_booking(0, 14, status="CONFIRMED")
 
     assert client.put(START_URL.format(booking.id)).status_code == 401
+
+
+def test_finish_moves_in_progress_to_completed(client, login, add_booking):
+    booking = add_booking(0, 14, status="IN_PROGRESS")
+
+    response = client.put(FINISH_URL.format(booking.id), headers=login("staff"))
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "COMPLETED"
+
+
+def test_finish_rejects_booking_that_is_not_in_progress(client, login, add_booking):
+    booking = add_booking(0, 14, status="CONFIRMED")
+
+    response = client.put(FINISH_URL.format(booking.id), headers=login("staff"))
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "INVALID_TRANSITION"
+
+
+def test_finish_unknown_booking_returns_404(client, login):
+    response = client.put(FINISH_URL.format(9999), headers=login("staff"))
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "NOT_FOUND"
+
+
+def test_finish_forbidden_for_client(client, login, add_booking):
+    booking = add_booking(0, 14, status="IN_PROGRESS")
+
+    response = client.put(FINISH_URL.format(booking.id), headers=login("client"))
+
+    assert response.status_code == 403
+
+
+def test_finish_requires_authentication(client, add_booking):
+    booking = add_booking(0, 14, status="IN_PROGRESS")
+
+    assert client.put(FINISH_URL.format(booking.id)).status_code == 401
+
+
+@pytest.mark.parametrize("status", ["IN_PROGRESS", "COMPLETED"])
+def test_list_accepts_game_statuses(client, status):
+    response = client.get("/api/v1/bookings", params={"status": status})
+
+    assert response.status_code == 200
