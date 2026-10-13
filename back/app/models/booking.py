@@ -18,6 +18,7 @@ from back.app.database import Base
 ACTIVE_STATUSES = ("PENDING", "CONFIRMED", "IN_PROGRESS")
 
 if TYPE_CHECKING:
+    from back.app.models.game_result import GameResult
     from back.app.models.time_slot import TimeSlot
     from back.app.models.user import User
 
@@ -74,4 +75,7 @@ class Booking(Base):
     )
     time_slot: Mapped["TimeSlot"] = relationship(
         back_populates="bookings",
+    )
+    result: Mapped["GameResult | None"] = relationship(
+        back_populates="booking",
     )

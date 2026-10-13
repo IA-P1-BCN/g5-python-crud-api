@@ -12,6 +12,8 @@ from back.app.schemas.booking import (
     BookingDetail,
     BookingRead,
     BookingUpdate,
+    GameResultCreate,
+    GameResultInfo,
 )
 
 router = APIRouter()
@@ -205,3 +207,29 @@ def finish_booking_endpoint(
     db: Session = Depends(get_db),  # noqa: B008
 ):
     return booking_controller.finish_booking(db=db, booking_id=booking_id)
+
+
+@router.post(
+    "/{booking_id}/result",
+    response_model=GameResultInfo,
+    status_code=201,
+    summary="Register a game result (staff)",
+    description="Registers completed and completion_time (seconds) once, only "
+    "for a COMPLETED booking. Staff and admin only.",
+    responses={
+        401: {"description": "Missing or invalid token"},
+        403: {"description": "FORBIDDEN: role is not staff or admin"},
+        404: {"description": "NOT_FOUND"},
+        409: {"description": "INVALID_TRANSITION (not COMPLETED) or DUPLICATE"},
+        422: {"description": "Invalid body"},
+    },
+    dependencies=[Depends(require_role("staff", "admin"))],
+)
+def register_result_endpoint(
+    booking_id: int,
+    result_in: GameResultCreate,
+    db: Session = Depends(get_db),
+):
+    return booking_controller.register_result(
+        db=db, booking_id=booking_id, result_in=result_in
+    )
