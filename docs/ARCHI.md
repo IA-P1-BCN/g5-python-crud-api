@@ -24,7 +24,7 @@ back/
     main.py              # creates FastAPI app, includes the routes
     config/              # pydantic-settings, reads .env; logging setup
     database.py          # engine, SessionLocal, declarative Base (get_db comes with the first routes)
-    models/              # user.py  room.py  time_slot.py  booking.py
+    models/              # user.py  room.py  time_slot.py  booking.py  game_result.py
     schemas/             # user.py  room.py  time_slot.py  booking.py
     controllers/         # user.py  room.py  time_slot.py  booking.py
     routes/              # user.py  room.py  time_slot.py  booking.py
@@ -32,7 +32,8 @@ back/
     core/                # errors.py (BR-X1), security.py (JWT decoding)
   tests/
     conftest.py          # shared fixtures: db session, client
-    test_users.py  test_rooms.py  test_time_slots.py  test_bookings.py
+    test_users.py  test_room.py  test_time_slot.py  test_bookings.py  test_bookings_today.py
+    test_game_results.py  test_auth.py
 ```
 
 Four people work in parallel: each one owns the files of their resource in every folder (`models/room.py`, `routes/room.py`...), so merge conflicts stay rare.
