@@ -6,6 +6,69 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ---
 
+## Martes 13 de octubre de 2026
+
+### Leandro
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Isbel
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Carolay
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Marie-Charlotte
+
+- **Hoy:**
+  - Back de la partida (Sprint 2, rol staff/admin): tickets 041 a 045.
+  - Ticket 060 "Enrich booking responses" (slug de la sala guardado, relaciones cargadas de una vez, rango de fechas invertido rechazado).
+- **Resultado (tarde):**
+- **Bloqueos:** Ninguno.
+
+---
+
+## Viernes 9 de octubre de 2026
+
+### Leandro
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Isbel
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Carolay
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Marie-Charlotte
+
+- **Hoy:**
+  - Ticket 066 "Port 3D corridor": portar el pasillo 3D con alternativa sin WebGL.
+  - Ticket 086 "Design system" del front (tokens, componentes compartidos).
+- **Resultado (tarde):**
+  - Ticket 066 hecho ✅ (PR #149 integrada): pasillo 3D dividido en módulos con sus tests, lista accesible de salas, fallback si falla WebGL, `useRooms` con las salas visibles.
+  - Ticket 086 hecho ✅ (PR #151 integrada): tokens de diseño, fuentes autoalojadas, `Button`, `Badge`, `Alert`, `Field`, `Spinner`, `EmptyState`, `Dialog` y `Select` de shadcn/ui, y guía "Start here" para el equipo en `DESIGN.md`.
+  - Correcciones: etiqueta Swagger duplicada de time-slots (PR #152) y cadena de migraciones del `auth_id`.
+- **Bloqueos:** Ninguno.
+
+---
+
 ## Jueves 8 de octubre de 2026
 
 ### Leandro
