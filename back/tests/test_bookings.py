@@ -613,7 +613,7 @@ def test_list_bookings_includes_nested_fields(client, seed):
 
     assert item["room"]["name"] == "Pharaoh"
     assert item["user"]["name"] == "Alice"
-    assert "can_modify" in item
+    assert item["can_modify"] is True
 
 
 def test_can_modify_true_when_live_and_24h_away(client, seed, db):
@@ -664,3 +664,21 @@ def test_list_bookings_cancelled_tab(client, seed, db):
 
 def test_list_bookings_invalid_date_returns_422(client, seed):
     assert client.get(URL, params={"date_from": "nope"}).status_code == 422
+
+
+def test_booking_room_slug_is_the_stored_slug(client, seed, db):
+    seed.room.slug = "custom-slug"  # differs from the name "Pharaoh"
+    db.flush()
+    booking_id = client.get(URL).json()[0]["id"]
+
+    assert client.get(f"{URL}/{booking_id}").json()["room"]["slug"] == "custom-slug"
+    assert client.get(URL).json()[0]["room"]["slug"] == "custom-slug"
+
+
+def test_list_bookings_date_from_after_date_to_returns_422(client, seed):
+    response = client.get(
+        URL, params={"date_from": "2030-01-05", "date_to": "2030-01-01"}
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"

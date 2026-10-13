@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from back.app.core.errors import AppError
 from back.app.models import Booking, TimeSlot, User
@@ -151,7 +151,21 @@ def list_bookings(
     date_from: date | None = None,
     date_to: date | None = None,
 ) -> list[BookingDetail]:
-    stmt = select(Booking).join(TimeSlot).order_by(Booking.id)
+    if date_from is not None and date_to is not None and date_from > date_to:
+        raise AppError(
+            "date_from must not be after date_to",
+            code="VALIDATION_ERROR",
+            status_code=422,
+        )
+    stmt = (
+        select(Booking)
+        .join(TimeSlot)
+        .options(
+            joinedload(Booking.time_slot).joinedload(TimeSlot.room),
+            joinedload(Booking.user),
+        )
+        .order_by(Booking.id)
+    )
     if user_id is not None:
         stmt = stmt.where(Booking.user_id == user_id)
     if status is not None:
