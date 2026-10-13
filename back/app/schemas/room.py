@@ -2,7 +2,7 @@ import re
 from datetime import date, time
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 SLUG_PATTERN = re.compile(r"^(?=.*[a-z])[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -77,25 +77,11 @@ class RoomResponse(RoomBase):
 # --- Time Slot Bulk Generation Schemas (Ticket 058) ---
 
 
-# BR-S8: cap the generated range so one request cannot create thousands of rows.
-MAX_BULK_GENERATE_DAYS = 90
-
-
 class TimeSlotBulkGenerateRequest(BaseModel):
     date_from: date
     date_to: date
     first_start: time
     last_start: time
-
-    @model_validator(mode="after")
-    def validate_range(self) -> "TimeSlotBulkGenerateRequest":
-        if self.date_from > self.date_to:
-            raise ValueError("date_from must not be after date_to")
-        if (self.date_to - self.date_from).days > MAX_BULK_GENERATE_DAYS:
-            raise ValueError(f"date range cannot exceed {MAX_BULK_GENERATE_DAYS} days")
-        if self.first_start > self.last_start:
-            raise ValueError("first_start must not be later than last_start")
-        return self
 
 
 class TimeSlotBulkGenerateResponse(BaseModel):

@@ -21,6 +21,9 @@ DUPLICATE_CONSTRAINTS = ("uq_rooms_slug", "rooms_name_key")
 # BR-S7: bulk generation spaces slot starts by duration + reset buffer.
 SLOT_RESET_BUFFER_MINUTES = 30
 
+# BR-S8: cap the generated range so one request cannot create thousands of rows.
+MAX_BULK_GENERATE_DAYS = 90
+
 
 def _as_utc(value: datetime) -> datetime:
     """SQLite returns naive datetimes; normalize before comparing."""
@@ -261,6 +264,26 @@ def bulk_generate_time_slots(
             message="Room is inactive",
             code="ROOM_INACTIVE",
             status_code=409,
+        )
+
+    # BR-S8: validated here, like BR-R7, so the error keeps the API error shape.
+    if payload.date_from > payload.date_to:
+        raise AppError(
+            message="date_from must not be after date_to",
+            code="VALIDATION_ERROR",
+            status_code=422,
+        )
+    if (payload.date_to - payload.date_from).days > MAX_BULK_GENERATE_DAYS:
+        raise AppError(
+            message=f"date range cannot exceed {MAX_BULK_GENERATE_DAYS} days",
+            code="VALIDATION_ERROR",
+            status_code=422,
+        )
+    if payload.first_start > payload.last_start:
+        raise AppError(
+            message="first_start must not be later than last_start",
+            code="VALIDATION_ERROR",
+            status_code=422,
         )
 
     duration_minutes = room.duration
