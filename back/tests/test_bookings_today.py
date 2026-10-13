@@ -6,6 +6,7 @@ import pytest
 from back.app.models import Booking, Room, TimeSlot, User
 
 URL = "/api/v1/bookings/today"
+START_URL = "/api/v1/bookings/{}/start"
 
 
 def day_at(offset_days: int, hour: int) -> datetime:
@@ -119,3 +120,51 @@ def test_today_forbidden_for_client(client, login):
 
 def test_today_requires_authentication(client):
     assert client.get(URL).status_code == 401
+
+
+def test_start_moves_confirmed_to_in_progress(client, login, add_booking):
+    booking = add_booking(0, 14, status="CONFIRMED")
+
+    response = client.put(START_URL.format(booking.id), headers=login("staff"))
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "IN_PROGRESS"
+
+
+def test_start_rejects_booking_that_is_not_confirmed(client, login, add_booking):
+    booking = add_booking(0, 14, status="PENDING")
+
+    response = client.put(START_URL.format(booking.id), headers=login("staff"))
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "INVALID_TRANSITION"
+
+
+def test_start_rejects_booking_on_another_day(client, login, add_booking):
+    booking = add_booking(1, 14, status="CONFIRMED")
+
+    response = client.put(START_URL.format(booking.id), headers=login("staff"))
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "INVALID_TRANSITION"
+
+
+def test_start_unknown_booking_returns_404(client, login):
+    response = client.put(START_URL.format(9999), headers=login("staff"))
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "NOT_FOUND"
+
+
+def test_start_forbidden_for_client(client, login, add_booking):
+    booking = add_booking(0, 14, status="CONFIRMED")
+
+    response = client.put(START_URL.format(booking.id), headers=login("client"))
+
+    assert response.status_code == 403
+
+
+def test_start_requires_authentication(client, add_booking):
+    booking = add_booking(0, 14, status="CONFIRMED")
+
+    assert client.put(START_URL.format(booking.id)).status_code == 401

@@ -280,3 +280,26 @@ def confirm_booking(db: Session, booking_id: int) -> Booking:
     db.commit()
     db.refresh(booking)
     return booking
+
+
+def start_booking(db: Session, booking_id: int) -> Booking:
+    booking = _get_booking_or_404(db, booking_id)
+
+    if booking.status != "CONFIRMED":
+        raise AppError(
+            f"Cannot start a {booking.status} booking",
+            code="INVALID_TRANSITION",
+            status_code=409,
+        )
+
+    if _starts_at_utc(booking).date() != _utcnow().date():
+        raise AppError(
+            "A game can only start on the booking's date",
+            code="INVALID_TRANSITION",
+            status_code=409,
+        )
+
+    booking.status = "IN_PROGRESS"
+    db.commit()
+    db.refresh(booking)
+    return booking

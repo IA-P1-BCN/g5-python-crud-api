@@ -56,21 +56,16 @@ class Booking(Base):
             name="ck_bookings_players_positive",
         ),
         CheckConstraint(
-            "status IN ('PENDING', 'CONFIRMED', 'CANCELLED')",
+            "status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS', 'CANCELLED')",
             name="ck_bookings_status",
         ),
-        # IN_PROGRESS is introduced in Sprint 2.
-        # It is included in the partial index now to satisfy BR-B8.
+        # IN_PROGRESS was added by ticket 042 (COMPLETED comes with 043).
         Index(
             "uq_bookings_active_time_slot",
             "time_slot_id",
             unique=True,
-            postgresql_where=text(
-                "status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS')"
-            ),
-            sqlite_where=text(
-                "status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS')"
-            ),
+            postgresql_where=text("status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS')"),
+            sqlite_where=text("status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS')"),
         ),
     )
 
