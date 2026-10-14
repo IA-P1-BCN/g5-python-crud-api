@@ -34,6 +34,13 @@ describe('RoomPage', () => {
     expect(await screen.findByRole('heading', { name: 'Faro 1923' })).toBeInTheDocument()
   })
 
+  it('draws the ambiance of the room behind its details', async () => {
+    respondWithRoom('faro', roomDto({ slug: 'faro', name: 'Faro 1923' }))
+    renderPage('/salas/faro')
+
+    expect(await screen.findByTestId('atmosphere')).toHaveAttribute('data-room', 'faro')
+  })
+
   it('shows "not found" for an inactive room (BR-R4)', async () => {
     respondWithRoom('lab', roomDto({ slug: 'lab', name: 'Laboratorio Zero', status: 'inactive' }))
     renderPage('/salas/lab')

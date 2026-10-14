@@ -1,1 +1,152 @@
-// Custom room ambiances (clock, beam, dust, lasers). Nested SCSS. Use var(--rc), no Sass color variables. No @apply, no @theme.
+// Custom room ambiances (clock, beam, dust, lasers, scan). Nested SCSS.
+// Use var(--rc), no Sass color variables. No @apply, no @theme.
+// The layer fills its parent: the parent needs `relative isolate`.
+.atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: -1; // behind the text; the parent needs `isolate` to keep it inside
+  overflow: hidden;
+  pointer-events: none;
+
+  // clock (relojero): a big dial whose second hand ticks
+  &[data-ambiance='clock'] {
+    &::before {
+      content: '';
+      position: absolute;
+      right: 4%;
+      top: 50%;
+      width: 300px;
+      height: 300px;
+      margin-top: -150px;
+      border-radius: 50%;
+      border: 2px solid var(--rc);
+      opacity: 0.35;
+      background: repeating-conic-gradient(var(--rc) 0 0.6deg, transparent 0.6deg 30deg);
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      right: calc(4% + 149px);
+      top: calc(50% - 130px);
+      width: 2px;
+      height: 130px;
+      background: var(--rc);
+      opacity: 0.7;
+      transform-origin: bottom center;
+      animation: atmosphere-tick 60s steps(60) infinite;
+    }
+  }
+
+  // dust (biblioteca): dots floating up
+  &[data-ambiance='dust'] {
+    opacity: 0.8;
+    background-image:
+      radial-gradient(circle, var(--rc) 1px, transparent 2px),
+      radial-gradient(circle, var(--rc) 1px, transparent 2px),
+      radial-gradient(circle, var(--rc) 1.5px, transparent 2.5px);
+    background-size:
+      90px 90px,
+      140px 140px,
+      210px 210px;
+    background-position:
+      0 0,
+      40px 60px,
+      100px 30px;
+    animation: atmosphere-dust 28s linear infinite;
+  }
+
+  // beam (faro): a lighthouse beam sweeping
+  &[data-ambiance='beam']::before {
+    content: '';
+    position: absolute;
+    right: -10%;
+    top: -90%;
+    width: 130%;
+    height: 280%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0 336deg,
+      color-mix(in srgb, var(--rc) 38%, transparent) 352deg,
+      transparent 360deg
+    );
+    transform-origin: 62% 50%;
+    animation: atmosphere-spin 7s linear infinite;
+  }
+
+  // lasers (atraco): a laser grid that flickers
+  &[data-ambiance='lasers'] {
+    background:
+      repeating-linear-gradient(
+        72deg,
+        transparent 0 70px,
+        color-mix(in srgb, var(--rc) 55%, transparent) 70px 71px
+      ),
+      repeating-linear-gradient(
+        -72deg,
+        transparent 0 90px,
+        color-mix(in srgb, var(--rc) 40%, transparent) 90px 91px
+      );
+    animation: atmosphere-flick 3s steps(2) infinite;
+  }
+
+  // lasers and scan (lab): a scan line going down
+  &[data-ambiance='lasers']::after,
+  &[data-ambiance='scan']::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -60px;
+    height: 60px;
+    background: linear-gradient(
+      transparent,
+      color-mix(in srgb, var(--rc) 30%, transparent),
+      transparent
+    );
+    animation: atmosphere-scan 4s linear infinite;
+  }
+
+  // 'none' (default theme): an empty layer
+
+  @media (prefers-reduced-motion: reduce) {
+    &,
+    &::before,
+    &::after {
+      animation: none;
+    }
+  }
+}
+
+@keyframes atmosphere-tick {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes atmosphere-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes atmosphere-dust {
+  to {
+    background-position:
+      30px -900px,
+      20px -600px,
+      80px -1200px;
+  }
+}
+
+@keyframes atmosphere-flick {
+  50% {
+    opacity: 0.75;
+  }
+}
+
+@keyframes atmosphere-scan {
+  to {
+    top: 100%;
+  }
+}
