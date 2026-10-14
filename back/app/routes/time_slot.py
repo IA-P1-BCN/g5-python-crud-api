@@ -10,6 +10,7 @@ from back.app.controllers import time_slot as controller
 from back.app.core.errors import AppError
 from back.app.core.pagination import Page, PageParams, paginate
 from back.app.database import get_db
+from back.app.dependencies.auth import require_role
 from back.app.models.booking import ACTIVE_STATUSES, Booking
 from back.app.models.time_slot import TimeSlot
 from back.app.schemas.time_slot import (
@@ -21,6 +22,11 @@ from back.app.schemas.time_slot import (
 )
 
 router = APIRouter(prefix="/api/v1/time-slots")
+
+ADMIN_ERRORS = {
+    401: {"description": "UNAUTHORIZED: missing or invalid token"},
+    403: {"description": "FORBIDDEN: role not allowed (admin only)"},
+}
 
 SessionDep = Annotated[Session, Depends(get_db)]
 
@@ -92,7 +98,8 @@ def get_time_slot(slot_id: int, db: SessionDep):
     response_model=TimeSlotResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a time slot",
-    responses={409: {"description": "Room inactive or slot overlap."}},
+    dependencies=[Depends(require_role("admin"))],
+    responses={**ADMIN_ERRORS, 409: {"description": "Room inactive or slot overlap."}},
 )
 def create_time_slot(slot_in: TimeSlotCreate, db: SessionDep):
     return controller.create_time_slot_controller(slot_in, db)
@@ -102,7 +109,8 @@ def create_time_slot(slot_in: TimeSlotCreate, db: SessionDep):
     "/{slot_id}",
     response_model=TimeSlotResponse,
     summary="Update a time slot",
-    responses={409: {"description": "Active booking or slot overlap."}},
+    dependencies=[Depends(require_role("admin"))],
+    responses={**ADMIN_ERRORS, 409: {"description": "Active booking or slot overlap."}},
 )
 def update_time_slot(slot_id: int, slot_in: TimeSlotUpdate, db: SessionDep):
     return controller.update_time_slot_controller(slot_id, slot_in, db)
@@ -112,7 +120,8 @@ def update_time_slot(slot_id: int, slot_in: TimeSlotUpdate, db: SessionDep):
     "/{slot_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a time slot",
-    responses={409: {"description": "Slot has an active booking."}},
+    dependencies=[Depends(require_role("admin"))],
+    responses={**ADMIN_ERRORS, 409: {"description": "Slot has an active booking."}},
 )
 def delete_time_slot(slot_id: int, db: SessionDep):
     return controller.delete_time_slot_controller(slot_id, db)

@@ -687,9 +687,7 @@ def test_past_state_wins_over_blocked(client: TestClient, db: Session):
 def test_public_day_board_hides_inactive_rooms(client: TestClient, db: Session):
     day = datetime(2099, 6, 1, 10, tzinfo=UTC)
     active = _simple_room(db, "Active Board", "active-board")
-    inactive = _simple_room(
-        db, "Inactive Board", "inactive-board", status="inactive"
-    )
+    inactive = _simple_room(db, "Inactive Board", "inactive-board", status="inactive")
     db.add_all(
         [
             TimeSlot(
@@ -845,6 +843,7 @@ def test_bulk_generate_time_slots_invalid_time_range(
 
 
 def test_bulk_generate_time_slots_requires_admin(client: TestClient, db: Session):
+    client.headers.pop("Authorization", None)  # sin token: debe dar 401
     response = client.post(
         "/api/v1/rooms/1/time-slots/generate",
         json={
@@ -896,3 +895,9 @@ def test_bulk_generate_time_slots_range_too_long(
 
     assert response.status_code == 422
     assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+@pytest.fixture(autouse=True)
+def _as_admin(client, admin_headers):
+    """Slots are admin-only (US05): act as admin unless a test sends its own headers."""
+    client.headers.update(admin_headers)

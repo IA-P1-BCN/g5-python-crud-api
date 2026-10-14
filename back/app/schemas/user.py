@@ -8,12 +8,19 @@ class UserCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     email: EmailStr
     phone: str | None = Field(default=None, max_length=50)
-    role: Literal["client", "staff", "admin"] = "client"
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class UserUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     phone: str | None = Field(default=None, max_length=50)
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class UserRoleUpdate(BaseModel):
+    role: Literal["client", "staff", "admin"]
 
     model_config = ConfigDict(extra="forbid")
 

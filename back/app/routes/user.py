@@ -7,26 +7,40 @@ from back.app.controllers import booking as booking_controller
 from back.app.controllers import user as user_controller
 from back.app.core.pagination import Page, PageParams
 from back.app.database import get_db
-from back.app.dependencies.auth import get_current_user
+from back.app.dependencies.auth import get_current_user, require_role
 from back.app.models import User
 from back.app.schemas.booking import BookingDetail
-from back.app.schemas.user import UserCreate, UserResponse, UserUpdate
+from back.app.schemas.user import (
+    UserCreate,
+    UserResponse,
+    UserRoleUpdate,
+    UserUpdate,
+)
 
 router = APIRouter(prefix="", tags=["Users"])
 
 SessionDep = Annotated[Session, Depends(get_db)]
 UserDep = Annotated[User, Depends(get_current_user)]
 
+ADMIN_ERRORS = {
+    401: {"description": "UNAUTHORIZED: missing or invalid token"},
+    403: {"description": "FORBIDDEN: role not allowed (admin only)"},
+}
+
 
 @router.post(
     "",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
+    summary="Create a user (admin)",
+    responses={
+        **ADMIN_ERRORS,
+        409: {"description": "DUPLICATE: email already exists"},
+        422: {"description": "Invalid body"},
+    },
+    dependencies=[Depends(require_role("admin"))],
 )
-def create_user_endpoint(
-    user_in: UserCreate,
-    db: SessionDep,
-):
+def create_user_endpoint(user_in: UserCreate, db: SessionDep):
     return user_controller.create_user(db=db, user_in=user_in)
 
 
@@ -34,12 +48,14 @@ def create_user_endpoint(
     "",
     response_model=Page[UserResponse],
     status_code=status.HTTP_200_OK,
-    summary="List users",
+    summary="List users (admin)",
     description="Paginated list of users: page (default 1) and size (default 20, max 100).",
     responses={
+        **ADMIN_ERRORS,
         200: {"description": "Users retrieved successfully"},
         422: {"description": "Invalid page or size"},
     },
+    dependencies=[Depends(require_role("admin"))],
 )
 def list_users_endpoint(
     db: SessionDep,
@@ -78,27 +94,27 @@ def user_history_endpoint(user_id: int, db: SessionDep, current_user: UserDep):
 @router.get(
     "/{user_id}",
     response_model=UserResponse,
-    summary="Get user profile",
+    summary="Get user profile (admin)",
     responses={
-        401: {"description": "Not authenticated"},
+        **ADMIN_ERRORS,
         404: {"description": "User not found"},
     },
+    dependencies=[Depends(require_role("admin"))],
 )
-def get_user_endpoint(
-    user_id: int,
-    db: SessionDep,
-    current_user: UserDep,
-):
+def get_user_endpoint(user_id: int, db: SessionDep):
     return user_controller.get_user(db=db, user_id=user_id)
 
 
 @router.put(
     "/{user_id}",
     response_model=UserResponse,
-    summary="Update user profile",
+    summary="Update user profile (admin)",
     responses={
+        **ADMIN_ERRORS,
         404: {"description": "User not found"},
+        422: {"description": "Invalid body"},
     },
+    dependencies=[Depends(require_role("admin"))],
 )
 def update_user_endpoint(
     user_id: int,
@@ -113,18 +129,41 @@ def update_user_endpoint(
 
 
 @router.put(
+    "/{user_id}/role",
+    response_model=UserResponse,
+    summary="Change user role (admin)",
+    description="Only an admin can change a user's role (BR-A4).",
+    responses={
+        **ADMIN_ERRORS,
+        404: {"description": "User not found"},
+        422: {"description": "Invalid role"},
+    },
+    dependencies=[Depends(require_role("admin"))],
+)
+def update_user_role_endpoint(
+    user_id: int,
+    role_in: UserRoleUpdate,
+    db: SessionDep,
+):
+    return user_controller.update_user_role(
+        db=db,
+        user_id=user_id,
+        role_in=role_in,
+    )
+
+
+@router.put(
     "/{user_id}/deactivate",
     response_model=UserResponse,
     status_code=status.HTTP_200_OK,
-    summary="Deactivate user",
+    summary="Deactivate user (admin)",
     responses={
+        **ADMIN_ERRORS,
         404: {"description": "User not found"},
     },
+    dependencies=[Depends(require_role("admin"))],
 )
-def deactivate_user_endpoint(
-    user_id: int,
-    db: SessionDep,
-):
+def deactivate_user_endpoint(user_id: int, db: SessionDep):
     return user_controller.deactivate_user(
         db=db,
         user_id=user_id,

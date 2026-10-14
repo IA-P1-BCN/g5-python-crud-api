@@ -45,6 +45,8 @@ def add_booking(db):
 def login(db, make_token):
     def _login(role):
         sub = f"auth-{role}"
+        if db.query(User).filter_by(auth_id=sub).first():
+            return {"Authorization": f"Bearer {make_token(subject=sub)}"}
         db.add(
             User(name=role.title(), email=f"{role}@test.com", role=role, auth_id=sub)
         )
@@ -113,24 +115,26 @@ def test_register_result_forbidden_for_client(client, login, add_booking):
 
 def test_booking_detail_shows_result(client, login, add_booking):
     booking = add_booking()
-    client.post(URL.format(booking.id), json=BODY, headers=login("admin"))
+    admin = login("admin")
+    client.post(URL.format(booking.id), json=BODY, headers=admin)
 
-    response = client.get(f"/api/v1/bookings/{booking.id}")
+    response = client.get(f"/api/v1/bookings/{booking.id}", headers=admin)
 
     assert response.json()["result"] == BODY
 
 
-def test_booking_detail_result_is_null_without_result(client, add_booking):
+def test_booking_detail_result_is_null_without_result(client, login, add_booking):
     booking = add_booking()
 
-    response = client.get(f"/api/v1/bookings/{booking.id}")
+    response = client.get(f"/api/v1/bookings/{booking.id}", headers=login("admin"))
 
     assert response.json()["result"] is None
 
 
-def test_list_bookings_loads_results_in_one_query(client, db, add_booking):
+def test_list_bookings_loads_results_in_one_query(client, db, login, add_booking):
     for _ in range(3):
         add_booking()
+    headers = login("admin")
     queries = []
 
     def count(conn, cursor, statement, *args):
@@ -139,9 +143,10 @@ def test_list_bookings_loads_results_in_one_query(client, db, add_booking):
     engine = db.get_bind()
     event.listen(engine, "before_cursor_execute", count)
     try:
-        client.get("/api/v1/bookings")
+        client.get("/api/v1/bookings", headers=headers)
     finally:
         event.remove(engine, "before_cursor_execute", count)
 
     # one COUNT for the total + one SELECT for the page, whatever the row count
-    assert len(queries) == 2
+    # (the auth lookup also runs a query, so only count the bookings ones)
+    assert len([q for q in queries if "FROM bookings" in q]) == 2
