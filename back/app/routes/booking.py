@@ -20,6 +20,11 @@ from back.app.schemas.booking import (
 
 router = APIRouter()
 
+AUTH_ERRORS = {
+    401: {"description": "UNAUTHORIZED: missing or invalid token"},
+    403: {"description": "FORBIDDEN: not your booking or role not allowed"},
+}
+
 
 @router.post(
     "",
@@ -29,6 +34,7 @@ router = APIRouter()
     description="Books a time slot for a user. The booking starts as PENDING "
     "and total_price is room.base_price x players.",
     responses={
+        **AUTH_ERRORS,
         404: {"description": "SLOT_NOT_FOUND or USER_NOT_FOUND"},
         409: {
             "description": "USER_INACTIVE, ROOM_INACTIVE, "
@@ -56,7 +62,10 @@ def create_booking_endpoint(
     "user_id, room_id, status, and date_from/date_to (inclusive days, on the "
     "slot start). Use date_from=today for Upcoming, date_to=yesterday for "
     "Past, status=CANCELLED for Cancelled.",
-    responses={422: {"description": "Invalid status, date filter, page or size"}},
+    responses={
+        **AUTH_ERRORS,
+        422: {"description": "Invalid status, date filter, page or size"},
+    },
 )
 def list_bookings_endpoint(
     params: Annotated[PageParams, Depends()],
@@ -105,7 +114,7 @@ def today_bookings_endpoint(
     response_model=BookingDetail,
     summary="Get a booking",
     description="Returns a booking with slot, room, user and can_modify.",
-    responses={404: {"description": "NOT_FOUND"}},
+    responses={**AUTH_ERRORS, 404: {"description": "NOT_FOUND"}},
 )
 def get_booking_endpoint(
     booking_id: int,
@@ -127,6 +136,7 @@ def get_booking_endpoint(
     "slot must be bookable and 24h or more away; the old slot becomes free. "
     "Sending the current time_slot_id changes nothing.",
     responses={
+        **AUTH_ERRORS,
         404: {"description": "NOT_FOUND or SLOT_NOT_FOUND"},
         409: {
             "description": "INVALID_TRANSITION, TOO_LATE_TO_MODIFY, "
@@ -156,6 +166,7 @@ def update_booking_endpoint(
     description="Sets the booking to CANCELLED and frees the slot. Only PENDING "
     "or CONFIRMED bookings, and only 24h or more before the slot starts.",
     responses={
+        **AUTH_ERRORS,
         404: {"description": "NOT_FOUND"},
         409: {"description": "INVALID_TRANSITION or TOO_LATE_TO_CANCEL"},
     },
@@ -177,6 +188,7 @@ def cancel_booking_endpoint(
     dependencies=[Depends(require_role("staff", "admin"))],
     description="Moves a PENDING booking to CONFIRMED.",
     responses={
+        **AUTH_ERRORS,
         404: {"description": "NOT_FOUND"},
         409: {"description": "INVALID_TRANSITION (booking is not PENDING)"},
     },

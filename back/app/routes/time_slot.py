@@ -23,6 +23,11 @@ from back.app.schemas.time_slot import (
 
 router = APIRouter(prefix="/api/v1/time-slots")
 
+ADMIN_ERRORS = {
+    401: {"description": "UNAUTHORIZED: missing or invalid token"},
+    403: {"description": "FORBIDDEN: role not allowed (admin only)"},
+}
+
 SessionDep = Annotated[Session, Depends(get_db)]
 
 TimeSlotsResponse = Page[TimeSlotRead] | PublicRoomBoardResponse
@@ -94,7 +99,7 @@ def get_time_slot(slot_id: int, db: SessionDep):
     status_code=status.HTTP_201_CREATED,
     summary="Create a time slot",
     dependencies=[Depends(require_role("admin"))],
-    responses={409: {"description": "Room inactive or slot overlap."}},
+    responses={**ADMIN_ERRORS, 409: {"description": "Room inactive or slot overlap."}},
 )
 def create_time_slot(slot_in: TimeSlotCreate, db: SessionDep):
     return controller.create_time_slot_controller(slot_in, db)
@@ -105,7 +110,7 @@ def create_time_slot(slot_in: TimeSlotCreate, db: SessionDep):
     response_model=TimeSlotResponse,
     summary="Update a time slot",
     dependencies=[Depends(require_role("admin"))],
-    responses={409: {"description": "Active booking or slot overlap."}},
+    responses={**ADMIN_ERRORS, 409: {"description": "Active booking or slot overlap."}},
 )
 def update_time_slot(slot_id: int, slot_in: TimeSlotUpdate, db: SessionDep):
     return controller.update_time_slot_controller(slot_id, slot_in, db)
@@ -116,7 +121,7 @@ def update_time_slot(slot_id: int, slot_in: TimeSlotUpdate, db: SessionDep):
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a time slot",
     dependencies=[Depends(require_role("admin"))],
-    responses={409: {"description": "Slot has an active booking."}},
+    responses={**ADMIN_ERRORS, 409: {"description": "Slot has an active booking."}},
 )
 def delete_time_slot(slot_id: int, db: SessionDep):
     return controller.delete_time_slot_controller(slot_id, db)

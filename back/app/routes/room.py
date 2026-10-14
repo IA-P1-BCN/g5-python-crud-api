@@ -17,6 +17,11 @@ from back.app.schemas.room import (
 
 router = APIRouter(prefix="", tags=["Rooms"])
 
+ADMIN_ERRORS = {
+    401: {"description": "UNAUTHORIZED: missing or invalid token"},
+    403: {"description": "FORBIDDEN: role not allowed (admin only)"},
+}
+
 SessionDep = Annotated[Session, Depends(get_db)]
 
 
@@ -26,7 +31,10 @@ SessionDep = Annotated[Session, Depends(get_db)]
     status_code=status.HTTP_201_CREATED,
     summary="Create a room",
     dependencies=[Depends(require_role("admin"))],
-    responses={409: {"description": "Room name or slug already exists."}},
+    responses={
+        **ADMIN_ERRORS,
+        409: {"description": "Room name or slug already exists."},
+    },
 )
 def create_room_endpoint(room_in: RoomCreate, db: SessionDep):
     return room_controller.create_room(db=db, room_in=room_in)
@@ -39,6 +47,7 @@ def create_room_endpoint(room_in: RoomCreate, db: SessionDep):
     summary="Update a room",
     dependencies=[Depends(require_role("admin"))],
     responses={
+        **ADMIN_ERRORS,
         404: {"description": "Room not found."},
         409: {"description": "Room name or slug already exists."},
     },
@@ -53,7 +62,10 @@ def update_room_endpoint(room_id: int, room_in: RoomUpdate, db: SessionDep):
     status_code=status.HTTP_200_OK,
     summary="Deactivate a room",
     dependencies=[Depends(require_role("admin"))],
-    responses={409: {"description": "Room has future active bookings."}},
+    responses={
+        **ADMIN_ERRORS,
+        409: {"description": "Room has future active bookings."},
+    },
 )
 def deactivate_room_endpoint(room_id: int, db: SessionDep):
     return room_controller.deactivate_room(db=db, room_id=room_id)
@@ -97,6 +109,7 @@ def get_room_endpoint(room_id_or_slug: str, db: SessionDep):
     summary="Activate a room",
     dependencies=[Depends(require_role("admin"))],
     responses={
+        **ADMIN_ERRORS,
         200: {
             "description": "Room successfully activated or already active (idempotent)."
         },
