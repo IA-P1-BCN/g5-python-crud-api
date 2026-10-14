@@ -1,1 +1,266 @@
-// Room entrance animations (#gate). Nested SCSS. Use var(--rc), no Sass color variables.
+// Room entrance animations. Colours come from var(--rc) / var(--rd) (set by data-room),
+// no Sass colour variables. One block per entrance, named like roomThemes.js.
+// cover: the entrance plays and hides the page. uncover: the gate fades out on the new page.
+$duration: 1.1s;
+$uncover: 1.8s;
+
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  perspective: 1200px;
+  background: var(--rd);
+  animation: gate-cover $duration ease-in forwards;
+
+  // the two parts stay hidden unless an entrance below uses them
+  > span {
+    display: none;
+    position: absolute;
+  }
+
+  // relojero: a clock dial zooms in while its hand spins
+  &[data-entrance='gears'] {
+    display: grid;
+    place-items: center;
+
+    > span:first-child {
+      display: block;
+      position: relative;
+      width: min(340px, 80vmin);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 3px solid var(--rc);
+      background: repeating-conic-gradient(var(--rc) 0 0.8deg, transparent 0.8deg 30deg);
+      animation: gate-zoom $duration ease-in forwards;
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 3px;
+        height: 44%;
+        margin-left: -1.5px;
+        background: var(--rc);
+        transform-origin: top;
+        transform: rotate(180deg);
+        animation: gate-hand-cover $duration ease-in forwards;
+      }
+    }
+  }
+
+  // faro: a lighthouse beam sweeps the dark screen
+  &[data-entrance='fog']::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 300vmax;
+    height: 300vmax;
+    margin: -150vmax;
+    background: conic-gradient(
+      transparent 0 330deg,
+      color-mix(in srgb, var(--rc) 67%, transparent) 350deg,
+      transparent 360deg
+    );
+    animation: gate-beam-cover $duration linear forwards;
+  }
+
+  // biblioteca: two book pages swing shut
+  &[data-entrance='book'] > span {
+    display: block;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    border: 6px solid var(--rc);
+    background: repeating-linear-gradient(var(--rd) 0 34px, var(--rc) 34px 35px);
+    animation: $duration ease-in forwards;
+
+    &:first-child {
+      left: 0;
+      transform-origin: left center;
+      animation-name: gate-page-left;
+    }
+
+    &:last-child {
+      right: 0;
+      transform-origin: right center;
+      animation-name: gate-page-right;
+    }
+  }
+
+  // atraco: a vault door rolls in and turns
+  &[data-entrance='vault'] {
+    display: grid;
+    place-items: center;
+
+    > span:first-child {
+      display: block;
+      position: relative;
+      width: min(300px, 75vmin);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 10px solid var(--rc);
+      background: repeating-conic-gradient(var(--rc) 0 4deg, transparent 4deg 60deg);
+      animation: gate-door $duration ease-in-out forwards;
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 38%;
+        border-radius: 50%;
+        border: 6px solid var(--rc);
+        background: var(--rd);
+      }
+    }
+  }
+
+  // lab: two airlock panels slide together
+  &[data-entrance='airlock'] > span {
+    display: block;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    border: 4px solid var(--rc);
+    background: var(--rd);
+    animation: $duration ease-in forwards;
+
+    &:first-child {
+      left: 0;
+      animation-name: gate-slide-left;
+    }
+
+    &:last-child {
+      right: 0;
+      animation-name: gate-slide-right;
+    }
+  }
+
+  // the entrance parts keep their last frame (forwards) while the whole gate fades away
+  &[data-phase='uncover'] {
+    animation: gate-uncover $uncover ease-in-out forwards;
+
+    // the lighthouse beam keeps sweeping too
+    &[data-entrance='fog']::before {
+      animation: gate-beam-uncover $uncover linear forwards;
+    }
+
+    // the clock hand does not stop: it keeps turning while the gate fades
+    &[data-entrance='gears'] > span:first-child::after {
+      animation: gate-hand-uncover $uncover linear forwards;
+    }
+  }
+
+  // 'fade' (default theme) needs nothing: the base fade-in is the whole entrance
+}
+
+@keyframes gate-cover {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// the effect stays fully visible for a moment, then melts away slowly
+@keyframes gate-uncover {
+  0%,
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes gate-hand-cover {
+  from {
+    transform: rotate(180deg);
+  }
+  to {
+    transform: rotate(720deg);
+  }
+}
+
+@keyframes gate-hand-uncover {
+  from {
+    transform: rotate(720deg);
+  }
+  to {
+    transform: rotate(1080deg);
+  }
+}
+
+// slow, constant sweep: half a turn per phase
+@keyframes gate-beam-cover {
+  to {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes gate-beam-uncover {
+  from {
+    transform: rotate(180deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gate-zoom {
+  from {
+    transform: scale(0.5);
+  }
+  to {
+    transform: scale(2.6);
+  }
+}
+
+@keyframes gate-door {
+  0% {
+    transform: scale(0.6) rotate(0);
+  }
+  60% {
+    transform: scale(1) rotate(200deg);
+  }
+  100% {
+    transform: scale(3.4) rotate(260deg);
+  }
+}
+
+@keyframes gate-page-left {
+  from {
+    transform: rotateY(90deg);
+  }
+  to {
+    transform: rotateY(0);
+  }
+}
+
+@keyframes gate-page-right {
+  from {
+    transform: rotateY(-90deg);
+  }
+  to {
+    transform: rotateY(0);
+  }
+}
+
+@keyframes gate-slide-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes gate-slide-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
