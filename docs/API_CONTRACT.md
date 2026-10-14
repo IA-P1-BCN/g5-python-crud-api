@@ -61,7 +61,7 @@ Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphe
 | Method | Path | Sprint | Description | Success |
 |--------|------|:------:|-------------|---------|
 | POST | `/bookings` | 1 | Create (`user_id`, `time_slot_id`, `players`) | 201 |
-| GET | `/bookings` | 1 | List with room, slot, user, can_modify (`?user_id=&status=&date_from=&date_to=`) | 200 |
+| GET | `/bookings` | 1 | List with room, slot, user, can_modify (`?user_id=&room_id=&status=&date_from=&date_to=`), paginated | 200 |
 | GET | `/bookings/{id}` | 1 | Get booking with room, slot, user, can_modify | 200 |
 | PUT | `/bookings/{id}` | 1 | Change `players` and/or `time_slot_id` (BR-B7, BR-L5) | 200 |
 | PUT | `/bookings/{id}/confirm` | 1 | PENDING -> CONFIRMED | 200 |
@@ -93,10 +93,13 @@ The staff/admin endpoints above answer 401 `UNAUTHORIZED` without a valid token 
 
 ## Pagination (Sprint 2)
 
-`GET` lists accept `?page=1&size=20` and return:
+`GET /users`, `GET /rooms`, `GET /bookings` and `GET /time-slots` accept `?page=1&size=20` and return:
 
 ```json
 { "items": [], "total": 0, "page": 1, "size": 20 }
 ```
 
-In Sprint 1 lists return a plain array.
+- `page` starts at 1 (default 1). `size` is 1 to 100 (default 20). Anything else returns 422.
+- `total` is the number of rows matching the filters, not the size of the page. A page past the end returns `items: []`.
+- Lists are always ordered (users, rooms, bookings by `id`; time slots by `starts_at`), so a row never shows on two pages.
+- These lists stay plain arrays: `GET /bookings/today` (staff planning) and the game history (`GET /users/me/history`, `GET /users/{id}/history`).
