@@ -161,7 +161,9 @@ def bulk_generate_time_slots_endpoint(
     },
 )
 def change_price_endpoint(
-    room_id: int, db: SessionDep, new_price: Annotated[Decimal, Query(ge=0)]
+    room_id: int,
+    db: SessionDep,
+    new_price: Annotated[Decimal, Query(ge=0, decimal_places=2)],
 ):
     return room_controller.update_room(
         db=db, room_id=room_id, room_in=RoomUpdate(base_price=new_price)

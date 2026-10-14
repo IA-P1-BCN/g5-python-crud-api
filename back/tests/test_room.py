@@ -993,3 +993,11 @@ def test_change_price_unknown_room_is_404(client):
 
     assert response.status_code == 404
     assert response.json()["code"] == "NOT_FOUND"
+
+
+def test_change_price_too_many_decimals_is_422(client, db):
+    room = _room_for_price(db)
+
+    response = client.put(f"{URL}/{room.id}/price?new_price=12.345")
+
+    assert response.status_code == 422
