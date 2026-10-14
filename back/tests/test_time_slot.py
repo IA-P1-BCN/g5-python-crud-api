@@ -687,9 +687,7 @@ def test_past_state_wins_over_blocked(client: TestClient, db: Session):
 def test_public_day_board_hides_inactive_rooms(client: TestClient, db: Session):
     day = datetime(2099, 6, 1, 10, tzinfo=UTC)
     active = _simple_room(db, "Active Board", "active-board")
-    inactive = _simple_room(
-        db, "Inactive Board", "inactive-board", status="inactive"
-    )
+    inactive = _simple_room(db, "Inactive Board", "inactive-board", status="inactive")
     db.add_all(
         [
             TimeSlot(

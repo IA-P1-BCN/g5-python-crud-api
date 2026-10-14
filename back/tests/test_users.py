@@ -399,7 +399,6 @@ def test_list_users_is_ordered_by_id(client, admin_headers):
     assert second_response.status_code == 201
     assert third_response.status_code == 201
 
-
     response = client.get(URL, headers=admin_headers)
 
     assert response.status_code == 200
@@ -582,25 +581,25 @@ def _make_users(client, n):
         client.post(URL, json={"email": f"u{i}@x.com", "name": f"U{i}"})
 
 
-def test_list_users_default_pagination(client):
+def test_list_users_default_pagination(client, admin_headers):
     _make_users(client, 3)
-    body = client.get(URL).json()
-    assert body["page"] == 1 and body["size"] == 20 and body["total"] == 3
-    assert len(body["items"]) == 3
+    body = client.get(URL, headers=admin_headers).json()
+    assert body["page"] == 1 and body["size"] == 20 and body["total"] == 4
+    assert len(body["items"]) == 4
 
 
-def test_list_users_second_page(client):
+def test_list_users_second_page(client, admin_headers):
     _make_users(client, 5)
-    body = client.get(f"{URL}?page=2&size=2").json()
-    assert body["total"] == 5 and len(body["items"]) == 2
+    body = client.get(f"{URL}?page=2&size=2", headers=admin_headers).json()
+    assert body["total"] == 6 and len(body["items"]) == 2
 
 
-def test_list_users_page_beyond_end_is_empty(client):
+def test_list_users_page_beyond_end_is_empty(client, admin_headers):
     _make_users(client, 2)
-    body = client.get(f"{URL}?page=9").json()
-    assert body["items"] == [] and body["total"] == 2
+    body = client.get(f"{URL}?page=9", headers=admin_headers).json()
+    assert body["items"] == [] and body["total"] == 3
 
 
 @pytest.mark.parametrize("qs", ["page=0", "size=0", "size=101", "page=abc"])
-def test_list_users_invalid_params_returns_422(client, qs):
-    assert client.get(f"{URL}?{qs}").status_code == 422
+def test_list_users_invalid_params_returns_422(client, admin_headers, qs):
+    assert client.get(f"{URL}?{qs}", headers=admin_headers).status_code == 422

@@ -171,7 +171,7 @@ def test_client_lists_only_own_bookings(client, client_headers, bookings):
     response = client.get(f"{API}/bookings", headers=client_headers)
 
     assert response.status_code == 200
-    assert [b["id"] for b in response.json()] == [bookings["mine"].id]
+    assert [b["id"] for b in response.json()["items"]] == [bookings["mine"].id]
 
 
 def test_client_cannot_filter_by_other_user(client, client_headers, bookings):
@@ -192,7 +192,7 @@ def test_staff_and_admin_list_all_bookings(client, request, bookings, headers_na
     response = client.get(f"{API}/bookings", headers=headers)
 
     assert response.status_code == 200
-    assert {b["id"] for b in response.json()} == {
+    assert {b["id"] for b in response.json()["items"]} == {
         bookings["mine"].id,
         bookings["theirs"].id,
     }
