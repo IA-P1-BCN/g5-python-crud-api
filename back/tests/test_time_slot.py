@@ -293,9 +293,10 @@ def test_list_time_slots_available_filter(client: TestClient, db: Session):
     )
 
     assert response.status_code == 200
-    ids = [s["id"] for s in response.json()]
-    assert ids == [slots[0].id, slots[3].id]
-    assert all(s["is_bookable"] for s in response.json())
+    items = response.json()["items"]
+    assert [s["id"] for s in items] == [slots[0].id, slots[3].id]
+    assert all(s["is_bookable"] for s in items)
+    assert response.json()["total"] == 2
 
 
 def test_list_time_slots_date_filter_excludes_other_days(
@@ -306,7 +307,47 @@ def test_list_time_slots_date_filter_excludes_other_days(
     response = client.get(f"/api/v1/time-slots/?room_id={room.id}&date=2099-01-02")
 
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json()["items"] == []
+    assert response.json()["total"] == 0
+
+
+def test_list_time_slots_second_page(client: TestClient, db: Session):
+    room, slots = _room_with_slots(db, [None] * 5)
+
+    body = client.get(f"/api/v1/time-slots/?room_id={room.id}&page=2&size=2").json()
+
+    assert body["total"] == 5
+    assert [s["id"] for s in body["items"]] == [slots[2].id, slots[3].id]
+
+
+def test_list_time_slots_available_total_counts_all_pages(
+    client: TestClient, db: Session
+):
+    """The available filter runs in SQL: total ignores the page size."""
+    room, slots = _room_with_slots(db, [None, "CONFIRMED", "PENDING", None, None])
+
+    body = client.get(
+        f"/api/v1/time-slots/?room_id={room.id}&available=true&page=2&size=2"
+    ).json()
+
+    assert body["total"] == 3
+    assert [s["id"] for s in body["items"]] == [slots[4].id]
+
+
+def test_list_time_slots_available_excludes_blocked(client: TestClient, db: Session):
+    room, slots = _room_with_slots(db, [None, None])
+    slots[1].status = "blocked"
+    db.commit()
+
+    body = client.get(f"/api/v1/time-slots/?room_id={room.id}&available=true").json()
+
+    assert body["total"] == 1
+    assert body["items"][0]["id"] == slots[0].id
+
+
+@pytest.mark.parametrize("qs", ["page=0", "size=0", "size=101", "page=abc"])
+def test_list_time_slots_invalid_pagination_returns_422(client: TestClient, qs):
+    assert client.get(f"/api/v1/time-slots/?{qs}").status_code == 422
 
 
 def test_get_time_slot_exposes_is_bookable(client: TestClient, db: Session):
@@ -621,7 +662,7 @@ def test_slot_state_list_exposes_state_per_slot(client: TestClient, db: Session)
     response = client.get(f"/api/v1/time-slots/?room_id={room.id}&date=2099-01-01")
 
     assert response.status_code == 200
-    states = [slot["state"] for slot in response.json()]
+    states = [slot["state"] for slot in response.json()["items"]]
     assert states == ["free", "taken", "free"]
 
 

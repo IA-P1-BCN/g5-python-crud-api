@@ -298,7 +298,7 @@ Business rules: BR-L3
 **As a** API consumer, **I want** paginate and filter lists, **so that** responses stay fast and relevant.
 
 Acceptance criteria:
-- All GET lists accept `page` and `size` and return `{items,total,page,size}`
+- The lists of users, rooms, bookings and time slots accept `page` and `size` and return `{items,total,page,size}` (`/bookings/today` and the history endpoints stay arrays)
 - Filters from BR-L2 implemented for bookings and time slots
 - Invalid `page`/`size` returns 422; `size` max 100
 - Tests per list endpoint (coordinate with endpoint owners, shared helper)

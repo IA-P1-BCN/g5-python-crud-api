@@ -29,11 +29,11 @@ back/
     controllers/         # user.py  room.py  time_slot.py  booking.py
     routes/              # user.py  room.py  time_slot.py  booking.py
     dependencies/        # auth.py: get_current_user (JWT), require_role(*roles) -> 403 FORBIDDEN
-    core/                # errors.py (BR-X1), security.py (JWT decoding)
+    core/                # errors.py (BR-X1), security.py (JWT decoding), pagination.py (Page, PageParams, paginate)
   tests/
     conftest.py          # shared fixtures: db session, client
     test_users.py  test_room.py  test_time_slot.py  test_bookings.py  test_bookings_today.py
-    test_game_results.py  test_auth.py
+    test_game_results.py  test_auth.py  test_pagination.py
 ```
 
 Four people work in parallel: each one owns the files of their resource in every folder (`models/room.py`, `routes/room.py`...), so merge conflicts stay rare.
@@ -403,7 +403,7 @@ RoomsCorridor (rooms)  ->  CorridorView (corridor)  ->  Corridor.jsx -> scene/cr
 
 **Known limits.** The walk-in animation after `entering` is ticket 068 (until then the scene stays on the chosen door), "full" rooms are 067, and the corridor is 30 m long (about 9 rooms). The final look of the 3D is checked manually in a browser.
 
-**Doors come from the data.** The corridor is built from `GET /rooms?status=active`: one door per room the API returns, with its name on the sign. The API returns every room with its `status` and a `has_upcoming_slots` flag (true if it has at least one upcoming time slot, free or taken: BR-R6, ticket 059), and the front keeps only the rooms that are active **and** have that flag. So a deactivated room (BR-R3, BR-R4) has no door, a new room has none until the admin has created slots for it, and a fully booked room keeps its door and is shown as full. A room created by the admin (`POST /rooms`) appears the next time the list is loaded (page load or TanStack Query refetch, no real-time push). Visual themes come from the `roomThemes` registry by slug, with a **default theme** for slugs not in it, so a new room never breaks the corridor. Opening `/salas/<slug>` of an inactive room shows "room not found".
+**Doors come from the data.** The corridor is built from `GET /rooms?status=active`, a paginated list (`{items,total,page,size}`): `roomsApi` reads `items` of the first page (20 rooms by default, more than the corridor can show). One door per room the API returns, with its name on the sign. The API returns every room with its `status` and a `has_upcoming_slots` flag (true if it has at least one upcoming time slot, free or taken: BR-R6, ticket 059), and the front keeps only the rooms that are active **and** have that flag. So a deactivated room (BR-R3, BR-R4) has no door, a new room has none until the admin has created slots for it, and a fully booked room keeps its door and is shown as full. A room created by the admin (`POST /rooms`) appears the next time the list is loaded (page load or TanStack Query refetch, no real-time push). Visual themes come from the `roomThemes` registry by slug, with a **default theme** for slugs not in it, so a new room never breaks the corridor. Opening `/salas/<slug>` of an inactive room shows "room not found".
 
 ### Access control
 

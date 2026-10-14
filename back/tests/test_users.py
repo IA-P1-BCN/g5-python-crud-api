@@ -1,6 +1,8 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
+import pytest
+
 from back.app.models import Booking, GameResult, Room, TimeSlot, User
 
 URL = "/api/v1/users"
@@ -338,7 +340,8 @@ def test_list_users_empty(client):
     response = client.get(URL)
 
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json()["items"] == []
+    assert response.json()["total"] == 0
 
 
 def test_list_users(client):
@@ -365,7 +368,7 @@ def test_list_users(client):
 
     assert response.status_code == 200
 
-    data = response.json()
+    data = response.json()["items"]
 
     assert len(data) == 2
     assert data[0]["name"] == "Alice"
@@ -411,7 +414,7 @@ def test_list_users_is_ordered_by_id(client):
 
     assert response.status_code == 200
 
-    data = response.json()
+    data = response.json()["items"]
 
     assert [user["id"] for user in data] == [
         first_id,
@@ -579,3 +582,32 @@ def test_staff_can_read_any_history(client, db, make_token):
 
 def test_history_requires_authentication(client):
     assert client.get(f"{URL}/me/history").status_code == 401
+
+
+def _make_users(client, n):
+    for i in range(n):
+        client.post(URL, json={"email": f"u{i}@x.com", "name": f"U{i}"})
+
+
+def test_list_users_default_pagination(client):
+    _make_users(client, 3)
+    body = client.get(URL).json()
+    assert body["page"] == 1 and body["size"] == 20 and body["total"] == 3
+    assert len(body["items"]) == 3
+
+
+def test_list_users_second_page(client):
+    _make_users(client, 5)
+    body = client.get(f"{URL}?page=2&size=2").json()
+    assert body["total"] == 5 and len(body["items"]) == 2
+
+
+def test_list_users_page_beyond_end_is_empty(client):
+    _make_users(client, 2)
+    body = client.get(f"{URL}?page=9").json()
+    assert body["items"] == [] and body["total"] == 2
+
+
+@pytest.mark.parametrize("qs", ["page=0", "size=0", "size=101", "page=abc"])
+def test_list_users_invalid_params_returns_422(client, qs):
+    assert client.get(f"{URL}?{qs}").status_code == 422

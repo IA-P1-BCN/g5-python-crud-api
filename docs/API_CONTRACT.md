@@ -19,7 +19,7 @@ Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUP
 | Method | Path | Sprint | Description | Success |
 |--------|------|:------:|-------------|---------|
 | POST | `/users` | 1 | Create user | 201 |
-| GET | `/users` | 1 | List users | 200 |
+| GET | `/users` | 1 | List users, paginated | 200 |
 | GET | `/users/{id}` | 1 | Get user | 200 |
 | PUT | `/users/{id}` | 1 | Update name, phone | 200 |
 | PUT | `/users/{id}/deactivate` | 1 | Deactivate | 200 |
@@ -33,7 +33,7 @@ Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUP
 | Method | Path | Sprint | Description | Success |
 |--------|------|:------:|-------------|---------|
 | POST | `/rooms` | 1 | Create room (catalog fields required; `slug` generated from name if omitted) | 201 |
-| GET | `/rooms` | 1 | List rooms (`?status=active`) | 200 |
+| GET | `/rooms` | 1 | List rooms (`?status=active`), paginated | 200 |
 | GET | `/rooms/{id or slug}` | 1 | Get room by numeric ID or URL slug | 200 |
 | PUT | `/rooms/{id}` | 1 | Partial update (only sent fields). `slug` is immutable; `null` or unknown fields → 422 | 200 |
 | PUT | `/rooms/{id}/deactivate` | 1 | Deactivate | 200 |
@@ -48,7 +48,7 @@ Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphe
 | Method | Path | Sprint | Description | Success |
 |--------|------|:------:|-------------|---------|
 | POST | `/time-slots` | 1 | Create slot (`room_id`, `starts_at`, `ends_at`) | 201 |
-| GET | `/time-slots` | 1 | List (`?room_id=&date=&available=true`) | 200 |
+| GET | `/time-slots` | 1 | List (`?room_id=&date=&available=true`), paginated. With only `date`, returns the public day board (active rooms with their slots, BR-R6), not paginated | 200 |
 | GET | `/time-slots/{id}` | 1 | Get slot, includes computed `is_bookable` | 200 |
 | PUT | `/time-slots/{id}` | 1 | Update times / status | 200 |
 | DELETE | `/time-slots/{id}` | 1 | Delete (BR-S6) | 204 |
@@ -61,7 +61,7 @@ Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphe
 | Method | Path | Sprint | Description | Success |
 |--------|------|:------:|-------------|---------|
 | POST | `/bookings` | 1 | Create (`user_id`, `time_slot_id`, `players`) | 201 |
-| GET | `/bookings` | 1 | List with room, slot, user, can_modify (`?user_id=&status=&date_from=&date_to=`) | 200 |
+| GET | `/bookings` | 1 | List with room, slot, user, can_modify (`?user_id=&room_id=&status=&date_from=&date_to=`), paginated | 200 |
 | GET | `/bookings/{id}` | 1 | Get booking with room, slot, user, can_modify | 200 |
 | PUT | `/bookings/{id}` | 1 | Change `players` and/or `time_slot_id` (BR-B7, BR-L5) | 200 |
 | PUT | `/bookings/{id}/confirm` | 1 | PENDING -> CONFIRMED | 200 |
@@ -93,10 +93,13 @@ The staff/admin endpoints above answer 401 `UNAUTHORIZED` without a valid token 
 
 ## Pagination (Sprint 2)
 
-`GET` lists accept `?page=1&size=20` and return:
+`GET /users`, `GET /rooms`, `GET /bookings` and `GET /time-slots` accept `?page=1&size=20` and return:
 
 ```json
 { "items": [], "total": 0, "page": 1, "size": 20 }
 ```
 
-In Sprint 1 lists return a plain array.
+- `page` starts at 1 (default 1). `size` is 1 to 100 (default 20). Anything else returns 422.
+- `total` is the number of rows matching the filters, not the size of the page. A page past the end returns `items: []`.
+- Lists are always ordered (users, rooms, bookings by `id`; time slots by `starts_at`), so a row never shows on two pages.
+- These responses are not paginated: `GET /bookings/today` (staff planning, plain array), the game history (`GET /users/me/history`, `GET /users/{id}/history`, plain arrays) and the public day board of `GET /time-slots?date=...` (its own shape).

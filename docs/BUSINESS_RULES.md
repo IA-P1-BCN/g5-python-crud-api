@@ -95,8 +95,8 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 ### Lists and reporting (E5)
 | ID | Rule |
 |----|------|
-| BR-L1 | List endpoints support `page` and `size` (default 1/20, max size 100) |
-| BR-L2 | Bookings filter by `status`, `room_id`, `date_from`, `date_to`. Slots by `room_id`, `date`, `available` |
+| BR-L1 | `GET` lists of users, rooms, bookings and time slots support `page` (>= 1, default 1) and `size` (1-100, default 20); otherwise 422. `/bookings/today` and the history endpoints stay plain arrays, and the public day board (`GET /time-slots?date=` alone) is not paginated |
+| BR-L2 | Bookings filter by `user_id`, `status`, `room_id`, `date_from`, `date_to`. Slots by `room_id`, `date`, `available` |
 | BR-L3 | Admin exports bookings to CSV with the same filters |
 | BR-L4 | Statistics: bookings per room, occupancy %, revenue per period |
 | BR-L5 | BR-B7 extended: client can change slot if the new slot is bookable and 24h or more away. The new slot may belong to another room (team-approved): `total_price` is recalculated with the new room's `base_price` (BR-B4) and `players` must fit its capacity (BR-B2). The old slot becomes free |

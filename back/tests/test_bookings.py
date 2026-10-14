@@ -185,17 +185,20 @@ def test_list_bookings_returns_all(client, seed):
     response = client.get(URL)
 
     assert response.status_code == 200
-    assert len(response.json()) == 1
+    assert len(response.json()["items"]) == 1
+    assert response.json()["total"] == 1
 
 
 def test_list_bookings_filter_by_user(client, seed):
-    assert len(client.get(URL, params={"user_id": seed.user.id}).json()) == 1
-    assert client.get(URL, params={"user_id": seed.inactive_user.id}).json() == []
+    assert len(client.get(URL, params={"user_id": seed.user.id}).json()["items"]) == 1
+    other = client.get(URL, params={"user_id": seed.inactive_user.id}).json()
+    assert other["items"] == []
+    assert other["total"] == 0
 
 
 def test_list_bookings_filter_by_status(client, seed):
-    assert len(client.get(URL, params={"status": "PENDING"}).json()) == 1
-    assert client.get(URL, params={"status": "CANCELLED"}).json() == []
+    assert len(client.get(URL, params={"status": "PENDING"}).json()["items"]) == 1
+    assert client.get(URL, params={"status": "CANCELLED"}).json()["items"] == []
 
 
 def test_list_bookings_invalid_status_is_422(client, seed):
@@ -203,7 +206,7 @@ def test_list_bookings_invalid_status_is_422(client, seed):
 
 
 def test_get_booking_ok_includes_room_and_slot(client, seed):
-    booking_id = client.get(URL).json()[0]["id"]
+    booking_id = client.get(URL).json()["items"][0]["id"]
 
     response = client.get(f"{URL}/{booking_id}")
 
@@ -596,7 +599,7 @@ def test_change_slot_to_same_slot_is_a_noop(client, seed, db):
 
 
 def test_get_booking_includes_nested_fields(client, seed):
-    booking_id = client.get(URL).json()[0]["id"]
+    booking_id = client.get(URL).json()["items"][0]["id"]
 
     data = client.get(f"{URL}/{booking_id}").json()
 
@@ -609,7 +612,7 @@ def test_get_booking_includes_nested_fields(client, seed):
 
 
 def test_list_bookings_includes_nested_fields(client, seed):
-    item = client.get(URL).json()[0]
+    item = client.get(URL).json()["items"][0]
 
     assert item["room"]["name"] == "Pharaoh"
     assert item["user"]["name"] == "Alice"
@@ -638,7 +641,7 @@ def test_can_modify_false_when_cancelled(client, seed, db):
 def test_list_bookings_filter_date_from(client, seed, db):
     make_booking(db, seed, add_slot(db, seed.room, LATER))  # 2030-01-02
 
-    data = client.get(URL, params={"date_from": "2030-01-02"}).json()
+    data = client.get(URL, params={"date_from": "2030-01-02"}).json()["items"]
 
     assert len(data) == 1  # the seed booking is on 2030-01-01
 
@@ -646,8 +649,8 @@ def test_list_bookings_filter_date_from(client, seed, db):
 def test_list_bookings_filter_date_to_is_inclusive(client, seed, db):
     make_booking(db, seed, add_slot(db, seed.room, LATER))
 
-    only_first_day = client.get(URL, params={"date_to": "2030-01-01"}).json()
-    both_days = client.get(URL, params={"date_to": "2030-01-02"}).json()
+    only_first_day = client.get(URL, params={"date_to": "2030-01-01"}).json()["items"]
+    both_days = client.get(URL, params={"date_to": "2030-01-02"}).json()["items"]
 
     assert len(only_first_day) == 1
     assert len(both_days) == 2
@@ -656,7 +659,7 @@ def test_list_bookings_filter_date_to_is_inclusive(client, seed, db):
 def test_list_bookings_cancelled_tab(client, seed, db):
     make_booking(db, seed, seed.free_slot, status="CANCELLED")
 
-    data = client.get(URL, params={"status": "CANCELLED"}).json()
+    data = client.get(URL, params={"status": "CANCELLED"}).json()["items"]
 
     assert len(data) == 1
     assert data[0]["can_modify"] is False
@@ -669,10 +672,10 @@ def test_list_bookings_invalid_date_returns_422(client, seed):
 def test_booking_room_slug_is_the_stored_slug(client, seed, db):
     seed.room.slug = "custom-slug"  # differs from the name "Pharaoh"
     db.flush()
-    booking_id = client.get(URL).json()[0]["id"]
+    booking_id = client.get(URL).json()["items"][0]["id"]
 
     assert client.get(f"{URL}/{booking_id}").json()["room"]["slug"] == "custom-slug"
-    assert client.get(URL).json()[0]["room"]["slug"] == "custom-slug"
+    assert client.get(URL).json()["items"][0]["room"]["slug"] == "custom-slug"
 
 
 def test_list_bookings_date_from_after_date_to_returns_422(client, seed):
@@ -682,3 +685,61 @@ def test_list_bookings_date_from_after_date_to_returns_422(client, seed):
 
     assert response.status_code == 422
     assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+def _add_bookings(db, seed, n):
+    """Seed already has 1 booking: add n more on distinct slots."""
+    for i in range(n):
+        make_booking(db, seed, add_slot(db, seed.room, LATER + timedelta(hours=2 * i)))
+
+
+def test_list_bookings_second_page(client, seed, db):
+    _add_bookings(db, seed, 4)  # 5 bookings in total
+
+    body = client.get(URL, params={"page": 2, "size": 2}).json()
+
+    assert body["total"] == 5
+    assert body["page"] == 2 and body["size"] == 2
+    assert len(body["items"]) == 2
+
+
+def test_list_bookings_default_page_and_size(client, seed):
+    body = client.get(URL).json()
+
+    assert body["page"] == 1 and body["size"] == 20
+
+
+def test_list_bookings_total_counts_filtered_rows_not_the_page(client, seed, db):
+    _add_bookings(db, seed, 3)
+    make_booking(
+        db, seed, add_slot(db, seed.room, LATER + timedelta(days=1)), "CANCELLED"
+    )
+
+    body = client.get(URL, params={"status": "PENDING", "size": 2}).json()
+
+    assert body["total"] == 4
+    assert len(body["items"]) == 2
+
+
+def test_list_bookings_filter_by_room(client, seed, db):
+    other_room = Room(
+        name="Other",
+        slug="other",
+        capacity=4,
+        duration=60,
+        base_price=Decimal("10.00"),
+        status="active",
+    )
+    db.add(other_room)
+    db.commit()
+    make_booking(db, seed, add_slot(db, other_room, LATER))
+
+    body = client.get(URL, params={"room_id": other_room.id}).json()
+
+    assert body["total"] == 1
+    assert body["items"][0]["room"]["id"] == other_room.id
+
+
+@pytest.mark.parametrize("qs", ["page=0", "size=0", "size=101", "page=abc"])
+def test_list_bookings_invalid_pagination_returns_422(client, seed, qs):
+    assert client.get(f"{URL}?{qs}").status_code == 422

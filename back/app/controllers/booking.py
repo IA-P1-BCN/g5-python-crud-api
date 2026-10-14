@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from back.app.core.errors import AppError
+from back.app.core.pagination import PageParams, paginate
 from back.app.models import Booking, GameResult, TimeSlot, User
 from back.app.models.booking import ACTIVE_STATUSES, ensure_transition
 from back.app.schemas.booking import (
@@ -145,13 +146,14 @@ def create_booking(db: Session, booking_in: BookingCreate) -> Booking:
     return booking
 
 
-def list_bookings(
-    db: Session,
+def _bookings_stmt(
     user_id: int | None = None,
     status: str | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
-) -> list[BookingDetail]:
+    room_id: int | None = None,
+):
+    """Filtered, ordered query shared by the list, today and history views."""
     if date_from is not None and date_to is not None and date_from > date_to:
         raise AppError(
             "date_from must not be after date_to",
@@ -172,21 +174,42 @@ def list_bookings(
         stmt = stmt.where(Booking.user_id == user_id)
     if status is not None:
         stmt = stmt.where(Booking.status == status)
+    if room_id is not None:
+        stmt = stmt.where(TimeSlot.room_id == room_id)
     if date_from is not None:
         start = datetime(date_from.year, date_from.month, date_from.day, tzinfo=UTC)
         stmt = stmt.where(TimeSlot.starts_at >= start)
     if date_to is not None:
         end = datetime(date_to.year, date_to.month, date_to.day, tzinfo=UTC)
         stmt = stmt.where(TimeSlot.starts_at < end + timedelta(days=1))
-    return [_to_detail(b) for b in db.scalars(stmt)]
+    return stmt
+
+
+def list_bookings(
+    db: Session,
+    params: PageParams,
+    user_id: int | None = None,
+    status: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    room_id: int | None = None,
+) -> dict:
+    stmt = _bookings_stmt(user_id, status, date_from, date_to, room_id)
+    page = paginate(db, stmt, params)
+    page["items"] = [_to_detail(b) for b in page["items"]]
+    return page
 
 
 def list_today_bookings(db: Session) -> list[BookingDetail]:
     """Today's (UTC) games for the staff, earliest first, cancelled ones hidden."""
     today = _utcnow().date()
-    bookings = list_bookings(db, date_from=today, date_to=today)
-    active = [b for b in bookings if b.status != "CANCELLED"]
-    return sorted(active, key=lambda b: b.time_slot.starts_at)
+    stmt = (
+        _bookings_stmt(date_from=today, date_to=today)
+        .where(Booking.status != "CANCELLED")
+        .order_by(None)
+        .order_by(TimeSlot.starts_at, Booking.id)
+    )
+    return [_to_detail(b) for b in db.scalars(stmt)]
 
 
 def get_booking(db: Session, booking_id: int) -> BookingDetail:
@@ -339,5 +362,6 @@ def list_user_history(
         raise AppError(
             "You can only see your own history", code="FORBIDDEN", status_code=403
         )
-    games = list_bookings(db, user_id=user_id, status="COMPLETED")
+    stmt = _bookings_stmt(user_id=user_id, status="COMPLETED")
+    games = [_to_detail(b) for b in db.scalars(stmt)]
     return sorted(games, key=lambda b: b.time_slot.starts_at, reverse=True)

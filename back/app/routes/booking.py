@@ -1,10 +1,11 @@
 from datetime import date
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from back.app.controllers import booking as booking_controller
+from back.app.core.pagination import Page, PageParams
 from back.app.database import get_db
 from back.app.dependencies.auth import require_role
 from back.app.schemas.booking import (
@@ -44,16 +45,19 @@ def create_booking_endpoint(
 
 @router.get(
     "",
-    response_model=list[BookingDetail],
+    response_model=Page[BookingDetail],
     summary="List bookings",
-    description="Lists bookings with room, slot, user and can_modify. Filters: "
-    "user_id, status, and date_from/date_to (inclusive days, on the slot "
-    "start). Use date_from=today for Upcoming, date_to=yesterday for Past, "
-    "status=CANCELLED for Cancelled.",
-    responses={422: {"description": "Invalid status or date filter"}},
+    description="Paginated list of bookings (page default 1, size default 20, "
+    "max 100) with room, slot, user and can_modify. Filters: "
+    "user_id, room_id, status, and date_from/date_to (inclusive days, on the "
+    "slot start). Use date_from=today for Upcoming, date_to=yesterday for "
+    "Past, status=CANCELLED for Cancelled.",
+    responses={422: {"description": "Invalid status, date filter, page or size"}},
 )
 def list_bookings_endpoint(
+    params: Annotated[PageParams, Depends()],
     user_id: int | None = None,
+    room_id: int | None = None,
     status: Literal["PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
     | None = None,
     date_from: date | None = None,
@@ -62,7 +66,9 @@ def list_bookings_endpoint(
 ):
     return booking_controller.list_bookings(
         db=db,
+        params=params,
         user_id=user_id,
+        room_id=room_id,
         status=status,
         date_from=date_from,
         date_to=date_to,
