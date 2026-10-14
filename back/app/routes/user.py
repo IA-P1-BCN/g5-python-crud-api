@@ -65,6 +65,45 @@ def list_users_endpoint(
 
 
 @router.get(
+    "/me",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get my profile",
+    responses={
+        401: {"description": "Not authenticated"},
+    },
+)
+def get_my_profile_endpoint(current_user: UserDep):
+    return user_controller.get_my_profile(current_user)
+
+
+@router.put(
+    "/me",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Update my profile",
+    description=(
+        "Users can update their own name and phone, "
+        "but not their email, role, or active status."
+    ),
+    responses={
+        401: {"description": "Not authenticated"},
+        422: {"description": "Invalid body"},
+    },
+)
+def update_my_profile_endpoint(
+    user_in: UserUpdate,
+    db: SessionDep,
+    current_user: UserDep,
+):
+    return user_controller.update_user(
+        db=db,
+        user_id=current_user.id,
+        user_in=user_in,
+    )
+
+
+@router.get(
     "/me/history",
     response_model=list[BookingDetail],
     summary="My game history",

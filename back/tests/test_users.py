@@ -626,3 +626,108 @@ def test_list_users_page_beyond_end_is_empty(client, admin_headers):
 @pytest.mark.parametrize("qs", ["page=0", "size=0", "size=101", "page=abc"])
 def test_list_users_invalid_params_returns_422(client, admin_headers, qs):
     assert client.get(f"{URL}?{qs}", headers=admin_headers).status_code == 422
+
+
+# Ticket 039: own profile
+
+
+def test_get_my_profile_returns_authenticated_user(client, client_user):
+    user, headers = client_user
+
+    response = client.get(f"{URL}/me", headers=headers)
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["id"] == user.id
+    assert data["name"] == user.name
+    assert data["email"] == user.email
+    assert data["phone"] == user.phone
+    assert data["role"] == user.role
+    assert data["is_active"] is True
+
+
+def test_get_my_profile_without_token_returns_401(client):
+    response = client.get(f"{URL}/me")
+
+    assert response.status_code == 401
+    assert response.json()["code"] == "UNAUTHORIZED"
+
+
+def test_get_my_profile_with_invalid_token_returns_401(client):
+    response = client.get(
+        f"{URL}/me",
+        headers={"Authorization": "Bearer invalid-token"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["code"] == "UNAUTHORIZED"
+
+
+def test_update_my_profile_success(client, db, client_user):
+    user, headers = client_user
+
+    response = client.put(
+        f"{URL}/me",
+        headers=headers,
+        json={
+            "name": "Updated Client",
+            "phone": "+34600111222",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["id"] == user.id
+    assert data["name"] == "Updated Client"
+    assert data["phone"] == "+34600111222"
+    assert data["email"] == user.email
+    assert data["role"] == "client"
+    assert data["is_active"] is True
+
+    db.refresh(user)
+    assert user.name == "Updated Client"
+    assert user.phone == "+34600111222"
+
+
+@pytest.mark.parametrize(
+    ("forbidden_field", "forbidden_value"),
+    [
+        ("email", "attacker@example.com"),
+        ("role", "admin"),
+        ("is_active", False),
+        ("auth_id", "another-auth-id"),
+    ],
+)
+def test_update_my_profile_rejects_protected_fields(
+    client,
+    client_user,
+    forbidden_field,
+    forbidden_value,
+):
+    _, headers = client_user
+
+    response = client.put(
+        f"{URL}/me",
+        headers=headers,
+        json={
+            "name": "Attempted Update",
+            forbidden_field: forbidden_value,
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_update_my_profile_without_token_returns_401(client):
+    response = client.put(
+        f"{URL}/me",
+        json={
+            "name": "Unauthorized Update",
+            "phone": "+34600111222",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json()["code"] == "UNAUTHORIZED"
