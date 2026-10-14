@@ -19,7 +19,7 @@ Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUP
 | Method | Path | Sprint | Description | Success |
 |--------|------|:------:|-------------|---------|
 | POST | `/users` | 1 | Create user | 201 |
-| GET | `/users` | 1 | List users | 200 |
+| GET | `/users` | 1 | List users, paginated | 200 |
 | GET | `/users/{id}` | 1 | Get user | 200 |
 | PUT | `/users/{id}` | 1 | Update name, phone | 200 |
 | PUT | `/users/{id}/deactivate` | 1 | Deactivate | 200 |
@@ -33,7 +33,7 @@ Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUP
 | Method | Path | Sprint | Description | Success |
 |--------|------|:------:|-------------|---------|
 | POST | `/rooms` | 1 | Create room (catalog fields required; `slug` generated from name if omitted) | 201 |
-| GET | `/rooms` | 1 | List rooms (`?status=active`) | 200 |
+| GET | `/rooms` | 1 | List rooms (`?status=active`), paginated | 200 |
 | GET | `/rooms/{id or slug}` | 1 | Get room by numeric ID or URL slug | 200 |
 | PUT | `/rooms/{id}` | 1 | Partial update (only sent fields). `slug` is immutable; `null` or unknown fields → 422 | 200 |
 | PUT | `/rooms/{id}/deactivate` | 1 | Deactivate | 200 |
@@ -48,7 +48,7 @@ Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphe
 | Method | Path | Sprint | Description | Success |
 |--------|------|:------:|-------------|---------|
 | POST | `/time-slots` | 1 | Create slot (`room_id`, `starts_at`, `ends_at`) | 201 |
-| GET | `/time-slots` | 1 | List (`?room_id=&date=&available=true`) | 200 |
+| GET | `/time-slots` | 1 | List (`?room_id=&date=&available=true`), paginated | 200 |
 | GET | `/time-slots/{id}` | 1 | Get slot, includes computed `is_bookable` | 200 |
 | PUT | `/time-slots/{id}` | 1 | Update times / status | 200 |
 | DELETE | `/time-slots/{id}` | 1 | Delete (BR-S6) | 204 |

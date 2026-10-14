@@ -29,11 +29,11 @@ back/
     controllers/         # user.py  room.py  time_slot.py  booking.py
     routes/              # user.py  room.py  time_slot.py  booking.py
     dependencies/        # auth.py: get_current_user (JWT), require_role(*roles) -> 403 FORBIDDEN
-    core/                # errors.py (BR-X1), security.py (JWT decoding)
+    core/                # errors.py (BR-X1), security.py (JWT decoding), pagination.py (Page, PageParams, paginate)
   tests/
     conftest.py          # shared fixtures: db session, client
     test_users.py  test_room.py  test_time_slot.py  test_bookings.py  test_bookings_today.py
-    test_game_results.py  test_auth.py
+    test_game_results.py  test_auth.py  test_pagination.py
 ```
 
 Four people work in parallel: each one owns the files of their resource in every folder (`models/room.py`, `routes/room.py`...), so merge conflicts stay rare.
