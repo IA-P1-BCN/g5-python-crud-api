@@ -1,11 +1,13 @@
 import re
 import unicodedata
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import CheckConstraint, Numeric, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from back.app.core.datetimes import as_utc
 from back.app.database import Base
 
 if TYPE_CHECKING:
@@ -101,3 +103,22 @@ class Room(Base):
     time_slots: Mapped[list["TimeSlot"]] = relationship(
         back_populates="room",
     )
+
+    @property
+    def is_active(self) -> bool:
+        """Rooms are archived with ``status=inactive`` (BR-R3)."""
+        return self.status == "active"
+
+    @property
+    def has_upcoming_slots(self) -> bool:
+        """BR-R6: an active room is shown while it has a future slot.
+
+        A slot counts when it is available (free or taken, i.e. not blocked)
+        and has not started yet. A fully booked room therefore still returns
+        ``True`` and stays visible as full.
+        """
+        now = datetime.now(UTC)
+        return any(
+            slot.status == "available" and as_utc(slot.starts_at) > now
+            for slot in self.time_slots
+        )

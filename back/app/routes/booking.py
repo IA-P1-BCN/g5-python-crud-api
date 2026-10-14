@@ -37,7 +37,7 @@ router = APIRouter()
 )
 def create_booking_endpoint(
     booking_in: BookingCreate,
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ):
     return booking_controller.create_booking(db=db, booking_in=booking_in)
 
@@ -58,7 +58,7 @@ def list_bookings_endpoint(
     | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ):
     return booking_controller.list_bookings(
         db=db,
@@ -83,7 +83,7 @@ def list_bookings_endpoint(
     dependencies=[Depends(require_role("staff", "admin"))],
 )
 def today_bookings_endpoint(
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ):
     return booking_controller.list_today_bookings(db=db)
 
@@ -97,7 +97,7 @@ def today_bookings_endpoint(
 )
 def get_booking_endpoint(
     booking_id: int,
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ):
     return booking_controller.get_booking(db=db, booking_id=booking_id)
 
@@ -123,7 +123,7 @@ def get_booking_endpoint(
 def update_booking_endpoint(
     booking_id: int,
     booking_in: BookingUpdate,
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ):
     return booking_controller.update_booking(
         db=db, booking_id=booking_id, booking_in=booking_in
@@ -143,7 +143,7 @@ def update_booking_endpoint(
 )
 def cancel_booking_endpoint(
     booking_id: int,
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ):
     return booking_controller.cancel_booking(db=db, booking_id=booking_id)
 
@@ -160,7 +160,7 @@ def cancel_booking_endpoint(
 )
 def confirm_booking_endpoint(
     booking_id: int,
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ):
     return booking_controller.confirm_booking(db=db, booking_id=booking_id)
 
@@ -184,7 +184,7 @@ def confirm_booking_endpoint(
 )
 def start_booking_endpoint(
     booking_id: int,
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ):
     return booking_controller.start_booking(db=db, booking_id=booking_id)
 
@@ -204,7 +204,7 @@ def start_booking_endpoint(
 )
 def finish_booking_endpoint(
     booking_id: int,
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ):
     return booking_controller.finish_booking(db=db, booking_id=booking_id)
 

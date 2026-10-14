@@ -757,3 +757,127 @@ def test_activate_room_not_found(client):
     activate_res = client.put("/api/v1/rooms/99999/activate")
     assert activate_res.status_code == 404
     assert activate_res.json()["code"] == "NOT_FOUND"
+
+
+# --- Ticket 059: is_active and has_upcoming_slots (BR-R6) ---
+
+
+def test_room_response_exposes_is_active(client):
+    """GET /rooms/{id} returns the derived is_active flag."""
+    room_id = _create_room(client, name="Sala Flag Activa")["id"]
+
+    body = client.get(f"{URL}/{room_id}").json()
+
+    assert body["status"] == "active"
+    assert body["is_active"] is True
+
+
+def test_room_response_is_active_false_when_deactivated(client, db):
+    """A deactivated room reports is_active=False."""
+    room_id = _create_room(client, name="Sala Flag Inactiva")["id"]
+    client.put(f"{URL}/{room_id}/deactivate")
+
+    body = client.get(f"{URL}/{room_id}").json()
+
+    assert body["status"] == "inactive"
+    assert body["is_active"] is False
+
+
+def test_has_upcoming_slots_false_without_slots(client):
+    """BR-R6: a room without slots is not shown to clients."""
+    room_id = _create_room(client, name="Sala Sin Slots")["id"]
+
+    body = client.get(f"{URL}/{room_id}").json()
+
+    assert body["has_upcoming_slots"] is False
+
+
+def test_has_upcoming_slots_false_with_only_past_slots(client, db):
+    """BR-R6: a room whose slots are all in the past is hidden."""
+    from back.app.models import TimeSlot
+
+    room_id = _create_room(client, name="Sala Solo Pasado")["id"]
+    past = datetime.now(UTC) - timedelta(days=1)
+    db.add(
+        TimeSlot(
+            room_id=room_id,
+            starts_at=past,
+            ends_at=past + timedelta(hours=1),
+            status="available",
+        )
+    )
+    db.commit()
+
+    body = client.get(f"{URL}/{room_id}").json()
+
+    assert body["has_upcoming_slots"] is False
+
+
+def test_has_upcoming_slots_true_with_free_future_slot(client, db):
+    """BR-R6: a future free slot keeps the room visible."""
+    from back.app.models import TimeSlot
+
+    room_id = _create_room(client, name="Sala Libre Futuro")["id"]
+    future = datetime.now(UTC) + timedelta(days=1)
+    db.add(
+        TimeSlot(
+            room_id=room_id,
+            starts_at=future,
+            ends_at=future + timedelta(hours=1),
+            status="available",
+        )
+    )
+    db.commit()
+
+    body = client.get(f"{URL}/{room_id}").json()
+
+    assert body["has_upcoming_slots"] is True
+
+
+def test_has_upcoming_slots_true_when_all_future_slots_taken(client, db):
+    """BR-R6: a fully booked room stays visible (shown as full)."""
+    from back.app.models import Booking, TimeSlot, User
+
+    room_id = _create_room(client, name="Sala Llena")["id"]
+    user = User(email="full@example.com", name="Full Client")
+    future = datetime.now(UTC) + timedelta(days=1)
+    slot = TimeSlot(
+        room_id=room_id,
+        starts_at=future,
+        ends_at=future + timedelta(hours=1),
+        status="available",
+    )
+    booking = Booking(
+        user=user,
+        time_slot=slot,
+        players=2,
+        total_price=Decimal("20.00"),
+        status="CONFIRMED",
+    )
+    db.add_all([user, slot, booking])
+    db.commit()
+
+    body = client.get(f"{URL}/{room_id}").json()
+
+    assert body["has_upcoming_slots"] is True
+
+
+def test_has_upcoming_slots_false_with_only_blocked_slots(client, db):
+    """BR-R6: a blocked slot is neither free nor taken, so it does not count."""
+    from back.app.models import TimeSlot
+
+    room_id = _create_room(client, name="Sala Bloqueada")["id"]
+    future = datetime.now(UTC) + timedelta(days=1)
+    db.add(
+        TimeSlot(
+            room_id=room_id,
+            starts_at=future,
+            ends_at=future + timedelta(hours=1),
+            status="blocked",
+        )
+    )
+    db.commit()
+
+    body = client.get(f"{URL}/{room_id}").json()
+
+    assert body["has_upcoming_slots"] is False
