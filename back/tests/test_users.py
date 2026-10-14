@@ -576,26 +576,28 @@ def test_history_requires_authentication(client):
     assert client.get(f"{URL}/me/history").status_code == 401
 
 
-def _make_users(client, n):
+def _make_users(client, headers, n):
     for i in range(n):
-        client.post(URL, json={"email": f"u{i}@x.com", "name": f"U{i}"})
+        client.post(
+            URL, headers=headers, json={"email": f"u{i}@x.com", "name": f"U{i}"}
+        )
 
 
 def test_list_users_default_pagination(client, admin_headers):
-    _make_users(client, 3)
+    _make_users(client, admin_headers, 3)
     body = client.get(URL, headers=admin_headers).json()
     assert body["page"] == 1 and body["size"] == 20 and body["total"] == 4
     assert len(body["items"]) == 4
 
 
 def test_list_users_second_page(client, admin_headers):
-    _make_users(client, 5)
+    _make_users(client, admin_headers, 5)
     body = client.get(f"{URL}?page=2&size=2", headers=admin_headers).json()
     assert body["total"] == 6 and len(body["items"]) == 2
 
 
 def test_list_users_page_beyond_end_is_empty(client, admin_headers):
-    _make_users(client, 2)
+    _make_users(client, admin_headers, 2)
     body = client.get(f"{URL}?page=9", headers=admin_headers).json()
     assert body["items"] == [] and body["total"] == 3
 
