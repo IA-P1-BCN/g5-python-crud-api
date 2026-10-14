@@ -2,6 +2,9 @@
 export const bookingMessages = {
   title: 'Selecciona fecha y hora',
   selectDate: 'Elige un día',
+  selectTime: 'Horarios',
+  loadingSlots: 'Cargando horarios...',
+  noSlotsAvailable: 'No hay horarios disponibles para esta fecha.',
   states: {
     free: 'Disponible',
     taken: 'Ocupado',

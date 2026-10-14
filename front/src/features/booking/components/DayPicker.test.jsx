@@ -13,11 +13,7 @@ describe('DayPicker component', () => {
     const handleSelectDate = vi.fn()
 
     render(
-      <DayPicker
-        selectedDate="2026-06-01"
-        onSelectDate={handleSelectDate}
-        dates={mockDates}
-      />
+      <DayPicker selectedDate="2026-06-01" onSelectDate={handleSelectDate} dates={mockDates} />,
     )
 
     expect(screen.getByText('Lun')).toBeInTheDocument()

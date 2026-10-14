@@ -9,7 +9,7 @@ export function DayPicker({ selectedDate, onSelectDate, dates = [] }) {
             key={dateObj.dateString}
             type="button"
             onClick={() => onSelectDate(dateObj.dateString)}
-            className={`px-4 py-2 rounded-lg border transition-colors ${
+            className={`rounded-lg border px-4 py-2 transition-colors ${
               isSelected
                 ? 'bg-primary text-primary-contrast border-primary'
                 : 'bg-surface text-text-main border-border hover:bg-surface-hover'
