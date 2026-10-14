@@ -2,15 +2,13 @@
 import { http, HttpResponse } from 'msw'
 
 export const bookingHandlers = [
-  http.get('/api/rooms/:roomId/slots', ({ request }) => {
+  http.get('/api/v1/time-slots', ({ request }) => {
     const url = new URL(request.url)
     const date = url.searchParams.get('date') || '2026-06-01'
 
     return HttpResponse.json([
-      { id: 'slot-1', time: '10:00', state: 'past', date },
-      { id: 'slot-2', time: '11:00', state: 'blocked', date },
-      { id: 'slot-3', time: '12:00', state: 'free', date },
-      { id: 'slot-4', time: '13:00', state: 'taken', date },
+      { id: 'slot-1', starts_at: `${date}T10:00:00Z`, is_bookable: false },
+      { id: 'slot-2', starts_at: `${date}T11:00:00Z`, is_bookable: true },
     ])
   }),
 ]

@@ -16,6 +16,6 @@ export async function fetchSlotsForDate({ roomId, date }) {
       hour: '2-digit',
       minute: '2-digit',
     }),
-    state: slot.is_bookable ? 'available' : 'taken', // Ejemplo de mapeo de estado
+    state: slot.is_bookable ? 'free' : 'taken',
   }))
 }

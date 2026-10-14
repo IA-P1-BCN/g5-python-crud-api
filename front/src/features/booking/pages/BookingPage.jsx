@@ -32,13 +32,13 @@ export function BookingPage() {
       <h1 className="text-heading-title text-2xl font-bold">{bookingMessages.title}</h1>
 
       <section className="space-y-2">
-        <h2 className="text-text-main text-lg font-semibold">{bookingMessages.selectDate}</h2>
+        <h2 className="text-text text-lg font-semibold">{bookingMessages.selectDate}</h2>
         <DayPicker selectedDate={activeDate} onSelectDate={setSelectedDate} dates={mockDates} />
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-text-main text-lg font-semibold">Horarios</h2>
-        {isLoading && <p className="text-muted">Cargando horarios...</p>}
+        <h2 className="text-text text-lg font-semibold">{bookingMessages.selectTime}</h2>
+        {isLoading && <p className="text-muted">{bookingMessages.loadingSlots}</p>}
         {isError && <p className="text-error">{bookingMessages.errors.loadFailed}</p>}
         {!isLoading && !isError && (
           <SlotGrid slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} />
