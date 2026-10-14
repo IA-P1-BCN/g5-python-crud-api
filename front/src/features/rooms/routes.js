@@ -1,3 +1,7 @@
-// Routes of the rooms feature: /salas -> RoomsPage, /salas/:slug -> RoomPage. Route objects { path, Component }; composed in app/routes.jsx.
+import RoomsPage from './pages/RoomsPage'
+import RoomPage from './pages/RoomPage'
 
-export const roomsRoutes = []
+export const roomsRoutes = [
+  { path: '/salas', element: <RoomsPage /> },
+  { path: '/salas/:slug', element: <RoomPage /> },
+]

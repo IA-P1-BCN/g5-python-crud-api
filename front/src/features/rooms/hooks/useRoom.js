@@ -1,1 +1,15 @@
-// TanStack Query hook: one room (api + mapper). No JSX.
+import { useQuery } from '@tanstack/react-query'
+import { fetchRoom } from '../api/roomsApi.js'
+import { mapRoom } from '../model/roomMapper.js'
+
+const ONE_MINUTE = 60_000
+
+export function useRoom(slug) {
+  return useQuery({
+    queryKey: ['room', slug],
+    queryFn: () => fetchRoom(slug),
+    select: mapRoom,
+    enabled: Boolean(slug),
+    staleTime: ONE_MINUTE,
+  })
+}
