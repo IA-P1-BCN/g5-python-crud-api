@@ -143,4 +143,5 @@ def test_list_bookings_loads_results_in_one_query(client, db, add_booking):
     finally:
         event.remove(engine, "before_cursor_execute", count)
 
-    assert len(queries) == 1
+    # one COUNT for the total + one SELECT for the page, whatever the row count
+    assert len(queries) == 2
