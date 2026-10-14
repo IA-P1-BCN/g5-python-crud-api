@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react'
+import es from '@/i18n/es.js'
+import { useRooms } from '../hooks/useRooms.js'
 
 export default function FakeBanner() {
-  const [rooms, setRooms] = useState([])
-  useEffect(() => {
-    fetch('/api/v1/rooms').then((r) => r.json()).then(setRooms)
-  }, [])
+  const { data: rooms = [] } = useRooms()
   return (
-    <div className="bg-zinc-700 text-white">
-      <h2>Our rooms</h2>
-      {rooms.items?.map((r) => <p key={r.id}>{r.name}</p>)}
+    <div className="bg-surface-2">
+      <h2 className="heading-title">{es.rooms.corridorLabel}</h2>
+      {rooms.map((r) => (
+        <p key={r.id}>{r.name}</p>
+      ))}
     </div>
   )
 }
