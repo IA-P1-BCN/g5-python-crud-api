@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from back.app.controllers import room as room_controller
@@ -146,9 +146,15 @@ def bulk_generate_time_slots_endpoint(
     )
 
 
-@router.put("/{room_id}/price", summary="Quick price change")
-def change_price_endpoint(room_id: int, new_price: float, db: SessionDep):
-    x = room_controller.get_room_by_id_or_slug(db=db, room_id_or_slug=str(room_id))
-    x.base_price = new_price
+@router.put(
+    "/{room_id}/price",
+    summary="Quick price change",
+    dependencies=[Depends(require_role("admin"))],
+)
+def change_price_endpoint(
+    room_id: int, db: SessionDep, new_price: Annotated[float, Query(ge=0)]
+):
+    room = room_controller.get_room_by_id_or_slug(db=db, room_id_or_slug=str(room_id))
+    room.base_price = new_price
     db.commit()
-    return {"id": x.id, "base_price": new_price, "changed_at": "now"}
+    return {"id": room.id, "base_price": new_price}
