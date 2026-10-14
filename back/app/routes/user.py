@@ -7,10 +7,15 @@ from back.app.controllers import booking as booking_controller
 from back.app.controllers import user as user_controller
 from back.app.core.pagination import Page, PageParams
 from back.app.database import get_db
-from back.app.dependencies.auth import get_current_user
+from back.app.dependencies.auth import get_current_user, require_role
 from back.app.models import User
 from back.app.schemas.booking import BookingDetail
-from back.app.schemas.user import UserCreate, UserResponse, UserUpdate
+from back.app.schemas.user import (
+    UserCreate,
+    UserResponse,
+    UserRoleUpdate,
+    UserUpdate,
+)
 
 router = APIRouter(prefix="", tags=["Users"])
 
@@ -22,11 +27,9 @@ UserDep = Annotated[User, Depends(get_current_user)]
     "",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role("admin"))],
 )
-def create_user_endpoint(
-    user_in: UserCreate,
-    db: SessionDep,
-):
+def create_user_endpoint(user_in: UserCreate, db: SessionDep):
     return user_controller.create_user(db=db, user_in=user_in)
 
 
@@ -40,6 +43,7 @@ def create_user_endpoint(
         200: {"description": "Users retrieved successfully"},
         422: {"description": "Invalid page or size"},
     },
+    dependencies=[Depends(require_role("admin"))],
 )
 def list_users_endpoint(
     db: SessionDep,
@@ -52,9 +56,6 @@ def list_users_endpoint(
     "/me/history",
     response_model=list[BookingDetail],
     summary="My game history",
-    description="My finished games (COMPLETED) with their result, most recent "
-    "first. Declared before /{user_id} so 'me' is not read as an id.",
-    responses={401: {"description": "Not authenticated"}},
 )
 def my_history_endpoint(db: SessionDep, current_user: UserDep):
     return booking_controller.list_user_history(db, current_user.id, current_user)
@@ -64,14 +65,12 @@ def my_history_endpoint(db: SessionDep, current_user: UserDep):
     "/{user_id}/history",
     response_model=list[BookingDetail],
     summary="Game history of a user",
-    description="Finished games of a user. A client can only read their own; "
-    "staff and admin can read any.",
-    responses={
-        401: {"description": "Not authenticated"},
-        403: {"description": "FORBIDDEN: not your history"},
-    },
 )
-def user_history_endpoint(user_id: int, db: SessionDep, current_user: UserDep):
+def user_history_endpoint(
+    user_id: int,
+    db: SessionDep,
+    current_user: UserDep,
+):
     return booking_controller.list_user_history(db, user_id, current_user)
 
 
@@ -79,16 +78,9 @@ def user_history_endpoint(user_id: int, db: SessionDep, current_user: UserDep):
     "/{user_id}",
     response_model=UserResponse,
     summary="Get user profile",
-    responses={
-        401: {"description": "Not authenticated"},
-        404: {"description": "User not found"},
-    },
+    dependencies=[Depends(require_role("admin"))],
 )
-def get_user_endpoint(
-    user_id: int,
-    db: SessionDep,
-    current_user: UserDep,
-):
+def get_user_endpoint(user_id: int, db: SessionDep):
     return user_controller.get_user(db=db, user_id=user_id)
 
 
@@ -96,9 +88,7 @@ def get_user_endpoint(
     "/{user_id}",
     response_model=UserResponse,
     summary="Update user profile",
-    responses={
-        404: {"description": "User not found"},
-    },
+    dependencies=[Depends(require_role("admin"))],
 )
 def update_user_endpoint(
     user_id: int,
@@ -113,18 +103,31 @@ def update_user_endpoint(
 
 
 @router.put(
+    "/{user_id}/role",
+    response_model=UserResponse,
+    summary="Change user role",
+    dependencies=[Depends(require_role("admin"))],
+)
+def update_user_role_endpoint(
+    user_id: int,
+    role_in: UserRoleUpdate,
+    db: SessionDep,
+):
+    return user_controller.update_user_role(
+        db=db,
+        user_id=user_id,
+        role_in=role_in,
+    )
+
+
+@router.put(
     "/{user_id}/deactivate",
     response_model=UserResponse,
     status_code=status.HTTP_200_OK,
     summary="Deactivate user",
-    responses={
-        404: {"description": "User not found"},
-    },
+    dependencies=[Depends(require_role("admin"))],
 )
-def deactivate_user_endpoint(
-    user_id: int,
-    db: SessionDep,
-):
+def deactivate_user_endpoint(user_id: int, db: SessionDep):
     return user_controller.deactivate_user(
         db=db,
         user_id=user_id,

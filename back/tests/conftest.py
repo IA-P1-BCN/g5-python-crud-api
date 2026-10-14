@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-# Default configuration so the app does not fail when importing settings
+# Default configuration so the app does not fail when importing settings.
 os.environ.setdefault("DATABASE_URL", "sqlite://")
 os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
 
@@ -17,6 +17,7 @@ from back.app.config.settings import settings
 from back.app.core import security
 from back.app.database import Base, get_db
 from back.app.main import app
+from back.app.models import User
 
 TEST_KID = "test-ec-key"
 TEST_ISSUER = "https://test.supabase.co/auth/v1"
@@ -86,9 +87,7 @@ def make_token():
             payload["sub"] = subject
 
         if include_exp:
-            payload["exp"] = (
-                expires_at or now + timedelta(minutes=60)
-            )
+            payload["exp"] = expires_at or now + timedelta(minutes=60)
 
         if include_email:
             payload["email"] = email
@@ -150,3 +149,52 @@ def client(db):
         yield TestClient(app)
     finally:
         app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def admin_headers(db, make_token):
+    """Create an admin user and return valid authentication headers."""
+    admin = User(
+        auth_id="test-admin-sub",
+        name="Test Admin",
+        email="admin@example.com",
+        role="admin",
+        is_active=True,
+    )
+    db.add(admin)
+    db.commit()
+
+    token = make_token(
+        subject=admin.auth_id,
+        email=admin.email,
+    )
+
+    return {"Authorization": f"Bearer {token}"}
+
+
+def _headers_for(db, make_token, auth_id, name, email, role):
+    user = User(auth_id=auth_id, name=name, email=email, role=role, is_active=True)
+    db.add(user)
+    db.commit()
+    return user, {"Authorization": f"Bearer {make_token(subject=auth_id, email=email)}"}
+
+
+@pytest.fixture
+def staff_headers(db, make_token):
+    """Create a staff user and return valid authentication headers."""
+    return _headers_for(
+        db, make_token, "test-staff-sub", "Test Staff", "staff@example.com", "staff"
+    )[1]
+
+
+@pytest.fixture
+def client_user(db, make_token):
+    """A regular client user plus its headers: (user, headers)."""
+    return _headers_for(
+        db, make_token, "test-client-sub", "Test Client", "client@example.com", "client"
+    )
+
+
+@pytest.fixture
+def client_headers(client_user):
+    return client_user[1]

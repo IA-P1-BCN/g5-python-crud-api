@@ -919,3 +919,9 @@ def test_list_rooms_status_filter_counts_only_matching(client):
 @pytest.mark.parametrize("qs", ["page=0", "size=0", "size=101", "page=abc"])
 def test_list_rooms_invalid_params_returns_422(client, qs):
     assert client.get(f"{URL}?{qs}").status_code == 422
+
+
+@pytest.fixture(autouse=True)
+def _as_admin(client, admin_headers):
+    """Rooms are admin-only (US05): act as admin unless a test sends its own headers."""
+    client.headers.update(admin_headers)

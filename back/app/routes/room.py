@@ -25,6 +25,7 @@ SessionDep = Annotated[Session, Depends(get_db)]
     response_model=RoomResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a room",
+    dependencies=[Depends(require_role("admin"))],
     responses={409: {"description": "Room name or slug already exists."}},
 )
 def create_room_endpoint(room_in: RoomCreate, db: SessionDep):
@@ -36,6 +37,7 @@ def create_room_endpoint(room_in: RoomCreate, db: SessionDep):
     response_model=RoomResponse,
     status_code=status.HTTP_200_OK,
     summary="Update a room",
+    dependencies=[Depends(require_role("admin"))],
     responses={
         404: {"description": "Room not found."},
         409: {"description": "Room name or slug already exists."},
@@ -50,6 +52,7 @@ def update_room_endpoint(room_id: int, room_in: RoomUpdate, db: SessionDep):
     response_model=RoomResponse,
     status_code=status.HTTP_200_OK,
     summary="Deactivate a room",
+    dependencies=[Depends(require_role("admin"))],
     responses={409: {"description": "Room has future active bookings."}},
 )
 def deactivate_room_endpoint(room_id: int, db: SessionDep):
@@ -92,6 +95,7 @@ def get_room_endpoint(room_id_or_slug: str, db: SessionDep):
     response_model=RoomResponse,
     status_code=status.HTTP_200_OK,
     summary="Activate a room",
+    dependencies=[Depends(require_role("admin"))],
     responses={
         200: {
             "description": "Room successfully activated or already active (idempotent)."

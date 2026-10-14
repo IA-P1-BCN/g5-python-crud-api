@@ -89,7 +89,36 @@ def _ensure_slot_can_receive_booking(db: Session, slot: TimeSlot) -> None:
         )
 
 
-def create_booking(db: Session, booking_in: BookingCreate) -> Booking:
+def _ensure_can_access(booking: Booking, user: User) -> None:
+    """Clients only touch their own bookings; staff and admin touch any (US05)."""
+    if user.role == "client" and booking.user_id != user.id:
+        raise AppError(
+            "You can only access your own bookings",
+            code="FORBIDDEN",
+            status_code=403,
+        )
+
+
+def resolve_user_filter(current_user: User, user_id: int | None) -> int | None:
+    """Clients can only list their own bookings; others may filter freely."""
+    if current_user.role != "client":
+        return user_id
+    if user_id not in (None, current_user.id):
+        raise AppError(
+            "You can only see your own bookings",
+            code="FORBIDDEN",
+            status_code=403,
+        )
+    return current_user.id
+
+
+def create_booking(
+    db: Session, booking_in: BookingCreate, current_user: User
+) -> Booking:
+    if current_user.role == "client" and booking_in.user_id != current_user.id:
+        raise AppError(
+            "You can only book for yourself", code="FORBIDDEN", status_code=403
+        )
     slot = db.get(TimeSlot, booking_in.time_slot_id)
     if slot is None:
         raise AppError("Time slot not found", code="SLOT_NOT_FOUND", status_code=404)
@@ -212,13 +241,17 @@ def list_today_bookings(db: Session) -> list[BookingDetail]:
     return [_to_detail(b) for b in db.scalars(stmt)]
 
 
-def get_booking(db: Session, booking_id: int) -> BookingDetail:
-    return _to_detail(_get_booking_or_404(db, booking_id))
-
-
-def update_booking(db: Session, booking_id: int, booking_in: BookingUpdate) -> Booking:
+def get_booking(db: Session, booking_id: int, current_user: User) -> BookingDetail:
     booking = _get_booking_or_404(db, booking_id)
+    _ensure_can_access(booking, current_user)
+    return _to_detail(booking)
 
+
+def update_booking(
+    db: Session, booking_id: int, booking_in: BookingUpdate, current_user: User
+) -> Booking:
+    booking = _get_booking_or_404(db, booking_id)
+    _ensure_can_access(booking, current_user)
     if booking.status not in MODIFIABLE_STATUSES:
         raise AppError(
             f"Cannot modify a {booking.status} booking",
@@ -268,9 +301,9 @@ def update_booking(db: Session, booking_id: int, booking_in: BookingUpdate) -> B
     return booking
 
 
-def cancel_booking(db: Session, booking_id: int) -> Booking:
+def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
     booking = _get_booking_or_404(db, booking_id)
-
+    _ensure_can_access(booking, current_user)
     ensure_transition(booking.status, "CANCELLED", "cancel")
 
     if _starts_at_utc(booking) - _utcnow() < MIN_NOTICE:

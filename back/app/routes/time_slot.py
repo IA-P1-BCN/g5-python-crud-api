@@ -10,6 +10,7 @@ from back.app.controllers import time_slot as controller
 from back.app.core.errors import AppError
 from back.app.core.pagination import Page, PageParams, paginate
 from back.app.database import get_db
+from back.app.dependencies.auth import require_role
 from back.app.models.booking import ACTIVE_STATUSES, Booking
 from back.app.models.time_slot import TimeSlot
 from back.app.schemas.time_slot import (
@@ -92,6 +93,7 @@ def get_time_slot(slot_id: int, db: SessionDep):
     response_model=TimeSlotResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a time slot",
+    dependencies=[Depends(require_role("admin"))],
     responses={409: {"description": "Room inactive or slot overlap."}},
 )
 def create_time_slot(slot_in: TimeSlotCreate, db: SessionDep):
@@ -102,6 +104,7 @@ def create_time_slot(slot_in: TimeSlotCreate, db: SessionDep):
     "/{slot_id}",
     response_model=TimeSlotResponse,
     summary="Update a time slot",
+    dependencies=[Depends(require_role("admin"))],
     responses={409: {"description": "Active booking or slot overlap."}},
 )
 def update_time_slot(slot_id: int, slot_in: TimeSlotUpdate, db: SessionDep):
@@ -112,6 +115,7 @@ def update_time_slot(slot_id: int, slot_in: TimeSlotUpdate, db: SessionDep):
     "/{slot_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a time slot",
+    dependencies=[Depends(require_role("admin"))],
     responses={409: {"description": "Slot has an active booking."}},
 )
 def delete_time_slot(slot_id: int, db: SessionDep):

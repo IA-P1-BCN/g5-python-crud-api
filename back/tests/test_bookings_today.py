@@ -211,7 +211,9 @@ def test_finish_requires_authentication(client, add_booking):
 
 
 @pytest.mark.parametrize("status", ["IN_PROGRESS", "COMPLETED"])
-def test_list_accepts_game_statuses(client, status):
-    response = client.get("/api/v1/bookings", params={"status": status})
+def test_list_accepts_game_statuses(client, login, status):
+    response = client.get(
+        "/api/v1/bookings", params={"status": status}, headers=login("staff")
+    )
 
     assert response.status_code == 200

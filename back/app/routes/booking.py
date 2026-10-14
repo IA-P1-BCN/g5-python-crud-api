@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 from back.app.controllers import booking as booking_controller
 from back.app.core.pagination import Page, PageParams
 from back.app.database import get_db
-from back.app.dependencies.auth import require_role
+from back.app.dependencies.auth import get_current_user, require_role
+from back.app.models import User
 from back.app.schemas.booking import (
     BookingCreate,
     BookingDetail,
@@ -39,8 +40,11 @@ router = APIRouter()
 def create_booking_endpoint(
     booking_in: BookingCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return booking_controller.create_booking(db=db, booking_in=booking_in)
+    return booking_controller.create_booking(
+        db=db, booking_in=booking_in, current_user=current_user
+    )
 
 
 @router.get(
@@ -63,7 +67,9 @@ def list_bookings_endpoint(
     date_from: date | None = None,
     date_to: date | None = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    user_id = booking_controller.resolve_user_filter(current_user, user_id)
     return booking_controller.list_bookings(
         db=db,
         params=params,
@@ -104,8 +110,11 @@ def today_bookings_endpoint(
 def get_booking_endpoint(
     booking_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return booking_controller.get_booking(db=db, booking_id=booking_id)
+    return booking_controller.get_booking(
+        db=db, booking_id=booking_id, current_user=current_user
+    )
 
 
 @router.put(
@@ -130,9 +139,13 @@ def update_booking_endpoint(
     booking_id: int,
     booking_in: BookingUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return booking_controller.update_booking(
-        db=db, booking_id=booking_id, booking_in=booking_in
+        db=db,
+        booking_id=booking_id,
+        booking_in=booking_in,
+        current_user=current_user,
     )
 
 
@@ -150,14 +163,18 @@ def update_booking_endpoint(
 def cancel_booking_endpoint(
     booking_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return booking_controller.cancel_booking(db=db, booking_id=booking_id)
+    return booking_controller.cancel_booking(
+        db=db, booking_id=booking_id, current_user=current_user
+    )
 
 
 @router.put(
     "/{booking_id}/confirm",
     response_model=BookingRead,
     summary="Confirm a booking",
+    dependencies=[Depends(require_role("staff", "admin"))],
     description="Moves a PENDING booking to CONFIRMED.",
     responses={
         404: {"description": "NOT_FOUND"},

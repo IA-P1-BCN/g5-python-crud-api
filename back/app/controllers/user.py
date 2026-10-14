@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from back.app.core.errors import AppError
 from back.app.core.pagination import PageParams, paginate
 from back.app.models import User
-from back.app.schemas.user import UserCreate, UserUpdate
+from back.app.schemas.user import UserCreate, UserRoleUpdate, UserUpdate
 
 
 def create_user(db: Session, user_in: UserCreate) -> User:
@@ -25,7 +25,7 @@ def create_user(db: Session, user_in: UserCreate) -> User:
         name=user_in.name,
         email=normalized_email,
         phone=user_in.phone,
-        role=user_in.role,
+        role="client",
     )
 
     db.add(user)
@@ -64,6 +64,26 @@ def update_user(db: Session, user_id: int, user_in: UserUpdate) -> User:
 
     user.name = user_in.name
     user.phone = user_in.phone
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+
+def update_user_role(
+    db: Session, user_id: int, role_in: UserRoleUpdate
+) -> User:
+    user = db.get(User, user_id)
+
+    if user is None:
+        raise AppError(
+            message="User not found",
+            code="NOT_FOUND",
+            status_code=404,
+        )
+
+    user.role = role_in.role
 
     db.commit()
     db.refresh(user)

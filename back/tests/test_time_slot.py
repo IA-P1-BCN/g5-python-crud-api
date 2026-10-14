@@ -845,6 +845,7 @@ def test_bulk_generate_time_slots_invalid_time_range(
 
 
 def test_bulk_generate_time_slots_requires_admin(client: TestClient, db: Session):
+    client.headers.pop("Authorization", None)  # sin token: debe dar 401
     response = client.post(
         "/api/v1/rooms/1/time-slots/generate",
         json={
@@ -896,3 +897,9 @@ def test_bulk_generate_time_slots_range_too_long(
 
     assert response.status_code == 422
     assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+@pytest.fixture(autouse=True)
+def _as_admin(client, admin_headers):
+    """Slots are admin-only (US05): act as admin unless a test sends its own headers."""
+    client.headers.update(admin_headers)

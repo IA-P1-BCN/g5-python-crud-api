@@ -743,3 +743,9 @@ def test_list_bookings_filter_by_room(client, seed, db):
 @pytest.mark.parametrize("qs", ["page=0", "size=0", "size=101", "page=abc"])
 def test_list_bookings_invalid_pagination_returns_422(client, seed, qs):
     assert client.get(f"{URL}?{qs}").status_code == 422
+
+
+@pytest.fixture(autouse=True)
+def _as_admin(client, admin_headers):
+    """Bookings are protected (US05): act as admin unless a test sends its own headers."""
+    client.headers.update(admin_headers)

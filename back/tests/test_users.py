@@ -8,9 +8,10 @@ from back.app.models import Booking, GameResult, Room, TimeSlot, User
 URL = "/api/v1/users"
 
 
-def test_create_user_success(client, db):
+def test_create_user_success(client, db, admin_headers):
     response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "alice@example.com",
@@ -29,7 +30,7 @@ def test_create_user_success(client, db):
     assert data["is_active"] is True
     assert data["id"] is not None
 
-    user = db.query(User).one()
+    user = db.query(User).filter_by(email="alice@example.com").one()
 
     assert user.name == "Alice"
     assert user.email == "alice@example.com"
@@ -38,9 +39,10 @@ def test_create_user_success(client, db):
     assert user.is_active is True
 
 
-def test_create_user_duplicate_email_returns_409(client):
+def test_create_user_duplicate_email_returns_409(client, admin_headers):
     first_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "alice@example.com",
@@ -51,6 +53,7 @@ def test_create_user_duplicate_email_returns_409(client):
 
     second_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Another Alice",
             "email": "alice@example.com",
@@ -64,9 +67,10 @@ def test_create_user_duplicate_email_returns_409(client):
     }
 
 
-def test_create_user_email_is_normalized(client, db):
+def test_create_user_email_is_normalized(client, db, admin_headers):
     first_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "Alice@example.com",
@@ -76,11 +80,12 @@ def test_create_user_email_is_normalized(client, db):
     assert first_response.status_code == 201
     assert first_response.json()["email"] == "alice@example.com"
 
-    user = db.query(User).one()
+    user = db.query(User).filter_by(email="alice@example.com").one()
     assert user.email == "alice@example.com"
 
     second_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Another Alice",
             "email": "ALICE@EXAMPLE.COM",
@@ -94,9 +99,10 @@ def test_create_user_email_is_normalized(client, db):
     }
 
 
-def test_create_user_invalid_email_returns_422(client):
+def test_create_user_invalid_email_returns_422(client, admin_headers):
     response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "not-an-email",
@@ -106,9 +112,10 @@ def test_create_user_invalid_email_returns_422(client):
     assert response.status_code == 422
 
 
-def test_create_user_missing_name_returns_422(client):
+def test_create_user_missing_name_returns_422(client, admin_headers):
     response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "email": "alice@example.com",
         },
@@ -117,11 +124,10 @@ def test_create_user_missing_name_returns_422(client):
     assert response.status_code == 422
 
 
-def test_get_user_success(client, db, make_token):
-    auth_id = "google-user-123"
-
+def test_get_user_success(client, admin_headers):
     create_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "alice@example.com",
@@ -132,19 +138,8 @@ def test_get_user_success(client, db, make_token):
     assert create_response.status_code == 201
 
     user_id = create_response.json()["id"]
-    user = db.get(User, user_id)
 
-    assert user is not None
-
-    user.auth_id = auth_id
-    db.commit()
-
-    token = make_token(auth_id)
-
-    response = client.get(
-        f"{URL}/{user_id}",
-        headers={"Authorization": f"Bearer {token}"},
-    )
+    response = client.get(f"{URL}/{user_id}", headers=admin_headers)
 
     assert response.status_code == 200
     assert response.json()["id"] == user_id
@@ -153,9 +148,10 @@ def test_get_user_success(client, db, make_token):
     assert response.json()["phone"] == "+34123456789"
 
 
-def test_get_user_without_token_returns_401(client):
+def test_get_user_without_token_returns_401(client, admin_headers):
     create_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "alice@example.com",
@@ -223,24 +219,10 @@ def test_get_user_invalid_audience_returns_401(client, make_token):
     }
 
 
-def test_get_user_not_found_returns_404(client, db, make_token):
-    auth_id = "google-user-123"
-
-    user = User(
-        auth_id=auth_id,
-        name="Alice",
-        email="alice@example.com",
-        role="client",
-        is_active=True,
-    )
-    db.add(user)
-    db.commit()
-
-    token = make_token(auth_id)
-
+def test_get_user_not_found_returns_404(client, admin_headers):
     response = client.get(
         f"{URL}/999999",
-        headers={"Authorization": f"Bearer {token}"},
+        headers=admin_headers,
     )
 
     assert response.status_code == 404
@@ -250,9 +232,10 @@ def test_get_user_not_found_returns_404(client, db, make_token):
     }
 
 
-def test_update_user_success(client, db):
+def test_update_user_success(client, db, admin_headers):
     create_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "alice@example.com",
@@ -265,6 +248,7 @@ def test_update_user_success(client, db):
 
     response = client.put(
         f"{URL}/{user_id}",
+        headers=admin_headers,
         json={
             "name": "Alice Updated",
             "phone": "+34987654321",
@@ -288,9 +272,10 @@ def test_update_user_success(client, db):
     assert user.email == "alice@example.com"
 
 
-def test_update_user_invalid_data_returns_422(client):
+def test_update_user_invalid_data_returns_422(client, admin_headers):
     create_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "alice@example.com",
@@ -302,6 +287,7 @@ def test_update_user_invalid_data_returns_422(client):
 
     response = client.put(
         f"{URL}/{user_id}",
+        headers=admin_headers,
         json={
             "name": "",
             "phone": "+34987654321",
@@ -311,9 +297,10 @@ def test_update_user_invalid_data_returns_422(client):
     assert response.status_code == 422
 
 
-def test_update_user_rejects_email_change(client):
+def test_update_user_rejects_email_change(client, admin_headers):
     create_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "alice@example.com",
@@ -326,6 +313,7 @@ def test_update_user_rejects_email_change(client):
 
     response = client.put(
         f"{URL}/{user_id}",
+        headers=admin_headers,
         json={
             "name": "Alice Updated",
             "phone": "+34987654321",
@@ -336,17 +324,18 @@ def test_update_user_rejects_email_change(client):
     assert response.status_code == 422
 
 
-def test_list_users_empty(client):
-    response = client.get(URL)
+def test_list_users_empty(client, admin_headers):
+    response = client.get(URL, headers=admin_headers)
 
     assert response.status_code == 200
-    assert response.json()["items"] == []
-    assert response.json()["total"] == 0
+    assert [user["name"] for user in response.json()["items"]] == ["Test Admin"]
+    assert response.json()["total"] == 1
 
 
-def test_list_users(client):
+def test_list_users(client, admin_headers):
     first_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "alice@example.com",
@@ -355,6 +344,7 @@ def test_list_users(client):
 
     second_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Bob",
             "email": "bob@example.com",
@@ -364,22 +354,23 @@ def test_list_users(client):
     assert first_response.status_code == 201
     assert second_response.status_code == 201
 
-    response = client.get(URL)
+    response = client.get(URL, headers=admin_headers)
 
     assert response.status_code == 200
 
     data = response.json()["items"]
 
-    assert len(data) == 2
-    assert data[0]["name"] == "Alice"
-    assert data[0]["email"] == "alice@example.com"
-    assert data[1]["name"] == "Bob"
-    assert data[1]["email"] == "bob@example.com"
+    assert len(data) == 3
+    assert data[1]["name"] == "Alice"
+    assert data[1]["email"] == "alice@example.com"
+    assert data[2]["name"] == "Bob"
+    assert data[2]["email"] == "bob@example.com"
 
 
-def test_list_users_is_ordered_by_id(client):
+def test_list_users_is_ordered_by_id(client, admin_headers):
     first_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "alice@example.com",
@@ -388,6 +379,7 @@ def test_list_users_is_ordered_by_id(client):
 
     second_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Bob",
             "email": "bob@example.com",
@@ -396,6 +388,7 @@ def test_list_users_is_ordered_by_id(client):
 
     third_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Charlie",
             "email": "charlie@example.com",
@@ -406,26 +399,25 @@ def test_list_users_is_ordered_by_id(client):
     assert second_response.status_code == 201
     assert third_response.status_code == 201
 
-    first_id = first_response.json()["id"]
-    second_id = second_response.json()["id"]
-    third_id = third_response.json()["id"]
 
-    response = client.get(URL)
+    response = client.get(URL, headers=admin_headers)
 
     assert response.status_code == 200
 
     data = response.json()["items"]
 
-    assert [user["id"] for user in data] == [
-        first_id,
-        second_id,
-        third_id,
+    assert [user["id"] for user in data] == sorted(user["id"] for user in data)
+    assert [user["name"] for user in data[1:]] == [
+        "Alice",
+        "Bob",
+        "Charlie",
     ]
 
 
-def test_deactivate_user(client, db):
+def test_deactivate_user(client, db, admin_headers):
     create_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "alice@example.com",
@@ -435,7 +427,7 @@ def test_deactivate_user(client, db):
     assert create_response.status_code == 201
     user_id = create_response.json()["id"]
 
-    response = client.put(f"{URL}/{user_id}/deactivate")
+    response = client.put(f"{URL}/{user_id}/deactivate", headers=admin_headers)
 
     assert response.status_code == 200
 
@@ -450,9 +442,10 @@ def test_deactivate_user(client, db):
     assert user.is_active is False
 
 
-def test_deactivate_user_is_idempotent(client, db):
+def test_deactivate_user_is_idempotent(client, db, admin_headers):
     create_response = client.post(
         URL,
+        headers=admin_headers,
         json={
             "name": "Alice",
             "email": "alice@example.com",
@@ -462,8 +455,8 @@ def test_deactivate_user_is_idempotent(client, db):
     assert create_response.status_code == 201
     user_id = create_response.json()["id"]
 
-    first_response = client.put(f"{URL}/{user_id}/deactivate")
-    second_response = client.put(f"{URL}/{user_id}/deactivate")
+    first_response = client.put(f"{URL}/{user_id}/deactivate", headers=admin_headers)
+    second_response = client.put(f"{URL}/{user_id}/deactivate", headers=admin_headers)
 
     assert first_response.status_code == 200
     assert second_response.status_code == 200
@@ -476,8 +469,8 @@ def test_deactivate_user_is_idempotent(client, db):
     assert user.is_active is False
 
 
-def test_deactivate_unknown_user_returns_404(client):
-    response = client.put(f"{URL}/999999/deactivate")
+def test_deactivate_unknown_user_returns_404(client, admin_headers):
+    response = client.put(f"{URL}/999999/deactivate", headers=admin_headers)
 
     assert response.status_code == 404
     assert response.json() == {
