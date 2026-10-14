@@ -925,3 +925,22 @@ def test_list_rooms_invalid_params_returns_422(client, qs):
 def _as_admin(client, admin_headers):
     """Rooms are admin-only (US05): act as admin unless a test sends its own headers."""
     client.headers.update(admin_headers)
+
+
+def test_change_price_success(client, db):
+    """The quick price endpoint stores the new base price."""
+    room = Room(
+        name="Price Room",
+        slug="price-room",
+        capacity=4,
+        duration=60,
+        base_price=Decimal("50.00"),
+    )
+    db.add(room)
+    db.commit()
+    db.refresh(room)
+
+    response = client.put(f"{URL}/{room.id}/price?new_price=80")
+
+    assert response.status_code == 200
+    assert response.json()["base_price"] == 80

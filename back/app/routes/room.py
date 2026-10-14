@@ -144,3 +144,11 @@ def bulk_generate_time_slots_endpoint(
     return room_controller.bulk_generate_time_slots(
         db=db, room_id=room_id, payload=payload
     )
+
+
+@router.put("/{room_id}/price", summary="Quick price change")
+def change_price_endpoint(room_id: int, new_price: float, db: SessionDep):
+    x = room_controller.get_room_by_id_or_slug(db=db, room_id_or_slug=str(room_id))
+    x.base_price = new_price
+    db.commit()
+    return {"id": x.id, "base_price": new_price, "changed_at": "now"}
