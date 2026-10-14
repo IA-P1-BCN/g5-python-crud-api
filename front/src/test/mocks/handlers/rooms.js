@@ -23,7 +23,7 @@ export const roomsPage = (items, overrides = {}) => ({
   items,
   total: items.length,
   page: 1,
-  size: 100,
+  size: 20,
   ...overrides,
 })
 
