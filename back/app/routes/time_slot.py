@@ -11,6 +11,7 @@ from back.app.core.errors import AppError
 from back.app.database import get_db
 from back.app.models.time_slot import TimeSlot
 from back.app.schemas.time_slot import (
+    PublicRoomBoardResponse,
     TimeSlotCreate,
     TimeSlotRead,
     TimeSlotResponse,
@@ -21,12 +22,21 @@ router = APIRouter(prefix="/api/v1/time-slots")
 
 SessionDep = Annotated[Session, Depends(get_db)]
 
+TimeSlotsResponse = list[TimeSlotRead] | PublicRoomBoardResponse
+
 
 @router.get(
     "/",
-    response_model=list[TimeSlotRead],
-    summary="List time slots",
-    responses={200: {"description": "Time slots, optionally filtered."}},
+    response_model=TimeSlotsResponse,
+    summary="List time slots or the public day board",
+    responses={
+        200: {
+            "description": (
+                "Filtered time slots, or the public day board when only "
+                "`date` is given (active rooms with their slots, BR-R6)."
+            )
+        }
+    },
 )
 def list_time_slots(
     db: SessionDep,
@@ -34,6 +44,9 @@ def list_time_slots(
     date: Annotated[date_type | None, Query(description="Filter by day (UTC)")] = None,
     available: Annotated[bool | None, Query(description="Only bookable slots (BR-S5)")] = None,
 ):
+    if room_id is None and available is None and date is not None:
+        return controller.get_day_board(db, date)
+
     stmt = select(TimeSlot).options(selectinload(TimeSlot.bookings))
     if room_id is not None:
         stmt = stmt.where(TimeSlot.room_id == room_id)

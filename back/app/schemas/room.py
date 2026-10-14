@@ -70,6 +70,8 @@ class RoomResponse(RoomBase):
     id: int
     status: str
     slug: str
+    is_active: bool
+    has_upcoming_slots: bool
 
     model_config = ConfigDict(from_attributes=True)
 

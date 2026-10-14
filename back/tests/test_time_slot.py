@@ -549,6 +549,154 @@ def _create_bulk_room(db: Session, *, status: str = "active", **overrides) -> Ro
     return room
 
 
+# --- Ticket 059: computed slot state and public day board ---
+
+
+def _simple_room(db: Session, name: str, slug: str, status: str = "active") -> Room:
+    room = Room(
+        name=name,
+        capacity=4,
+        duration=60,
+        base_price=50.00,
+        slug=slug,
+        status=status,
+    )
+    db.add(room)
+    db.commit()
+    db.refresh(room)
+    return room
+
+
+def test_slot_state_free(client: TestClient, db: Session):
+    _, slots = _room_with_slots(db, [None])
+
+    response = client.get(f"/api/v1/time-slots/{slots[0].id}")
+
+    assert response.status_code == 200
+    assert response.json()["state"] == "free"
+
+
+def test_slot_state_taken(client: TestClient, db: Session):
+    _, slots = _room_with_slots(db, ["CONFIRMED"])
+
+    response = client.get(f"/api/v1/time-slots/{slots[0].id}")
+
+    assert response.status_code == 200
+    assert response.json()["state"] == "taken"
+
+
+def test_slot_state_blocked(client: TestClient, db: Session):
+    _, slots = _room_with_slots(db, [None])
+    slots[0].status = "blocked"
+    db.commit()
+
+    response = client.get(f"/api/v1/time-slots/{slots[0].id}")
+
+    assert response.status_code == 200
+    assert response.json()["state"] == "blocked"
+
+
+def test_slot_state_past(client: TestClient, db: Session):
+    room = _simple_room(db, "Past State Room", "past-state-room")
+    past = datetime.now(UTC) - timedelta(days=1)
+    slot = TimeSlot(
+        room_id=room.id,
+        starts_at=past,
+        ends_at=past + timedelta(hours=1),
+        status="available",
+    )
+    db.add(slot)
+    db.commit()
+    db.refresh(slot)
+
+    response = client.get(f"/api/v1/time-slots/{slot.id}")
+
+    assert response.status_code == 200
+    assert response.json()["state"] == "past"
+
+
+def test_slot_state_list_exposes_state_per_slot(client: TestClient, db: Session):
+    room, _ = _room_with_slots(db, [None, "PENDING", "CANCELLED"])
+
+    response = client.get(f"/api/v1/time-slots/?room_id={room.id}&date=2099-01-01")
+
+    assert response.status_code == 200
+    states = [slot["state"] for slot in response.json()]
+    assert states == ["free", "taken", "free"]
+
+
+def test_past_state_wins_over_blocked(client: TestClient, db: Session):
+    room = _simple_room(db, "Past Blocked Room", "past-blocked-room")
+    past = datetime.now(UTC) - timedelta(days=1)
+    slot = TimeSlot(
+        room_id=room.id,
+        starts_at=past,
+        ends_at=past + timedelta(hours=1),
+        status="blocked",
+    )
+    db.add(slot)
+    db.commit()
+    db.refresh(slot)
+
+    response = client.get(f"/api/v1/time-slots/{slot.id}")
+
+    assert response.json()["state"] == "past"
+
+
+def test_public_day_board_hides_inactive_rooms(client: TestClient, db: Session):
+    day = datetime(2099, 6, 1, 10, tzinfo=UTC)
+    active = _simple_room(db, "Active Board", "active-board")
+    inactive = _simple_room(
+        db, "Inactive Board", "inactive-board", status="inactive"
+    )
+    db.add_all(
+        [
+            TimeSlot(
+                room_id=active.id,
+                starts_at=day,
+                ends_at=day + timedelta(hours=1),
+                status="available",
+            ),
+            TimeSlot(
+                room_id=inactive.id,
+                starts_at=day,
+                ends_at=day + timedelta(hours=1),
+                status="available",
+            ),
+        ]
+    )
+    db.commit()
+
+    response = client.get("/api/v1/time-slots/?date=2099-06-01")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["date"] == "2099-06-01"
+    room_ids = [entry["room"]["id"] for entry in data["rooms"]]
+    assert room_ids == [active.id]
+    assert data["rooms"][0]["room"]["is_active"] is True
+    assert data["rooms"][0]["slots"][0]["state"] == "free"
+
+
+def test_public_day_board_only_includes_that_day(client: TestClient, db: Session):
+    room = _simple_room(db, "Board Day Room", "board-day-room")
+    day = datetime(2099, 6, 2, 10, tzinfo=UTC)
+    db.add(
+        TimeSlot(
+            room_id=room.id,
+            starts_at=day,
+            ends_at=day + timedelta(hours=1),
+            status="available",
+        )
+    )
+    db.commit()
+
+    response = client.get("/api/v1/time-slots/?date=2099-06-03")
+
+    assert response.status_code == 200
+    assert response.json()["rooms"] == []
+
+
 def test_bulk_generate_time_slots_room_not_found(
     client: TestClient, db: Session, login
 ):

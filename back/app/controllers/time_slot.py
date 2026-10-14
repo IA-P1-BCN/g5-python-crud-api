@@ -1,7 +1,8 @@
-from datetime import UTC, datetime
+from collections import defaultdict
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import and_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from back.app.core.errors import AppError
 from back.app.models.booking import ACTIVE_STATUSES, Booking
@@ -140,3 +141,48 @@ def delete_time_slot_controller(slot_id: int, db: Session) -> None:
 
     db.delete(db_slot)
     db.commit()
+
+
+def get_day_board(db: Session, day: date) -> dict:
+    """Public day board: active rooms with their slots for a given day.
+
+    BR-R6: inactive rooms are hidden. Only rooms that have at least one slot
+    on the requested day are included, ordered by room name and slot start.
+    """
+    day_start = datetime(day.year, day.month, day.day, tzinfo=UTC)
+    day_end = day_start + timedelta(days=1)
+
+    rooms = (
+        db.execute(select(Room).where(Room.status == "active").order_by(Room.name))
+        .scalars()
+        .all()
+    )
+
+    slots = (
+        db.execute(
+            select(TimeSlot)
+            .options(selectinload(TimeSlot.bookings))
+            .where(
+                and_(
+                    TimeSlot.starts_at >= day_start,
+                    TimeSlot.starts_at < day_end,
+                )
+            )
+            .order_by(TimeSlot.starts_at)
+        )
+        .scalars()
+        .all()
+    )
+
+    slots_by_room: dict[int, list[TimeSlot]] = defaultdict(list)
+    for slot in slots:
+        slots_by_room[slot.room_id].append(slot)
+
+    return {
+        "date": day,
+        "rooms": [
+            {"room": room, "slots": slots_by_room[room.id]}
+            for room in rooms
+            if slots_by_room[room.id]
+        ],
+    }
