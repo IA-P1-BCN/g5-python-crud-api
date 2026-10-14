@@ -943,4 +943,53 @@ def test_change_price_success(client, db):
     response = client.put(f"{URL}/{room.id}/price?new_price=80")
 
     assert response.status_code == 200
-    assert response.json()["base_price"] == 80
+    assert Decimal(str(response.json()["base_price"])) == Decimal("80")
+
+
+def _room_for_price(db):
+    room = Room(
+        name="Price Room 2",
+        slug="price-room-2",
+        capacity=4,
+        duration=60,
+        base_price=Decimal("50.00"),
+    )
+    db.add(room)
+    db.commit()
+    db.refresh(room)
+    return room
+
+
+def test_change_price_without_token_is_401(client, db):
+    room = _room_for_price(db)
+    client.headers.pop("Authorization", None)
+
+    response = client.put(f"{URL}/{room.id}/price?new_price=80")
+
+    assert response.status_code == 401
+    assert response.json()["code"] == "UNAUTHORIZED"
+
+
+def test_change_price_as_staff_is_403(client, db, staff_headers):
+    room = _room_for_price(db)
+    client.headers.update(staff_headers)
+
+    response = client.put(f"{URL}/{room.id}/price?new_price=80")
+
+    assert response.status_code == 403
+    assert response.json()["code"] == "FORBIDDEN"
+
+
+def test_change_price_negative_is_422(client, db):
+    room = _room_for_price(db)
+
+    response = client.put(f"{URL}/{room.id}/price?new_price=-1")
+
+    assert response.status_code == 422
+
+
+def test_change_price_unknown_room_is_404(client):
+    response = client.put(f"{URL}/999999/price?new_price=80")
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "NOT_FOUND"

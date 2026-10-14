@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
@@ -148,13 +149,20 @@ def bulk_generate_time_slots_endpoint(
 
 @router.put(
     "/{room_id}/price",
+    response_model=RoomResponse,
+    status_code=status.HTTP_200_OK,
     summary="Quick price change",
+    description="Change only the base price of a room (admin only). Same rules as PUT /rooms/{id}.",
     dependencies=[Depends(require_role("admin"))],
+    responses={
+        **ADMIN_ERRORS,
+        404: {"description": "Room not found."},
+        422: {"description": "Invalid price (must be 0 or more)."},
+    },
 )
 def change_price_endpoint(
-    room_id: int, db: SessionDep, new_price: Annotated[float, Query(ge=0)]
+    room_id: int, db: SessionDep, new_price: Annotated[Decimal, Query(ge=0)]
 ):
-    room = room_controller.get_room_by_id_or_slug(db=db, room_id_or_slug=str(room_id))
-    room.base_price = new_price
-    db.commit()
-    return {"id": room.id, "base_price": new_price}
+    return room_controller.update_room(
+        db=db, room_id=room_id, room_in=RoomUpdate(base_price=new_price)
+    )
