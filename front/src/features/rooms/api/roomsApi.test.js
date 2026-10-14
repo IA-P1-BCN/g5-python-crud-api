@@ -1,21 +1,23 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { server } from '@/test/mocks/server.js'
+import { roomsPage } from '@/test/mocks/handlers/rooms.js'
 import { fetchActiveRooms } from './roomsApi.js'
 
 describe('fetchActiveRooms', () => {
-  it('calls GET /api/v1/rooms?status=active and returns the raw list', async () => {
+  it('calls GET /api/v1/rooms?status=active&size=100 and returns the items of the page', async () => {
     let requestedUrl
     server.use(
       http.get('/api/v1/rooms', ({ request }) => {
         requestedUrl = new URL(request.url)
-        return HttpResponse.json([{ id: 1, slug: 'faro' }])
+        return HttpResponse.json(roomsPage([{ id: 1, slug: 'faro' }]))
       }),
     )
 
     const rooms = await fetchActiveRooms()
 
     expect(requestedUrl.searchParams.get('status')).toBe('active')
+    expect(requestedUrl.searchParams.get('size')).toBe('100')
     expect(rooms).toEqual([{ id: 1, slug: 'faro' }])
   })
 

@@ -18,4 +18,13 @@ export const roomDto = (overrides = {}) => ({
   ...overrides,
 })
 
+// GET /rooms is paginated: { items, total, page, size } (API_CONTRACT.md, Pagination).
+export const roomsPage = (items, overrides = {}) => ({
+  items,
+  total: items.length,
+  page: 1,
+  size: 100,
+  ...overrides,
+})
+
 export default []

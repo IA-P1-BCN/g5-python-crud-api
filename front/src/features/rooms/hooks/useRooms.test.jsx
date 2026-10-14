@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { server } from '@/test/mocks/server.js'
-import { roomDto } from '@/test/mocks/handlers/rooms.js'
+import { roomDto, roomsPage } from '@/test/mocks/handlers/rooms.js'
 import { useRooms } from './useRooms.js'
 
 function createWrapper() {
@@ -13,8 +13,13 @@ function createWrapper() {
   }
 }
 
+// A list is sent as the paginated envelope; anything else (an error body) as is.
 const respondWith = (body, status = 200) =>
-  server.use(http.get('/api/v1/rooms', () => HttpResponse.json(body, { status })))
+  server.use(
+    http.get('/api/v1/rooms', () =>
+      HttpResponse.json(Array.isArray(body) ? roomsPage(body) : body, { status }),
+    ),
+  )
 
 describe('useRooms', () => {
   it('is pending while the request is in flight', () => {

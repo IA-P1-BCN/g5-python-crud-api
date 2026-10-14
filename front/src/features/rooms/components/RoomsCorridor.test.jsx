@@ -5,7 +5,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import es from '@/i18n/es.js'
 import { server } from '@/test/mocks/server.js'
-import { roomDto } from '@/test/mocks/handlers/rooms.js'
+import { roomDto, roomsPage } from '@/test/mocks/handlers/rooms.js'
 import { DEFAULT_THEME, ROOM_THEMES } from '../model/roomThemes.js'
 import RoomsCorridor from './RoomsCorridor.jsx'
 
@@ -29,8 +29,13 @@ vi.mock('@/features/corridor', async () => {
 
 const seenRooms = new Set()
 
+// A list is sent as the paginated envelope; anything else (an error body) as is.
 const respondWith = (body, status = 200) =>
-  server.use(http.get('/api/v1/rooms', () => HttpResponse.json(body, { status })))
+  server.use(
+    http.get('/api/v1/rooms', () =>
+      HttpResponse.json(Array.isArray(body) ? roomsPage(body) : body, { status }),
+    ),
+  )
 
 let client
 
