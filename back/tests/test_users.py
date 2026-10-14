@@ -572,6 +572,27 @@ def test_staff_can_read_any_history(client, db, make_token):
     assert len(r.json()) == 1
 
 
+def test_admin_can_read_any_history(client, db, make_token):
+    alice, _, _, (s1, _) = _history_setup(db, make_token)
+    admin = User(
+        name="Admin",
+        email="admin-history@example.com",
+        auth_id="admin-history-sub",
+        role="admin",
+    )
+    db.add(admin)
+    db.commit()
+    _booking(db, alice, s1)
+
+    response = client.get(
+        f"{URL}/{alice.id}/history",
+        headers=_auth(make_token, admin),
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+
+
 def test_history_requires_authentication(client):
     assert client.get(f"{URL}/me/history").status_code == 401
 
