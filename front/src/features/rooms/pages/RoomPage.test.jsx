@@ -1,66 +1,67 @@
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { http, HttpResponse } from 'msw'
-import { setupServer } from 'msw/node'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import RoomPage from './RoomPage'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { describe, expect, it } from 'vitest'
+import es from '@/i18n/es.js'
+import { roomDto } from '@/test/mocks/handlers/rooms.js'
+import { server } from '@/test/mocks/server.js'
+import RoomPage from './RoomPage.jsx'
 
-const server = setupServer(
-  http.get('/api/v1/rooms/sala-alfa', () => {
-    return HttpResponse.json({
-      id: '1',
-      slug: 'sala-alfa',
-      title: 'Alfa Detalle',
-      is_active: true,
-      has_upcoming_slots: true,
-    })
-  }),
-  http.get('/api/v1/rooms/sala-inactiva', () => {
-    return HttpResponse.json({
-      id: '3',
-      slug: 'sala-inactiva',
-      title: 'Inactiva',
-      is_active: false,
-      has_upcoming_slots: true,
-    })
-  })
-)
+const respondWithRoom = (slug, body, status = 200) =>
+  server.use(http.get(`/api/v1/rooms/${slug}`, () => HttpResponse.json(body, { status })))
 
-beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
-afterAll(() => server.close())
-
-const renderWithRouter = (initialRoute) => {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })
+function renderPage(initialRoute) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[initialRoute]}>
         <Routes>
+          <Route path="/salas" element={<p>{es.rooms.corridorLabel}</p>} />
           <Route path="/salas/:slug" element={<RoomPage />} />
         </Routes>
       </MemoryRouter>
-    </QueryClientProvider>
+    </QueryClientProvider>,
   )
 }
 
 describe('RoomPage', () => {
-  test('muestra los detalles de una sala válida y activa', async () => {
-    renderWithRouter('/salas/sala-alfa')
+  it('shows the details of an active room', async () => {
+    respondWithRoom('faro', roomDto({ slug: 'faro', name: 'Faro 1923' }))
+    renderPage('/salas/faro')
 
-    expect(await screen.findByText('Alfa Detalle')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Faro 1923' })).toBeInTheDocument()
   })
 
-  test('muestra "sala no encontrada" para una sala desconocida o inactiva', async () => {
-    renderWithRouter('/salas/sala-inactiva')
+  it('shows "not found" for an inactive room (BR-R4)', async () => {
+    respondWithRoom('lab', roomDto({ slug: 'lab', name: 'Laboratorio Zero', status: 'inactive' }))
+    renderPage('/salas/lab')
 
-    expect(await screen.findByText(/sala no encontrada/i)).toBeInTheDocument()
+    expect(await screen.findByText(es.rooms.notFound)).toBeInTheDocument()
   })
 
-  test('muestra "sala no encontrada" ante un error 404', async () => {
-    renderWithRouter('/salas/slug-inexistente')
+  it('shows "not found" for a 404 (unknown slug)', async () => {
+    respondWithRoom('unknown', { code: 'NOT_FOUND' }, 404)
+    renderPage('/salas/unknown')
 
-    expect(await screen.findByText(/sala no encontrada/i)).toBeInTheDocument()
+    expect(await screen.findByText(es.rooms.notFound)).toBeInTheDocument()
+  })
+
+  it('shows an error, not "not found", when the API fails with a non-404', async () => {
+    respondWithRoom('faro', { code: 'INTERNAL_ERROR' }, 500)
+    renderPage('/salas/faro')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(es.rooms.error)
+    expect(screen.queryByText(es.rooms.notFound)).not.toBeInTheDocument()
+  })
+
+  it('links back to the corridor', async () => {
+    respondWithRoom('faro', roomDto({ slug: 'faro', name: 'Faro 1923' }))
+    renderPage('/salas/faro')
+
+    await userEvent.click(await screen.findByRole('button', { name: es.rooms.backToCorridor }))
+
+    expect(screen.getByText(es.rooms.corridorLabel)).toBeInTheDocument()
   })
 })

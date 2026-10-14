@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw'
+// MSW handlers for the rooms endpoints (see docs/API_CONTRACT.md). One file per feature: no conflicts.
 
 export const roomDto = (overrides = {}) => ({
   id: 1,
@@ -18,6 +18,7 @@ export const roomDto = (overrides = {}) => ({
   ...overrides,
 })
 
+// GET /rooms is paginated: { items, total, page, size } (API_CONTRACT.md, Pagination).
 export const roomsPage = (items, overrides = {}) => ({
   items,
   total: items.length,
@@ -27,45 +28,3 @@ export const roomsPage = (items, overrides = {}) => ({
 })
 
 export default []
-
-const roomsFixture = [
-  {
-    id: '1',
-    slug: 'sala-alfa',
-    title: 'Alfa',
-    subtitle: 'Subtítulo Alfa',
-    description: 'Descripción Alfa',
-    poster_url: 'http://example.com/poster-alfa.jpg',
-    is_active: true,
-    has_upcoming_slots: true,
-    is_full: false,
-  },
-  {
-    id: '2',
-    slug: 'sala-beta',
-    title: 'Beta',
-    subtitle: 'Subtítulo Beta',
-    description: 'Descripción Beta',
-    poster_url: 'http://example.com/poster-beta.jpg',
-    is_active: true,
-    has_upcoming_slots: true,
-    is_full: true,
-  },
-  {
-    id: '3',
-    slug: 'sala-inactiva',
-    title: 'Inactiva',
-    is_active: false,
-    has_upcoming_slots: true,
-    is_full: false,
-  },
-]
-
-export const roomsHandlers = [
-  http.get('/api/v1/rooms', () => HttpResponse.json(roomsPage(roomsFixture))),
-  http.get('/api/v1/rooms/:slug', ({ params }) => {
-    const room = roomsFixture.find((r) => r.slug === params.slug)
-    if (!room) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json(room)
-  }),
-]

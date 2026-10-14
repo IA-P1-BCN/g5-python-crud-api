@@ -25,6 +25,10 @@ describe('each feature owns its routes', () => {
   ])('%s exports a routes array', (_name, routes) => {
     expect(Array.isArray(routes)).toBe(true)
   })
+
+  it('rooms owns /salas and /salas/:slug', () => {
+    expect(roomsRoutes.map((route) => route.path)).toEqual(['/salas', '/salas/:slug'])
+  })
 })
 
 it('app routes still render the home page', () => {

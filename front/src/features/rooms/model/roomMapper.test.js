@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { toRoom } from './roomMapper.js'
-import { mapRoom, mapRoomsList } from './roomMapper'
 
 const dto = {
   id: 3,
@@ -55,58 +54,5 @@ describe('toRoom', () => {
 
   it('hasUpcomingSlots is false when the backend says false', () => {
     expect(toRoom({ ...dto, has_upcoming_slots: false }).hasUpcomingSlots).toBe(false)
-  })
-})
-
-describe('roomMapper', () => {
-  describe('mapRoom', () => {
-    test('mapea correctamente un objeto crudo del backend', () => {
-      const raw = {
-        id: '1',
-        slug: 'sala-alfa',
-        title: 'Alfa',
-        subtitle: 'Subtítulo Alfa',
-        description: 'Descripción',
-        poster_url: 'http://example.com/poster.jpg',
-        is_active: true,
-        has_upcoming_slots: true,
-        is_full: false,
-      }
-
-      const result = mapRoom(raw)
-
-      expect(result).toEqual({
-        id: '1',
-        slug: 'sala-alfa',
-        title: 'Alfa',
-        subtitle: 'Subtítulo Alfa',
-        description: 'Descripción',
-        posterUrl: 'http://example.com/poster.jpg',
-        isActive: true,
-        hasUpcomingSlots: true,
-        isFull: false,
-      })
-    })
-  })
-
-  describe('mapRoomsList', () => {
-    test('filtra las salas que no están activas', () => {
-      const rawRooms = [
-        { id: '1', slug: 'alfa', title: 'Alfa', is_active: true, has_upcoming_slots: true },
-        { id: '2', slug: 'inactiva', title: 'Inactiva', is_active: false, has_upcoming_slots: true },
-        { id: '3', slug: 'beta', title: 'Beta', is_active: true, has_upcoming_slots: false },
-      ]
-
-      const result = mapRoomsList(rawRooms)
-
-      expect(result).toHaveLength(2)
-      expect(result.map(r => r.slug)).toEqual(['alfa', 'beta'])
-    })
-
-    test('retorna un array vacío si la entrada no es válida', () => {
-      expect(mapRoomsList(null)).toEqual([])
-      expect(mapRoomsList(undefined)).toEqual([])
-      expect(mapRoomsList({})).toEqual([])
-    })
   })
 })

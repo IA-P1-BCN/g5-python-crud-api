@@ -1,44 +1,48 @@
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useRoom } from '../hooks/useRoom.js'
-import Skeleton from '@/shared/ui/Skeleton'
+import Alert from '@/shared/ui/Alert.jsx'
+import Button from '@/shared/ui/Button.jsx'
+import Spinner from '@/shared/ui/Spinner.jsx'
 import es from '@/i18n/es.js'
+
+const isNotFound = (error) => error?.response?.status === 404
 
 export default function RoomPage() {
   const { slug } = useParams()
-  const { data: room, isPending, isError } = useRoom(slug)
+  const navigate = useNavigate()
+  const { data: room, isPending, error } = useRoom(slug)
 
   if (isPending)
     return (
-      <div className="p-6" role="status" aria-label={es.rooms.loading}>
-        <Skeleton className="h-64 w-full rounded-lg" />
-        <span className="sr-only">{es.rooms.loading}</span>
+      <div className="p-6">
+        <Spinner label={es.rooms.loading} />
       </div>
     )
 
-  if (isError || !room || !room.isActive) {
+  if (isNotFound(error) || (!error && (!room || !room.isActive)))
     return (
       <div className="p-6">
         <p role="alert">{es.rooms.notFound}</p>
       </div>
     )
-  }
+
+  if (error)
+    return (
+      <div className="p-6">
+        <Alert tone="error">{es.rooms.error}</Alert>
+      </div>
+    )
 
   return (
-    <main className="p-6 max-w-3xl mx-auto">
-      <h1 className="heading-hero font-display text-text mb-2">{room.title}</h1>
-      {room.subtitle && (
-        <p className="text-muted text-sm mb-4">{room.subtitle}</p>
-      )}
-      {room.description && (
-        <p className="text-text mb-6">{room.description}</p>
-      )}
-      {room.posterUrl && (
-        <img
-          src={room.posterUrl}
-          alt={room.title}
-          className="rounded-md w-full h-64 object-cover"
-        />
-      )}
+    <main className="mx-auto max-w-3xl p-6">
+      <h1 className="heading-hero text-text mb-2">{room.name}</h1>
+      {room.genre && <p className="text-muted mb-4">{room.genre}</p>}
+      {room.hook && <p className="text-text mb-4">{room.hook}</p>}
+      {room.story && <p className="text-text mb-6">{room.story}</p>}
+      {room.audience && <p className="text-muted mb-6">{room.audience}</p>}
+      <Button variant="secondary" onClick={() => navigate('/salas')}>
+        {es.rooms.backToCorridor}
+      </Button>
     </main>
   )
 }

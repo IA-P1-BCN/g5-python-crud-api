@@ -1,56 +1,68 @@
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
-import { http, HttpResponse } from 'msw'
-import { setupServer } from 'msw/node'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import RoomsPage from './RoomsPage'
-import { roomsHandlers } from '@/test/mocks/handlers/rooms'
+import { render, screen } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
+import { MemoryRouter } from 'react-router-dom'
+import { describe, expect, it } from 'vitest'
+import es from '@/i18n/es.js'
+import { roomDto, roomsPage } from '@/test/mocks/handlers/rooms.js'
+import { server } from '@/test/mocks/server.js'
+import RoomsPage from './RoomsPage.jsx'
 
-const server = setupServer(...roomsHandlers)
+const respondWithRooms = (body, status = 200) =>
+  server.use(http.get('/api/v1/rooms', () => HttpResponse.json(body, { status })))
 
-beforeAll(() => server.listen())
-afterEach(() => {
-  server.resetHandlers()
-})
-afterAll(() => server.close())
-
-const renderWithProviders = (ui) => {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })
+function renderPage() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter>{ui}</MemoryRouter>
-    </QueryClientProvider>
+    <QueryClientProvider client={client}>
+      <MemoryRouter>
+        <RoomsPage />
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 
 describe('RoomsPage', () => {
-  test('muestra estado de carga inicialmente', () => {
-    renderWithProviders(<RoomsPage />)
-    expect(screen.getByRole('status') || screen.getByText(/cargando/i)).toBeInTheDocument()
+  it('shows a loading status while the rooms are fetched', () => {
+    respondWithRooms(roomsPage([roomDto()]))
+    renderPage()
+
+    expect(screen.getByRole('status', { name: es.rooms.loading })).toBeInTheDocument()
   })
 
-  test('lista las salas activas y muestra el aviso de sala completa', async () => {
-    renderWithProviders(<RoomsPage />)
-
-    expect(await screen.findByText('Alfa')).toBeInTheDocument()
-    expect(screen.getByText('Beta')).toBeInTheDocument()
-    
-    expect(screen.queryByText('Inactiva')).not.toBeInTheDocument()
-
-    expect(screen.getByText(/completa/i)).toBeInTheDocument()
-  })
-
-  test('muestra estado de error cuando falla la API', async () => {
-    server.use(
-      http.get('/api/v1/rooms', () => {
-        return new HttpResponse(null, { status: 500 })
-      })
+  it('lists the rooms visible to clients (BR-R4, BR-R6)', async () => {
+    respondWithRooms(
+      roomsPage([
+        roomDto({ id: 1, slug: 'faro', name: 'Faro 1923' }),
+        roomDto({ id: 2, slug: 'lab', name: 'Laboratorio Zero', status: 'inactive' }),
+        roomDto({ id: 3, slug: 'nueva', name: 'Sala Nueva', has_upcoming_slots: false }),
+      ]),
     )
+    renderPage()
 
-    renderWithProviders(<RoomsPage />)
+    expect(await screen.findByText('Faro 1923')).toBeInTheDocument()
+    expect(screen.queryByText('Laboratorio Zero')).not.toBeInTheDocument()
+    expect(screen.queryByText('Sala Nueva')).not.toBeInTheDocument()
+  })
 
-    expect(await screen.findByRole('alert')).toBeInTheDocument()
+  it('links each room to its detail page', async () => {
+    respondWithRooms(roomsPage([roomDto({ id: 1, slug: 'faro', name: 'Faro 1923' })]))
+    renderPage()
+
+    expect(await screen.findByRole('button', { name: es.rooms.viewDetails })).toBeInTheDocument()
+  })
+
+  it('shows an empty state when no room is visible', async () => {
+    respondWithRooms(roomsPage([]))
+    renderPage()
+
+    expect(await screen.findByText(es.rooms.empty)).toBeInTheDocument()
+  })
+
+  it('shows an error when the API fails', async () => {
+    respondWithRooms({ code: 'INTERNAL_ERROR' }, 500)
+    renderPage()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(es.rooms.error)
   })
 })
