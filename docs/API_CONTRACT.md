@@ -48,7 +48,7 @@ Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphe
 | Method | Path | Sprint | Description | Success |
 |--------|------|:------:|-------------|---------|
 | POST | `/time-slots` | 1 | Create slot (`room_id`, `starts_at`, `ends_at`) | 201 |
-| GET | `/time-slots` | 1 | List (`?room_id=&date=&available=true`), paginated | 200 |
+| GET | `/time-slots` | 1 | List (`?room_id=&date=&available=true`), paginated. With only `date`, returns the public day board (active rooms with their slots, BR-R6), not paginated | 200 |
 | GET | `/time-slots/{id}` | 1 | Get slot, includes computed `is_bookable` | 200 |
 | PUT | `/time-slots/{id}` | 1 | Update times / status | 200 |
 | DELETE | `/time-slots/{id}` | 1 | Delete (BR-S6) | 204 |
@@ -102,4 +102,4 @@ The staff/admin endpoints above answer 401 `UNAUTHORIZED` without a valid token 
 - `page` starts at 1 (default 1). `size` is 1 to 100 (default 20). Anything else returns 422.
 - `total` is the number of rows matching the filters, not the size of the page. A page past the end returns `items: []`.
 - Lists are always ordered (users, rooms, bookings by `id`; time slots by `starts_at`), so a row never shows on two pages.
-- These lists stay plain arrays: `GET /bookings/today` (staff planning) and the game history (`GET /users/me/history`, `GET /users/{id}/history`).
+- These responses are not paginated: `GET /bookings/today` (staff planning, plain array), the game history (`GET /users/me/history`, `GET /users/{id}/history`, plain arrays) and the public day board of `GET /time-slots?date=...` (its own shape).

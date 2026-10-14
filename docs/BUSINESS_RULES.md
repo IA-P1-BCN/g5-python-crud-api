@@ -95,7 +95,7 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 ### Lists and reporting (E5)
 | ID | Rule |
 |----|------|
-| BR-L1 | `GET` lists of users, rooms, bookings and time slots support `page` (>= 1, default 1) and `size` (1-100, default 20); otherwise 422. `/bookings/today` and the history endpoints stay plain arrays |
+| BR-L1 | `GET` lists of users, rooms, bookings and time slots support `page` (>= 1, default 1) and `size` (1-100, default 20); otherwise 422. `/bookings/today` and the history endpoints stay plain arrays, and the public day board (`GET /time-slots?date=` alone) is not paginated |
 | BR-L2 | Bookings filter by `user_id`, `status`, `room_id`, `date_from`, `date_to`. Slots by `room_id`, `date`, `available` |
 | BR-L3 | Admin exports bookings to CSV with the same filters |
 | BR-L4 | Statistics: bookings per room, occupancy %, revenue per period |
