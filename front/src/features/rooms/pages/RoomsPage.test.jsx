@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { beforeEach, describe, expect, it } from 'vitest'
 import es from '@/i18n/es.js'
 import { roomDto, roomsPage } from '@/test/mocks/handlers/rooms.js'
 import { server } from '@/test/mocks/server.js'
+import { useGateStore } from '../model/gate.store.js'
 import RoomsPage from './RoomsPage.jsx'
 
 const respondWithRooms = (body, status = 200) =>
@@ -15,12 +17,17 @@ function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <RoomsPage />
+      <MemoryRouter initialEntries={['/salas']}>
+        <Routes>
+          <Route path="/salas" element={<RoomsPage />} />
+          <Route path="/salas/:slug" element={<p>room detail</p>} />
+        </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   )
 }
+
+beforeEach(() => useGateStore.getState().reset())
 
 describe('RoomsPage', () => {
   it('shows a loading status while the rooms are fetched', () => {
@@ -64,5 +71,15 @@ describe('RoomsPage', () => {
     renderPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(es.rooms.error)
+  })
+})
+
+describe('RoomsPage, entering a room', () => {
+  it('starts the gate with the chosen room (GateLayer does the rest)', async () => {
+    respondWithRooms(roomsPage([roomDto({ id: 1, slug: 'faro', name: 'Faro 1923' })]))
+    renderPage()
+    await userEvent.click(await screen.findByRole('button', { name: es.rooms.viewDetails }))
+
+    expect(useGateStore.getState()).toMatchObject({ room: { slug: 'faro' }, phase: 'cover' })
   })
 })
