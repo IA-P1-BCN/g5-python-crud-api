@@ -48,6 +48,10 @@ def get_user(db: Session, user_id: int) -> User:
     return user
 
 
+def get_my_profile(current_user: User) -> User:
+    return current_user
+
+
 def list_users(db: Session, params: PageParams) -> dict:
     return paginate(db, select(User).order_by(User.id), params)
 
@@ -71,9 +75,7 @@ def update_user(db: Session, user_id: int, user_in: UserUpdate) -> User:
     return user
 
 
-def update_user_role(
-    db: Session, user_id: int, role_in: UserRoleUpdate
-) -> User:
+def update_user_role(db: Session, user_id: int, role_in: UserRoleUpdate) -> User:
     user = db.get(User, user_id)
 
     if user is None:
