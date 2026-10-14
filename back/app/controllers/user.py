@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from back.app.core.errors import AppError
+from back.app.core.pagination import PageParams, paginate
 from back.app.models import User
 from back.app.schemas.user import UserCreate, UserUpdate
 
@@ -47,8 +48,8 @@ def get_user(db: Session, user_id: int) -> User:
     return user
 
 
-def list_users(db: Session) -> list[User]:
-    return list(db.scalars(select(User).order_by(User.id)).all())
+def list_users(db: Session, params: PageParams) -> dict:
+    return paginate(db, select(User).order_by(User.id), params)
 
 
 def update_user(db: Session, user_id: int, user_in: UserUpdate) -> User:

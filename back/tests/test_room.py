@@ -1,6 +1,8 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
+import pytest
+
 from back.app.models import Room
 
 URL = "/api/v1/rooms"
@@ -190,7 +192,7 @@ def test_list_rooms_all(client, db):
 
     response = client.get(URL)
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     assert len(data) >= 2
 
 
@@ -217,7 +219,7 @@ def test_list_rooms_filter_status(client, db):
 
     response = client.get(f"{URL}?status=active")
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     assert all(r["status"] == "active" for r in data)
 
 
@@ -309,7 +311,7 @@ def test_ac_02_crud_catalog_fields(client):
     assert create.json()["slug"] == "el-faro"
 
     listing = client.get(URL)
-    assert any(r["slug"] == "el-faro" for r in listing.json())
+    assert any(r["slug"] == "el-faro" for r in listing.json()["items"])
 
     by_slug = client.get(f"{URL}/el-faro")
     assert by_slug.status_code == 200
@@ -413,7 +415,7 @@ def test_create_room_numeric_name_gets_lettered_slug(client):
 
     listing = client.get(URL)
     assert listing.status_code == 200
-    assert any(r["slug"] == "sala-1923" for r in listing.json())
+    assert any(r["slug"] == "sala-1923" for r in listing.json()["items"])
 
 
 def test_create_room_rejects_digits_only_slug(client):
@@ -437,7 +439,7 @@ def test_list_rooms_survives_legacy_digits_only_slug(client, db):
 
     listing = client.get(URL)
     assert listing.status_code == 200
-    assert any(r["slug"] == "1923" for r in listing.json())
+    assert any(r["slug"] == "1923" for r in listing.json()["items"])
 
 
 def test_create_room_requires_catalog_fields(client):
@@ -616,7 +618,7 @@ def test_criterion_2_crud_accepts_and_returns_catalog_fields(client):
     # 4. List rooms
     list_res = client.get("/api/v1/rooms")
     assert list_res.status_code == 200
-    rooms = list_res.json()
+    rooms = list_res.json()["items"]
     assert any(r["id"] == room_id and r["genre"] == "Ciencia Ficción" for r in rooms)
 
 
@@ -881,3 +883,39 @@ def test_has_upcoming_slots_false_with_only_blocked_slots(client, db):
     body = client.get(f"{URL}/{room_id}").json()
 
     assert body["has_upcoming_slots"] is False
+
+
+def test_list_rooms_default_pagination(client):
+    for i in range(3):
+        _create_room(client, name=f"Sala {i}")
+
+    body = client.get(URL).json()
+
+    assert body["page"] == 1 and body["size"] == 20 and body["total"] == 3
+    assert len(body["items"]) == 3
+
+
+def test_list_rooms_second_page(client):
+    for i in range(5):
+        _create_room(client, name=f"Sala {i}")
+
+    body = client.get(f"{URL}?page=2&size=2").json()
+
+    assert body["total"] == 5
+    assert len(body["items"]) == 2
+
+
+def test_list_rooms_status_filter_counts_only_matching(client):
+    for i in range(3):
+        room = _create_room(client, name=f"Sala {i}")
+    client.put(f"{URL}/{room['id']}/deactivate")
+
+    body = client.get(f"{URL}?status=active&size=1").json()
+
+    assert body["total"] == 2
+    assert len(body["items"]) == 1
+
+
+@pytest.mark.parametrize("qs", ["page=0", "size=0", "size=101", "page=abc"])
+def test_list_rooms_invalid_params_returns_422(client, qs):
+    assert client.get(f"{URL}?{qs}").status_code == 422

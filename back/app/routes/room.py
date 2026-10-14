@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from back.app.controllers import room as room_controller
+from back.app.core.pagination import Page, PageParams
 from back.app.database import get_db
 from back.app.dependencies.auth import require_role
 from back.app.schemas.room import (
@@ -57,12 +58,19 @@ def deactivate_room_endpoint(room_id: int, db: SessionDep):
 
 @router.get(
     "",
-    response_model=list[RoomResponse],
+    response_model=Page[RoomResponse],
     status_code=status.HTTP_200_OK,
     summary="List rooms",
+    description="Paginated list of rooms: page (default 1) and size (default 20, max 100). "
+    "Optional filter: status.",
+    responses={422: {"description": "Invalid page or size"}},
 )
-def list_rooms_endpoint(db: SessionDep, status: str | None = None):
-    return room_controller.list_rooms(db=db, status=status)
+def list_rooms_endpoint(
+    db: SessionDep,
+    params: Annotated[PageParams, Depends()],
+    status: str | None = None,
+):
+    return room_controller.list_rooms(db=db, params=params, status=status)
 
 
 @router.get(

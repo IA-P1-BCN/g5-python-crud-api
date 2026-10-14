@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from back.app.core.errors import AppError
+from back.app.core.pagination import PageParams, paginate
 from back.app.models import Booking, Room, TimeSlot
 from back.app.models.room import generate_slug
 from back.app.schemas.room import (
@@ -204,11 +205,11 @@ def deactivate_room(db: Session, room_id: int) -> Room:
     return room
 
 
-def list_rooms(db: Session, status: str | None = None) -> list[Room]:
-    stmt = select(Room)
+def list_rooms(db: Session, params: PageParams, status: str | None = None) -> dict:
+    stmt = select(Room).order_by(Room.id)
     if status:
         stmt = stmt.where(Room.status == status)
-    return list(db.scalars(stmt).all())
+    return paginate(db, stmt, params)
 
 
 def get_room_by_id_or_slug(db: Session, room_id_or_slug: str) -> Room:
