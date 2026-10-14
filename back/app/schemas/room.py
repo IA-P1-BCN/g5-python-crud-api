@@ -83,13 +83,9 @@ class TimeSlotBulkGenerateRequest(BaseModel):
     date_from: date
     date_to: date
     first_start: time
-    last_start: time = Field(..., alias="last_start")
-
-    model_config = ConfigDict(populate_by_name=True)
+    last_start: time
 
 
 class TimeSlotBulkGenerateResponse(BaseModel):
     created_count: int
     skipped_count: int
-
-    model_config = ConfigDict(from_attributes=True)

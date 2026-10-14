@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -17,6 +17,19 @@ from back.app.schemas.room import (
 ACTIVE_STATUSES = ("PENDING", "CONFIRMED", "IN_PROGRESS")
 
 DUPLICATE_CONSTRAINTS = ("uq_rooms_slug", "rooms_name_key")
+
+# BR-S7: bulk generation spaces slot starts by duration + reset buffer.
+SLOT_RESET_BUFFER_MINUTES = 30
+
+# BR-S8: cap the generated range so one request cannot create thousands of rows.
+MAX_BULK_GENERATE_DAYS = 90
+
+
+def _as_utc(value: datetime) -> datetime:
+    """SQLite returns naive datetimes; normalize before comparing."""
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
 
 
 def _is_unique_violation(exc: IntegrityError) -> bool:
@@ -60,6 +73,7 @@ def _ensure_slug_is_available(
 
 
 def create_room(db: Session, room_in: RoomCreate) -> Room:
+    # BR-R7: validated here, like on update, so both return the same error shape.
     if room_in.min_players > room_in.capacity:
         raise AppError(
             message="BR-R7: min_players must be lower than or equal to capacity",
@@ -112,6 +126,8 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
             status_code=404,
         )
 
+    # Only apply fields the client actually sent (partial update). NULL values on
+    # NOT NULL columns are rejected above, so none reach the ORM object.
     raw_updates = room_in.model_dump(exclude_unset=True)
     for field_name, value in raw_updates.items():
         if value is None:
@@ -125,6 +141,7 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
     if "name" in update_data and update_data["name"] != room.name:
         _ensure_name_is_available(db, update_data["name"], room_id=room_id)
 
+    # BR-R7: validate against the effective room state (stored + supplied).
     effective_capacity = update_data.get("capacity", room.capacity)
     effective_min_players = update_data.get("min_players", room.min_players)
     if effective_min_players > effective_capacity:
@@ -195,6 +212,8 @@ def list_rooms(db: Session, status: str | None = None) -> list[Room]:
 
 
 def get_room_by_id_or_slug(db: Session, room_id_or_slug: str) -> Room:
+    # isascii() rules out unicode digits ("²".isdigit() is True) and slugs always
+    # contain at least one letter, so a pure number is an ID.
     if room_id_or_slug.isascii() and room_id_or_slug.isdigit():
         room = db.get(Room, int(room_id_or_slug))
     else:
@@ -219,6 +238,7 @@ def activate_room(db: Session, room_id: int) -> Room:
             code="NOT_FOUND",
             status_code=404,
         )
+    # Idempotent: an already active room is returned unchanged
     if room.status == "active":
         return room
 
@@ -243,56 +263,83 @@ def bulk_generate_time_slots(
         raise AppError(
             message="Room is inactive",
             code="ROOM_INACTIVE",
-            status_code=400,
+            status_code=409,
+        )
+
+    # BR-S8: validated here, like BR-R7, so the error keeps the API error shape.
+    if payload.date_from > payload.date_to:
+        raise AppError(
+            message="date_from must not be after date_to",
+            code="VALIDATION_ERROR",
+            status_code=422,
+        )
+    if (payload.date_to - payload.date_from).days > MAX_BULK_GENERATE_DAYS:
+        raise AppError(
+            message=f"date range cannot exceed {MAX_BULK_GENERATE_DAYS} days",
+            code="VALIDATION_ERROR",
+            status_code=422,
+        )
+    if payload.first_start > payload.last_start:
+        raise AppError(
+            message="first_start must not be later than last_start",
+            code="VALIDATION_ERROR",
+            status_code=422,
         )
 
     duration_minutes = room.duration
-    step_minutes = duration_minutes + 30  # 30 min buffer de descanso/limpieza
-
-    current_date = payload.date_from
-    created_count = 0
-    skipped_count = 0
+    step = timedelta(minutes=duration_minutes + SLOT_RESET_BUFFER_MINUTES)
 
     now = datetime.now(UTC)
 
-    while current_date <= payload.date_to:
-        current_time = payload.first_start
-        last_start = payload.last_start
+    range_start = datetime.combine(payload.date_from, time.min, tzinfo=UTC)
+    range_end = datetime.combine(
+        payload.date_to + timedelta(days=1), time.min, tzinfo=UTC
+    )
 
-        while current_time <= last_start:
-            slot_start_dt = datetime.combine(current_date, current_time, tzinfo=UTC)
+    # Load existing slots of the range once instead of querying per slot.
+    existing_rows = db.execute(
+        select(TimeSlot.starts_at, TimeSlot.ends_at).where(
+            TimeSlot.room_id == room_id,
+            TimeSlot.starts_at < range_end,
+            TimeSlot.ends_at > range_start,
+        )
+    ).all()
+    existing = [(_as_utc(start), _as_utc(end)) for start, end in existing_rows]
+
+    created_count = 0
+    skipped_count = 0
+
+    # Work with full datetimes: stepping with time() alone wraps around midnight
+    # and a slot after 23:59 would never leave the inner loop.
+    current_date = payload.date_from
+    while current_date <= payload.date_to:
+        slot_start_dt = datetime.combine(current_date, payload.first_start, tzinfo=UTC)
+        last_start_dt = datetime.combine(current_date, payload.last_start, tzinfo=UTC)
+
+        while slot_start_dt <= last_start_dt:
             slot_end_dt = slot_start_dt + timedelta(minutes=duration_minutes)
 
-            # BR-S2: Skip slots in the past
             if slot_start_dt < now:
+                # BR-S2: a slot cannot start in the past
                 skipped_count += 1
-                next_dt = datetime.combine(current_date, current_time) + timedelta(minutes=step_minutes)
-                current_time = next_dt.time()
-                continue
-
-            # BR-S3: Check overlaps with existing time slots
-            existing_overlap = db.execute(
-                select(TimeSlot.id).where(
-                    TimeSlot.room_id == room_id,
-                    TimeSlot.starts_at < slot_end_dt,
-                    TimeSlot.ends_at > slot_start_dt,
-                )
-            ).first()
-
-            if existing_overlap:
+            elif any(
+                start < slot_end_dt and end > slot_start_dt for start, end in existing
+            ):
+                # BR-S3: slots of the same room cannot overlap
                 skipped_count += 1
             else:
-                new_slot = TimeSlot(
-                    room_id=room_id,
-                    starts_at=slot_start_dt,
-                    ends_at=slot_end_dt,
-                    status="available",
+                db.add(
+                    TimeSlot(
+                        room_id=room_id,
+                        starts_at=slot_start_dt,
+                        ends_at=slot_end_dt,
+                        status="available",
+                    )
                 )
-                db.add(new_slot)
+                existing.append((slot_start_dt, slot_end_dt))
                 created_count += 1
 
-            next_dt = datetime.combine(current_date, current_time) + timedelta(minutes=step_minutes)
-            current_time = next_dt.time()
+            slot_start_dt += step
 
         current_date += timedelta(days=1)
 

@@ -35,6 +35,8 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | BR-S4 | Slot `status` is `available` or `blocked` (admin-managed) | 422 |
 | BR-S5 | A slot is **bookable** when `status=available` AND it has no active booking. This is computed, not stored | - |
 | BR-S6 | A slot with an active booking cannot be deleted or edited | 409 |
+| BR-S7 | Bulk generation spaces slot starts by `duration + 30 min` (room reset buffer), skipping past (BR-S2) and overlapping (BR-S3) slots | - |
+| BR-S8 | A bulk generation request covers at most 90 days, and `date_from` must not be after `date_to` nor `first_start` after `last_start` | 422 |
 
 ### Bookings (E3)
 | ID | Rule | Error |
