@@ -29,7 +29,7 @@ export function BookingPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
-      <h1 className="text-heading-title text-2xl font-bold">{bookingMessages.title}</h1>
+      <h1 className="heading-title text-2xl font-bold">{bookingMessages.title}</h1>
 
       <section className="space-y-2">
         <h2 className="text-text text-lg font-semibold">{bookingMessages.selectDate}</h2>

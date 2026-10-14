@@ -3,7 +3,7 @@ import { BookingPage } from './pages/BookingPage'
 
 export const bookingRoutes = [
   {
-    path: '/rooms/:roomId/book',
+    path: '/reservar/:slug',
     element: <BookingPage />,
   },
 ]
