@@ -1,37 +1,37 @@
-import { useState } from "react";
-import es from "../../../i18n/es.js";
-import Alert from "../../../shared/ui/Alert.jsx";
-import Spinner from "../../../shared/ui/Spinner.jsx";
-import { RoomForm } from "../components/RoomForm";
-import { RoomsTable } from "../components/RoomsTable";
-import { useAdminRooms } from "../hooks/useAdminRooms";
-import { DUPLICATE_SLUG_ERROR } from "../model/errors";
+import { useState } from 'react'
+import es from '@/i18n/es.js'
+import Alert from '@/shared/ui/Alert.jsx'
+import Spinner from '@/shared/ui/Spinner.jsx'
+import { RoomForm } from '../components/RoomForm'
+import { RoomsTable } from '../components/RoomsTable'
+import { useAdminRooms } from '../hooks/useAdminRooms'
+import { DUPLICATE_SLUG_ERROR } from '../model/errors'
 
 export function AdminRoomsPage() {
-  const { rooms, loading, error, saveRoom, toggleActive } = useAdminRooms();
-  const [apiError, setApiError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  const { rooms, loading, error, saveRoom, toggleActive } = useAdminRooms()
+  const [apiError, setApiError] = useState(null)
+  const [success, setSuccess] = useState(null)
 
   const handleSubmit = async (values) => {
-    setApiError(null);
-    setSuccess(null);
+    setApiError(null)
+    setSuccess(null)
     try {
-      await saveRoom(values);
-      setSuccess(es.adminRooms.createSuccess);
+      await saveRoom(values)
+      setSuccess(es.adminRooms.createSuccess)
     } catch (err) {
-      const code = err?.response?.data?.error;
-      setApiError(code === DUPLICATE_SLUG_ERROR ? DUPLICATE_SLUG_ERROR : err?.message);
+      const code = err?.response?.data?.code
+      setApiError(code === DUPLICATE_SLUG_ERROR ? DUPLICATE_SLUG_ERROR : err?.message)
     }
-  };
+  }
 
   const handleToggleActive = async (id, active) => {
-    setApiError(null);
+    setApiError(null)
     try {
-      await toggleActive(id, active);
+      await toggleActive(id, active)
     } catch (err) {
-      setApiError(err?.message);
+      setApiError(err?.message)
     }
-  };
+  }
 
   return (
     <main className="mx-auto max-w-5xl p-6">
@@ -48,7 +48,7 @@ export function AdminRoomsPage() {
         )}
       </div>
     </main>
-  );
+  )
 }
 
-export default AdminRoomsPage;
+export default AdminRoomsPage
