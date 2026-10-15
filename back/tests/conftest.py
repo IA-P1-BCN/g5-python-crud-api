@@ -74,6 +74,7 @@ def make_token():
         user_metadata=None,
         include_user_metadata=True,
         name=None,
+        provider="google",
     ):
         now = datetime.now(UTC)
 
@@ -81,6 +82,7 @@ def make_token():
             "aud": audience,
             "iss": issuer,
             "iat": now,
+            "app_metadata": {"provider": provider},
         }
 
         if include_subject:

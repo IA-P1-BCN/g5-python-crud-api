@@ -154,10 +154,28 @@ def test_get_current_user_unknown_user_without_name(make_token, db):
     assert db.query(User).count() == 0
 
 
-def test_get_current_user_duplicate_email_does_not_link(
-    make_token,
-    db,
-):
+def test_get_current_user_links_existing_user_without_auth_id(make_token, db):
+    existing_user = User(
+        auth_id=None,
+        name="Existing User",
+        email="new-user@example.com",
+        role="staff",
+        is_active=True,
+    )
+    db.add(existing_user)
+    db.commit()
+
+    token = make_token(subject="google-user-1", email="new-user@example.com")
+
+    current_user = get_current_user(credentials=make_credentials(token), db=db)
+
+    assert current_user.id == existing_user.id
+    assert current_user.auth_id == "google-user-1"
+    assert current_user.role == "staff"
+    assert db.query(User).count() == 1
+
+
+def test_get_current_user_untrusted_provider_does_not_link(make_token, db):
     existing_user = User(
         auth_id=None,
         name="Existing User",
@@ -169,18 +187,83 @@ def test_get_current_user_duplicate_email_does_not_link(
     db.commit()
 
     token = make_token(
-        subject="different-google-user",
-        email="new-user@example.com",
+        subject="email-signup", email="new-user@example.com", provider="email"
     )
 
     with pytest.raises(AppError) as exc_info:
         get_current_user(credentials=make_credentials(token), db=db)
 
     assert exc_info.value.status_code == 409
-
+    assert exc_info.value.code == "DUPLICATE"
     db.refresh(existing_user)
     assert existing_user.auth_id is None
-    assert db.query(User).count() == 1
+
+
+def test_get_current_user_duplicate_email_with_other_identity_does_not_link(
+    make_token,
+    db,
+):
+    existing_user = User(
+        auth_id="first-google-user",
+        name="Existing User",
+        email="new-user@example.com",
+        role="client",
+        is_active=True,
+    )
+    db.add(existing_user)
+    db.commit()
+
+    token = make_token(subject="different-google-user", email="new-user@example.com")
+
+    with pytest.raises(AppError) as exc_info:
+        get_current_user(credentials=make_credentials(token), db=db)
+
+    assert exc_info.value.status_code == 409
+    db.refresh(existing_user)
+    assert existing_user.auth_id == "first-google-user"
+
+
+def test_get_current_user_untrusted_provider_never_becomes_admin(
+    make_token, db, monkeypatch
+):
+    monkeypatch.setattr(settings, "admin_emails", "admin@example.com")
+    token = make_token(
+        subject="email-signup", email="admin@example.com", provider="email"
+    )
+
+    current_user = get_current_user(credentials=make_credentials(token), db=db)
+
+    assert current_user.role == "client"
+
+
+def test_get_current_user_jwks_unreachable_returns_503(make_token, db, monkeypatch):
+    import jwt
+
+    from back.app.core import security
+
+    class DownClient:
+        def get_signing_key_from_jwt(self, token):
+            raise jwt.PyJWKClientConnectionError("network down")
+
+    monkeypatch.setattr(security, "jwks_client", DownClient())
+
+    with pytest.raises(AppError) as exc_info:
+        get_current_user(credentials=make_credentials(make_token()), db=db)
+
+    assert exc_info.value.status_code == 503
+    assert exc_info.value.code == "AUTH_UNAVAILABLE"
+
+
+def test_get_current_user_invalid_token_is_logged_without_the_token(
+    make_token, db, caplog
+):
+    token = make_token(audience="wrong")
+
+    with caplog.at_level("WARNING"), pytest.raises(HTTPException):
+        get_current_user(credentials=make_credentials(token), db=db)
+
+    assert "invalid token" in caplog.text
+    assert token not in caplog.text
 
 
 def test_get_current_user_inactive_user(make_token, db):

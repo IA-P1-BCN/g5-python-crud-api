@@ -6,7 +6,7 @@ from back.app.config.settings import settings
 SUPABASE_ISSUER = f"{settings.supabase_url.rstrip('/')}/auth/v1"
 SUPABASE_JWKS_URL = f"{SUPABASE_ISSUER}/.well-known/jwks.json"
 
-jwks_client = PyJWKClient(SUPABASE_JWKS_URL)
+jwks_client = PyJWKClient(SUPABASE_JWKS_URL, timeout=5)
 
 
 def decode_access_token(token: str) -> dict:
