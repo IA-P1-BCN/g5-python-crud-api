@@ -39,7 +39,7 @@ React client in `front/`, JavaScript (no TypeScript: the team's language; data i
 | Format | Prettier (+ Tailwind class sorting) | 100 characters per line, no semicolons, single quotes |
 | Container | Docker: Node build, then Nginx | Nginx serves `dist/` and proxies `/api/` to the API (no CORS) |
 
-Not installed yet: `@supabase/supabase-js` (ticket 077). More shadcn/ui primitives are added when a screen needs them (`DESIGN.md`).
+More shadcn/ui primitives are added when a screen needs them (`DESIGN.md`).
 
 Known limit: `eslint-plugin-react` and `eslint-plugin-jsx-a11y` do not support ESLint 10 yet, so they are not installed. Rules of hooks and Fast Refresh are covered.
 
@@ -74,10 +74,15 @@ POSTGRES_DB=             # same
 POSTGRES_HOST=           # not read by the API
 POSTGRES_PORT=           # not read by the API
 SUPABASE_URL=            # Sprint 2
-SUPABASE_JWT_SECRET=     # Sprint 2
+VITE_SUPABASE_URL=       # Frontend; copy to front/.env.local for Vite
+VITE_SUPABASE_PUBLISHABLE_KEY= # Frontend; copy to front/.env.local for Vite
 ADMIN_EMAILS=            # Optional: comma-separated emails granted admin role on first login only
 ```
 
 The log level is fixed to `INFO` in `back/app/config/logging.py` (no `LOG_LEVEL` variable for now).
 
-Secrets go in `.env` only. The repo is **public**, so never commit keys.
+Backend secrets go in the root `.env` file. The frontend reads `VITE_*` variables from `front/.env.local`, not directly from the root `.env`.
+
+For local development, copy the two `VITE_SUPABASE_*` values from the root `.env.example` into `front/.env.local`. Docker Compose mounts `./front` into the `front` container, so Vite loads that file automatically. Restart the frontend container after changing environment variables.
+
+The publishable key is intended for browser use; never put a Supabase secret or `service_role` key in a `VITE_*` variable. Do not commit real credentials.
