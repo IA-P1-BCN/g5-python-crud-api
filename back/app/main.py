@@ -15,6 +15,9 @@ from back.app.routes.user import router as user_router
 app = FastAPI(
     title="Escape Room API",
     version="0.1.0",
+    description="Escape room booking API: rooms, time slots, bookings, games and users. "
+    'Errors always use `{"detail": ..., "code": ...}`. Authenticated endpoints '
+    "need `Authorization: Bearer <Supabase JWT>`.",
 )
 
 setup_logging()
@@ -98,13 +101,13 @@ async def unexpected_exception_handler(request: Request, exc: Exception):
     )
 
 
-@app.get("/")
+@app.get("/", summary="API name", tags=["Health"])
 def root():
     return {"message": "Escape Room API"}
 
 
-@app.get("/health")
-@app.get("/api/v1/health")
+@app.get("/health", summary="Liveness check", tags=["Health"])
+@app.get("/api/v1/health", summary="Liveness check", tags=["Health"])
 def health():
     return {"status": "ok"}
 

@@ -855,3 +855,26 @@ def test_user_role_check_constraint_rejects_unknown_role(db):
 
     with pytest.raises(IntegrityError):
         db.commit()
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [{"name": ""}, {"name": "x" * 101}, {"role": "boss"}],
+)
+def test_create_user_rejects_invalid_name_or_role(client, admin_headers, overrides):
+    body = {"name": "Ana", "email": "ana@example.com", **overrides}
+
+    response = client.post(URL, json=body, headers=admin_headers)
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+def test_create_user_without_phone_and_role_uses_defaults(client, admin_headers):
+    response = client.post(
+        URL, json={"name": "Ana", "email": "ana@example.com"}, headers=admin_headers
+    )
+
+    assert response.status_code == 201
+    assert response.json()["role"] == "client"
+    assert response.json()["phone"] is None

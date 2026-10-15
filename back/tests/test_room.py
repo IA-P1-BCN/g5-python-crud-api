@@ -958,3 +958,14 @@ def test_create_room_rejects_out_of_bounds_or_unknown_fields(client, overrides):
 
 def test_get_room_with_huge_id_returns_404_not_500(client):
     assert client.get(f"{URL}/99999999999999999999").status_code == 404
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [{"capacity": 0}, {"duration": 0}, {"base_price": -1}],
+)
+def test_create_room_rejects_non_positive_numbers(client, overrides):
+    response = client.post(URL, json=_room_payload(**overrides))
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
