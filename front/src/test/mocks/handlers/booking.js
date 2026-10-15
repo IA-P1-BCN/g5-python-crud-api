@@ -8,10 +8,12 @@ export const bookingHandlers = [
 
     return HttpResponse.json({
       items: [
-        { id: 'slot-1', starts_at: `${date}T10:00:00Z`, is_bookable: false },
-        { id: 'slot-2', starts_at: `${date}T11:00:00Z`, is_bookable: true },
+        { id: 'slot-1', starts_at: `${date}T10:00:00Z`, state: 'past' },
+        { id: 'slot-2', starts_at: `${date}T11:00:00Z`, state: 'blocked' },
+        { id: 'slot-3', starts_at: `${date}T12:00:00Z`, state: 'taken' },
+        { id: 'slot-4', starts_at: `${date}T13:00:00Z`, state: 'free' },
       ],
-      total: 2,
+      total: 4,
       page: 1,
       size: 20,
     })

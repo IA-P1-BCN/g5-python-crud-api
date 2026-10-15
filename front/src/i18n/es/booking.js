@@ -1,5 +1,5 @@
 // Booking flow texts. (Spanish). One file per feature: no conflicts.
-export const bookingMessages = {
+export default {
   title: 'Selecciona fecha y hora',
   selectDate: 'Elige un día',
   selectTime: 'Horarios',

@@ -1,14 +1,18 @@
 // Presentational: slot grid with disabled states. Props only.
 import { isSlotSelectable } from '../model/slotState'
-import { bookingMessages } from '@/i18n/es/booking'
+import es from '@/i18n/es.js'
 
 export function SlotGrid({ slots = [], selectedSlot, onSelectSlot }) {
   if (slots.length === 0) {
-    return <p className="text-muted py-4 text-center">{bookingMessages.noSlotsAvailable}</p>
+    return <p className="text-muted py-4 text-center">{es.booking.noSlotsAvailable}</p>
   }
 
   return (
-    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+    <div
+      role="group"
+      aria-label={es.booking.selectTime}
+      className="grid grid-cols-3 gap-3 sm:grid-cols-4"
+    >
       {slots.map((slot) => {
         const selectable = isSlotSelectable(slot.state)
         const isSelected = selectedSlot?.id === slot.id
