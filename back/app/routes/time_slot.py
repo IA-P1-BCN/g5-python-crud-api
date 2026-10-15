@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 
 from back.app.controllers import time_slot as controller
+from back.app.core.limits import MAX_INT, IdPath
 from back.app.core.pagination import Page, PageParams
 from back.app.core.responses import ADMIN_ERRORS
 from back.app.database import SessionDep
@@ -40,7 +41,9 @@ TimeSlotsResponse = Page[TimeSlotRead] | PublicRoomBoardResponse
 def list_time_slots(
     db: SessionDep,
     params: Annotated[PageParams, Depends()],
-    room_id: Annotated[int | None, Query(description="Filter by room")] = None,
+    room_id: Annotated[
+        int | None, Query(ge=1, le=MAX_INT, description="Filter by room")
+    ] = None,
     date: Annotated[date_type | None, Query(description="Filter by day (UTC)")] = None,
     available: Annotated[
         bool | None, Query(description="Only bookable slots (BR-S5)")
@@ -57,7 +60,7 @@ def list_time_slots(
     summary="Get a time slot",
     responses={404: {"description": "Time slot not found."}},
 )
-def get_time_slot(slot_id: int, db: SessionDep):
+def get_time_slot(slot_id: IdPath, db: SessionDep):
     return controller.get_time_slot(db, slot_id)
 
 
@@ -87,11 +90,13 @@ def create_time_slot(slot_in: TimeSlotCreate, db: SessionDep):
     responses={
         **ADMIN_ERRORS,
         404: {"description": "Time slot not found."},
-        409: {"description": "SLOT_TAKEN (active booking), ROOM_INACTIVE or SLOT_OVERLAP."},
+        409: {
+            "description": "SLOT_TAKEN (active booking), ROOM_INACTIVE or SLOT_OVERLAP."
+        },
         422: {"description": "Invalid body, null field, past start or bad range."},
     },
 )
-def update_time_slot(slot_id: int, slot_in: TimeSlotUpdate, db: SessionDep):
+def update_time_slot(slot_id: IdPath, slot_in: TimeSlotUpdate, db: SessionDep):
     return controller.update_time_slot(db, slot_id, slot_in)
 
 
@@ -106,5 +111,5 @@ def update_time_slot(slot_id: int, slot_in: TimeSlotUpdate, db: SessionDep):
         409: {"description": "SLOT_TAKEN: the slot has bookings."},
     },
 )
-def delete_time_slot(slot_id: int, db: SessionDep):
+def delete_time_slot(slot_id: IdPath, db: SessionDep):
     return controller.delete_time_slot(db, slot_id)

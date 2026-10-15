@@ -9,6 +9,7 @@ from back.app.controllers.time_slot import commit_slots
 from back.app.core.datetimes import as_utc
 from back.app.core.errors import AppError
 from back.app.core.integrity import is_violation_of
+from back.app.core.limits import MAX_INT
 from back.app.core.pagination import PageParams, paginate
 from back.app.models import Booking, Room, TimeSlot
 from back.app.models.booking import ACTIVE_STATUSES
@@ -220,7 +221,8 @@ def list_rooms(
 
 def get_room_by_id_or_slug(db: Session, room_id_or_slug: str) -> Room:
     if room_id_or_slug.isascii() and room_id_or_slug.isdigit():
-        room = db.get(Room, int(room_id_or_slug))
+        room_id = int(room_id_or_slug)
+        room = db.get(Room, room_id) if room_id <= MAX_INT else None
     else:
         room = db.execute(
             select(Room).where(Room.slug == room_id_or_slug)

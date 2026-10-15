@@ -935,3 +935,26 @@ def test_update_room_capacity_below_active_booking_players_returns_409(client, d
 
 def test_list_rooms_rejects_unknown_status_filter(client):
     assert client.get(f"{URL}?status=banana").status_code == 422
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"unknown": 1},
+        {"status": "inactive"},
+        {"capacity": 10**6},
+        {"duration": 10**6},
+        {"base_price": 10**9},
+        {"story": "x" * 5001},
+        {"hook": "x" * 501},
+    ],
+)
+def test_create_room_rejects_out_of_bounds_or_unknown_fields(client, overrides):
+    response = client.post(URL, json=_room_payload(**overrides))
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+def test_get_room_with_huge_id_returns_404_not_500(client):
+    assert client.get(f"{URL}/99999999999999999999").status_code == 404

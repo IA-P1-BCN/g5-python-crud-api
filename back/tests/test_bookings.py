@@ -428,8 +428,6 @@ def add_room(db, name, capacity, base_price):
 LATER = datetime(2030, 1, 2, 10, tzinfo=UTC)
 
 
-
-
 def test_change_slot_success_and_frees_old_slot(client, seed, db):
     booking = make_booking(db, seed, seed.free_slot)
     new_slot = add_slot(db, seed.room, LATER)
@@ -760,9 +758,7 @@ def test_active_slot_index_allows_booking_after_cancellation(db, seed):
 
 
 def _book_as(client, user, headers, slot):
-    return client.post(
-        URL, headers=headers, json=payload(user.id, slot.id, 2)
-    )
+    return client.post(URL, headers=headers, json=payload(user.id, slot.id, 2))
 
 
 def test_client_cannot_exceed_active_bookings_limit(
@@ -838,3 +834,11 @@ def test_history_of_unknown_user_returns_404(client):
 
     assert response.status_code == 404
     assert response.json()["code"] == "USER_NOT_FOUND"
+
+
+def test_create_booking_rejects_unknown_and_huge_values(client):
+    body = {"user_id": 1, "time_slot_id": 1, "players": 2}
+
+    assert client.post(URL, json={**body, "total_price": 0}).status_code == 422
+    assert client.post(URL, json={**body, "players": 10**12}).status_code == 422
+    assert client.post(URL, json={**body, "time_slot_id": 10**12}).status_code == 422

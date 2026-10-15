@@ -2,8 +2,9 @@ from datetime import date, datetime
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from back.app.core.limits import MAX_INT
 from back.app.schemas.room import RoomResponse
 
 
@@ -17,7 +18,7 @@ class SlotState(StrEnum):
 
 
 class TimeSlotBase(BaseModel):
-    room_id: int
+    room_id: int = Field(ge=1, le=MAX_INT)
     starts_at: datetime
     ends_at: datetime
     status: Literal["available", "blocked"] | None = "available"
@@ -26,7 +27,7 @@ class TimeSlotBase(BaseModel):
 
 
 class TimeSlotCreate(TimeSlotBase):
-    pass
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
 
 class TimeSlotUpdate(BaseModel):
@@ -34,7 +35,7 @@ class TimeSlotUpdate(BaseModel):
     ends_at: datetime | None = None
     status: Literal["available", "blocked"] | None = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     @model_validator(mode="after")
     def reject_explicit_null(self):

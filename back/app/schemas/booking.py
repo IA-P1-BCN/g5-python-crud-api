@@ -3,13 +3,17 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from back.app.core.limits import MAX_INT
+
 
 class BookingCreate(BaseModel):
     """Data the client sends to create a booking."""
 
-    user_id: int
-    time_slot_id: int
-    players: int = Field(ge=1)
+    model_config = ConfigDict(extra="forbid")
+
+    user_id: int = Field(ge=1, le=MAX_INT)
+    time_slot_id: int = Field(ge=1, le=MAX_INT)
+    players: int = Field(ge=1, le=MAX_INT)
 
 
 class BookingRead(BaseModel):
@@ -70,7 +74,7 @@ class GameResultCreate(BaseModel):
     """Data staff sends to register a game result (BR-G4)."""
 
     completed: bool
-    completion_time: int = Field(ge=0)
+    completion_time: int = Field(ge=0, le=MAX_INT)
 
 
 class BookingDetail(BookingRead):
@@ -86,8 +90,8 @@ class BookingDetail(BookingRead):
 class BookingUpdate(BaseModel):
     """Data the client sends to modify a booking (BR-B7, BR-L5)."""
 
-    players: int | None = Field(default=None, ge=1)
-    time_slot_id: int | None = None
+    players: int | None = Field(default=None, ge=1, le=MAX_INT)
+    time_slot_id: int | None = Field(default=None, ge=1, le=MAX_INT)
 
     @model_validator(mode="after")
     def at_least_one_field(self):

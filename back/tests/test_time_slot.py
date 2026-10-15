@@ -1132,3 +1132,23 @@ def test_bulk_generate_concurrent_overlap_returns_409(client, db, monkeypatch):
 
     assert response.status_code == 409
     assert response.json()["code"] == "SLOT_OVERLAP"
+
+
+def test_create_time_slot_rejects_unknown_and_huge_values(client):
+    start = datetime.now(UTC) + timedelta(days=5)
+    body = {
+        "room_id": 1,
+        "starts_at": start.isoformat(),
+        "ends_at": (start + timedelta(hours=1)).isoformat(),
+    }
+
+    assert client.post("/api/v1/time-slots", json={**body, "x": 1}).status_code == 422
+    assert (
+        client.post("/api/v1/time-slots", json={**body, "room_id": 10**12}).status_code
+        == 422
+    )
+    assert client.put("/api/v1/time-slots/1", json={"x": 1}).status_code == 422
+
+
+def test_get_time_slot_with_huge_id_returns_422(client):
+    assert client.get("/api/v1/time-slots/99999999999999999999").status_code == 422

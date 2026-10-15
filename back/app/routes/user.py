@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, status
 
 from back.app.controllers import booking as booking_controller
 from back.app.controllers import user as user_controller
+from back.app.core.limits import IdPath
 from back.app.core.pagination import Page, PageParams
 from back.app.core.responses import ADMIN_ERRORS
 from back.app.database import SessionDep
@@ -120,7 +121,7 @@ def my_history_endpoint(db: SessionDep, current_user: UserDep):
         403: {"description": "FORBIDDEN: not your history"},
     },
 )
-def user_history_endpoint(user_id: int, db: SessionDep, current_user: UserDep):
+def user_history_endpoint(user_id: IdPath, db: SessionDep, current_user: UserDep):
     return booking_controller.list_user_history(db, user_id, current_user)
 
 
@@ -134,7 +135,7 @@ def user_history_endpoint(user_id: int, db: SessionDep, current_user: UserDep):
     },
     dependencies=[Depends(require_role("admin"))],
 )
-def get_user_endpoint(user_id: int, db: SessionDep):
+def get_user_endpoint(user_id: IdPath, db: SessionDep):
     return user_controller.get_user(db=db, user_id=user_id)
 
 
@@ -150,7 +151,7 @@ def get_user_endpoint(user_id: int, db: SessionDep):
     dependencies=[Depends(require_role("admin"))],
 )
 def update_user_endpoint(
-    user_id: int,
+    user_id: IdPath,
     user_in: UserUpdate,
     db: SessionDep,
 ):
@@ -174,7 +175,7 @@ def update_user_endpoint(
     dependencies=[Depends(require_role("admin"))],
 )
 def update_user_role_endpoint(
-    user_id: int,
+    user_id: IdPath,
     role_in: UserRoleUpdate,
     db: SessionDep,
 ):
@@ -196,7 +197,7 @@ def update_user_role_endpoint(
     },
     dependencies=[Depends(require_role("admin"))],
 )
-def deactivate_user_endpoint(user_id: int, db: SessionDep):
+def deactivate_user_endpoint(user_id: IdPath, db: SessionDep):
     return user_controller.deactivate_user(
         db=db,
         user_id=user_id,
