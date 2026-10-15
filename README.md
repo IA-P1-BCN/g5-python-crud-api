@@ -387,6 +387,19 @@ GitHub Projects: `escape_room_project`
 
 ## Authentication
 
-Authentication and authorization are planned for Sprint 2.
+The API uses Supabase Auth JWTs for authentication and role-based authorization.
+
+### Initial admin setup
+
+Set the optional `ADMIN_EMAILS` environment variable to a comma-separated list of email addresses that should receive the `admin` role when their user account is created on first login.
+
+- Email addresses are matched case-insensitively, and surrounding whitespace is ignored.
+- Users whose email is not listed receive the `client` role.
+- This setting only determines the role at first user creation. It does not change the role of existing users.
+- Leave `ADMIN_EMAILS` empty to assign the `client` role to all newly created users.
+
+Example:
+
+    ADMIN_EMAILS=admin@example.com, another-admin@example.com
 
 See [STACK.md](docs/STACK.md) for the current technology decisions.
