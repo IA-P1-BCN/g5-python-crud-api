@@ -23,4 +23,20 @@ export const todayBookingDto = (overrides = {}) => ({
 })
 
 // GET /bookings/today is a plain array, not paginated (API_CONTRACT.md).
-export default [http.get('*/bookings/today', () => HttpResponse.json([todayBookingDto()]))]
+// The status changes answer with the booking in its new status.
+export default [
+  http.get('*/bookings/today', () => HttpResponse.json([todayBookingDto()])),
+  http.put('*/bookings/:id/confirm', () =>
+    HttpResponse.json(todayBookingDto({ status: 'CONFIRMED' })),
+  ),
+  http.put('*/bookings/:id/start', () =>
+    HttpResponse.json(todayBookingDto({ status: 'IN_PROGRESS' })),
+  ),
+  http.put('*/bookings/:id/finish', () =>
+    HttpResponse.json(todayBookingDto({ status: 'COMPLETED' })),
+  ),
+  http.post('*/bookings/:id/result', async ({ request }) => {
+    const result = await request.json()
+    return HttpResponse.json(todayBookingDto({ status: 'COMPLETED', result }), { status: 201 })
+  }),
+]

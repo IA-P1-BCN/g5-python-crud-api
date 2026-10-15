@@ -236,6 +236,7 @@ front/
 │   │       │   ├── ResultForm.jsx
 │   │       │   └── TodayBookingsTable.jsx
 │   │       ├── hooks/
+│   │       │   ├── useConfirmBooking.js
 │   │       │   ├── useFinishGame.js
 │   │       │   ├── useRegisterResult.js
 │   │       │   ├── useStartGame.js

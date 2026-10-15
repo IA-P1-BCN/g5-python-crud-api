@@ -41,7 +41,7 @@ The `es.booking.*` and `es.auth.*` keys are examples: add yours to your feature 
 **Watch out**
 - A class that does not exist is ignored without any error. If a style does nothing, check the name in the tokens table.
 - `className` adds or overrides styles (`<Button className="w-full">`).
-- Not built yet: textarea, checkbox/switch, radio, `format.js` (prices and dates), `useCountdown`, `usePagination`, `mapApiError`. They come with the first ticket that needs them.
+- Not built yet: textarea, checkbox/switch, radio, `format.js` (prices and dates), `useCountdown`, `usePagination`. They come with the first ticket that needs them.
 - Before the PR: `docker compose run --rm front-tools`. After pulling new dependencies: `docker compose restart front`.
 
 ## Tokens (`front/src/index.css`, block `@theme`)
