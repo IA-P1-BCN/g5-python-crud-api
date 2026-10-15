@@ -69,6 +69,25 @@ describe('StaffPlanningPage', () => {
     expect(within(rows[2]).getByText(es.staff.statuses.IN_PROGRESS)).toBeInTheDocument()
   })
 
+  it('shows the next action button on each row', async () => {
+    respondWith([
+      todayBookingDto({ id: 1, status: 'CONFIRMED' }),
+      todayBookingDto({ id: 2, status: 'IN_PROGRESS' }),
+      todayBookingDto({ id: 3, status: 'CANCELLED' }),
+    ])
+    renderPage()
+
+    const rows = await screen.findAllByRole('row')
+    // rows[0] is the header row
+    expect(
+      within(rows[1]).getByRole('button', { name: es.staff.actions.start }),
+    ).toBeInTheDocument()
+    expect(
+      within(rows[2]).getByRole('button', { name: es.staff.actions.finish }),
+    ).toBeInTheDocument()
+    expect(within(rows[3]).queryByRole('button')).not.toBeInTheDocument()
+  })
+
   it('shows an empty state when there is no game today', async () => {
     respondWith([])
     renderPage()

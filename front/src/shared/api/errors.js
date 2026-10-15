@@ -1,1 +1,7 @@
-// mapApiError(error, featureCodes = {}): generic mapping of backend codes to UI errors. Feature-specific codes live in features/<name>/model/errors.js. No React.
+import es from '@/i18n/es.js'
+
+export function mapApiError(error, featureCodes = {}) {
+  const code = error?.response?.data?.code ?? null
+  const message = featureCodes[code] ?? es.common.errors[code] ?? es.common.errors.unknown
+  return { code, message }
+}
