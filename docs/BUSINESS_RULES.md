@@ -65,7 +65,7 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | ID | Rule |
 |----|------|
 | BR-A1 | Login via Supabase Auth (Google). The API validates the Supabase JWT |
-| BR-A2 | First login creates a `users` row with `role=client` and stores `auth_id` (Supabase user id) |
+| BR-A2 | First login creates a `users` row and stores `auth_id` (Supabase user id). The default role is `client`; if the email matches an address configured in `ADMIN_EMAILS`, the new user receives `role=admin` on first login only. Existing users' roles are not changed by this configuration. |
 | BR-A3 | Role lives in OUR `users` table, not in Supabase **(to validate)** |
 | BR-A4 | Only `admin` can change a user's role |
 

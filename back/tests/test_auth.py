@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import select
 
+from back.app.config.settings import settings
 from back.app.core.errors import AppError
 from back.app.dependencies.auth import get_current_user
 from back.app.models import User
@@ -480,3 +481,114 @@ def test_get_current_user_reraises_unrelated_integrity_error(
     assert exc_info.value is original_error
     assert str(exc_info.value.orig) == "unrelated integrity error"
     assert db.query(User).count() == 0
+
+
+def test_get_current_user_bootstrap_admin(make_token, db, monkeypatch):
+    monkeypatch.setattr(settings, "admin_emails", "admin@example.com")
+    token = make_token(
+        subject="bootstrap-admin",
+        email="admin@example.com",
+        user_metadata={"full_name": "Bootstrap Admin"},
+    )
+
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
+
+    assert current_user.role == "admin"
+
+
+def test_get_current_user_bootstrap_admin_normalizes_configured_emails(
+    make_token,
+    db,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        settings,
+        "admin_emails",
+        " other@example.com , ADMIN@example.com , ",
+    )
+    token = make_token(
+        subject="normalized-admin",
+        email="admin@example.com",
+        user_metadata={"full_name": "Normalized Admin"},
+    )
+
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
+
+    assert current_user.role == "admin"
+
+
+def test_get_current_user_bootstrap_non_admin_remains_client(
+    make_token,
+    db,
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "admin_emails", "admin@example.com")
+    token = make_token(
+        subject="regular-client",
+        email="client@example.com",
+        user_metadata={"full_name": "Regular Client"},
+    )
+
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
+
+    assert current_user.role == "client"
+
+
+def test_get_current_user_existing_role_is_not_changed_by_admin_config(
+    make_token,
+    db,
+    monkeypatch,
+):
+    user = User(
+        auth_id="existing-client",
+        name="Existing Client",
+        email="admin@example.com",
+        role="client",
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    monkeypatch.setattr(settings, "admin_emails", "admin@example.com")
+    token = make_token(
+        subject="existing-client",
+        email="admin@example.com",
+    )
+
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
+
+    assert current_user.id == user.id
+    assert current_user.role == "client"
+
+
+def test_get_current_user_empty_admin_emails_defaults_to_client(
+    make_token,
+    db,
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "admin_emails", "")
+    token = make_token(
+        subject="empty-admin-config",
+        email="new-client@example.com",
+        user_metadata={"full_name": "New Client"},
+    )
+
+    current_user = get_current_user(
+        credentials=make_credentials(token),
+        db=db,
+    )
+
+    assert current_user.role == "client"

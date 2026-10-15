@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from back.app.config.settings import settings
 from back.app.core.errors import AppError
 from back.app.core.security import decode_access_token
 from back.app.database import get_db
@@ -100,12 +101,19 @@ def get_current_user(
             status_code=409,
         )
 
-    # New identities always receive the client role.
+    # Configured email addresses receive admin only on first login.
+    admin_emails = {
+        item.strip().lower()
+        for item in settings.admin_emails.split(",")
+        if item.strip()
+    }
+    role = "admin" if email.lower() in admin_emails else "client"
+
     user = User(
         auth_id=auth_id,
         name=name,
         email=email,
-        role="client",
+        role=role,
     )
 
     try:
