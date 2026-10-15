@@ -1,8 +1,9 @@
 import logging
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.exception_handlers import http_exception_handler
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from back.app.config.logging import setup_logging
 from back.app.core.errors import AppError
@@ -48,22 +49,36 @@ async def app_error_handler(request: Request, exc: AppError):
     )
 
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler_override(
-    request: Request,
-    exc: HTTPException,
-):
-    if exc.status_code == 401:
-        return JSONResponse(
-            status_code=401,
-            content={
-                "detail": str(exc.detail),
-                "code": "UNAUTHORIZED",
-            },
-            headers=exc.headers,
-        )
+HTTP_ERROR_CODES = {
+    401: "UNAUTHORIZED",
+    403: "FORBIDDEN",
+    404: "NOT_FOUND",
+    405: "METHOD_NOT_ALLOWED",
+}
 
-    return await http_exception_handler(request, exc)
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "detail": str(exc.detail),
+            "code": HTTP_ERROR_CODES.get(exc.status_code, "HTTP_ERROR"),
+        },
+        headers=exc.headers,
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError):
+    detail = "; ".join(
+        f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}"
+        for error in exc.errors()
+    )
+    return JSONResponse(
+        status_code=422,
+        content={"detail": detail, "code": "VALIDATION_ERROR"},
+    )
 
 
 @app.exception_handler(Exception)
