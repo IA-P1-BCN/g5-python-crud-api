@@ -2,11 +2,14 @@ from datetime import UTC, datetime, time, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
+from back.app.core.datetimes import as_utc
 from back.app.core.errors import AppError
+from back.app.core.integrity import is_violation_of
 from back.app.core.pagination import PageParams, paginate
 from back.app.models import Booking, Room, TimeSlot
+from back.app.models.booking import ACTIVE_STATUSES
 from back.app.models.room import generate_slug
 from back.app.schemas.room import (
     RoomCreate,
@@ -15,34 +18,13 @@ from back.app.schemas.room import (
     TimeSlotBulkGenerateResponse,
 )
 
-ACTIVE_STATUSES = ("PENDING", "CONFIRMED", "IN_PROGRESS")
-
-DUPLICATE_CONSTRAINTS = ("uq_rooms_slug", "rooms_name_key")
+DUPLICATE_MARKERS = ("uq_rooms_slug", "rooms_name_key", "rooms.slug", "rooms.name")
 
 # BR-S7: bulk generation spaces slot starts by duration + reset buffer.
 SLOT_RESET_BUFFER_MINUTES = 30
 
 # BR-S8: cap the generated range so one request cannot create thousands of rows.
 MAX_BULK_GENERATE_DAYS = 90
-
-
-def _as_utc(value: datetime) -> datetime:
-    """SQLite returns naive datetimes; normalize before comparing."""
-    if value.tzinfo is None:
-        return value.replace(tzinfo=UTC)
-    return value.astimezone(UTC)
-
-
-def _is_unique_violation(exc: IntegrityError) -> bool:
-    """Return True only for name/slug unique-constraint failures."""
-    diag = getattr(exc.orig, "diag", None)
-    constraint_name = getattr(diag, "constraint_name", None)
-    message = str(exc.orig)
-    return (
-        constraint_name in DUPLICATE_CONSTRAINTS
-        or "rooms.slug" in message
-        or "rooms.name" in message
-    )
 
 
 def _ensure_name_is_available(
@@ -106,13 +88,13 @@ def create_room(db: Session, room_in: RoomCreate) -> Room:
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        if not _is_unique_violation(exc):
+        if not is_violation_of(exc, *DUPLICATE_MARKERS):
             raise
         raise AppError(
             message="Room with this name or slug already exists",
             code="DUPLICATE",
             status_code=409,
-        )
+        ) from exc
     db.refresh(room)
 
     return room
@@ -159,13 +141,13 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        if not _is_unique_violation(exc):
+        if not is_violation_of(exc, *DUPLICATE_MARKERS):
             raise
         raise AppError(
             message="Room with this name already exists",
             code="DUPLICATE",
             status_code=409,
-        )
+        ) from exc
     db.refresh(room)
 
     return room
@@ -193,7 +175,7 @@ def deactivate_room(db: Session, room_id: int) -> Room:
     if future_booking:
         raise AppError(
             message="Cannot deactivate room with future active bookings",
-            code="CONFLICT",
+            code="ROOM_HAS_BOOKINGS",
             status_code=409,
         )
 
@@ -206,7 +188,12 @@ def deactivate_room(db: Session, room_id: int) -> Room:
 
 
 def list_rooms(db: Session, params: PageParams, status: str | None = None) -> dict:
-    stmt = select(Room).order_by(Room.id)
+    upcoming_slots = selectinload(
+        Room.time_slots.and_(
+            TimeSlot.status == "available", TimeSlot.starts_at > datetime.now(UTC)
+        )
+    )
+    stmt = select(Room).options(upcoming_slots).order_by(Room.id)
     if status:
         stmt = stmt.where(Room.status == status)
     return paginate(db, stmt, params)
@@ -305,7 +292,7 @@ def bulk_generate_time_slots(
             TimeSlot.ends_at > range_start,
         )
     ).all()
-    existing = [(_as_utc(start), _as_utc(end)) for start, end in existing_rows]
+    existing = [(as_utc(start), as_utc(end)) for start, end in existing_rows]
 
     created_count = 0
     skipped_count = 0

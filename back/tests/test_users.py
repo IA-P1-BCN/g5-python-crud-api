@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from back.app.models import Booking, GameResult, Room, TimeSlot, User
 
@@ -731,3 +732,128 @@ def test_update_my_profile_without_token_returns_401(client):
 
     assert response.status_code == 401
     assert response.json()["code"] == "UNAUTHORIZED"
+
+
+def _admin_user(db):
+    return db.query(User).filter_by(email="admin@example.com").one()
+
+
+def test_update_user_without_phone_keeps_phone(client, db, admin_headers):
+    user = User(name="Alice", email="alice@example.com", phone="+34123456789")
+    db.add(user)
+    db.commit()
+
+    response = client.put(f"{URL}/{user.id}", headers=admin_headers, json={"name": "A"})
+
+    assert response.status_code == 200
+    assert response.json()["phone"] == "+34123456789"
+
+
+def test_update_user_with_null_phone_clears_phone(client, db, admin_headers):
+    user = User(name="Alice", email="alice@example.com", phone="+34123456789")
+    db.add(user)
+    db.commit()
+
+    response = client.put(
+        f"{URL}/{user.id}", headers=admin_headers, json={"name": "A", "phone": None}
+    )
+
+    assert response.json()["phone"] is None
+
+
+def test_update_my_profile_without_phone_keeps_phone(client, db, client_user):
+    user, headers = client_user
+    user.phone = "+34600111222"
+    db.commit()
+
+    response = client.put(f"{URL}/me", headers=headers, json={"name": "New Name"})
+
+    assert response.status_code == 200
+    assert response.json()["phone"] == "+34600111222"
+
+
+def test_last_admin_cannot_lose_the_role(client, db, admin_headers):
+    admin = _admin_user(db)
+
+    response = client.put(
+        f"{URL}/{admin.id}/role", headers=admin_headers, json={"role": "client"}
+    )
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "LAST_ADMIN"
+    db.refresh(admin)
+    assert admin.role == "admin"
+
+
+def test_last_admin_cannot_be_deactivated(client, db, admin_headers):
+    admin = _admin_user(db)
+
+    response = client.put(f"{URL}/{admin.id}/deactivate", headers=admin_headers)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "LAST_ADMIN"
+    db.refresh(admin)
+    assert admin.is_active is True
+
+
+def test_admin_can_step_down_when_another_admin_exists(client, db, admin_headers):
+    db.add(User(name="Second", email="second@example.com", role="admin"))
+    db.commit()
+    admin = _admin_user(db)
+
+    response = client.put(
+        f"{URL}/{admin.id}/role", headers=admin_headers, json={"role": "client"}
+    )
+
+    assert response.status_code == 200
+
+
+def test_inactive_admin_does_not_count_as_another_admin(client, db, admin_headers):
+    db.add(
+        User(name="Gone", email="gone@example.com", role="admin", is_active=False)
+    )
+    db.commit()
+    admin = _admin_user(db)
+
+    response = client.put(f"{URL}/{admin.id}/deactivate", headers=admin_headers)
+
+    assert response.status_code == 409
+
+
+def test_create_user_concurrent_duplicate_returns_409(
+    client, db, admin_headers, monkeypatch
+):
+    def failing_commit():
+        raise IntegrityError(
+            "INSERT", {}, Exception('violates unique constraint "users_email_key"')
+        )
+
+    monkeypatch.setattr(db, "commit", failing_commit)
+
+    response = client.post(
+        URL, headers=admin_headers, json={"name": "Al", "email": "al@example.com"}
+    )
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "DUPLICATE"
+
+
+def test_create_user_unrelated_integrity_error_is_raised(
+    client, db, admin_headers, monkeypatch
+):
+    def failing_commit():
+        raise IntegrityError("INSERT", {}, Exception("violates check constraint"))
+
+    monkeypatch.setattr(db, "commit", failing_commit)
+
+    with pytest.raises(IntegrityError):
+        client.post(
+            URL, headers=admin_headers, json={"name": "Al", "email": "al@example.com"}
+        )
+
+
+def test_user_role_check_constraint_rejects_unknown_role(db):
+    db.add(User(name="Odd", email="odd@example.com", role="superuser"))
+
+    with pytest.raises(IntegrityError):
+        db.commit()

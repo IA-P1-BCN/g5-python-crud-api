@@ -158,7 +158,7 @@ def test_deactivate_room_conflict_future_bookings(client, db):
     response = client.put(f"{URL}/{room.id}/deactivate")
     assert response.status_code == 409
     data = response.json()
-    assert data["code"] == "CONFLICT"
+    assert data["code"] == "ROOM_HAS_BOOKINGS"
 
 
 def test_deactivate_room_not_found(client):
@@ -925,3 +925,47 @@ def test_list_rooms_invalid_params_returns_422(client, qs):
 def _as_admin(client, admin_headers):
     """Rooms are admin-only (US05): act as admin unless a test sends its own headers."""
     client.headers.update(admin_headers)
+
+
+def _room_body(name="Race Room"):
+    return {
+        "name": name,
+        "capacity": 4,
+        "duration": 60,
+        "base_price": 50,
+        "slug": name.lower().replace(" ", "-"),
+        "genre": "Mystery",
+        "min_players": 2,
+        "difficulty": 3,
+        "hook": "hook",
+        "story": "story",
+        "audience": "everyone",
+    }
+
+
+def test_create_room_concurrent_duplicate_returns_409(client, db, monkeypatch):
+    from sqlalchemy.exc import IntegrityError
+
+    def failing_commit():
+        raise IntegrityError(
+            "INSERT", {}, Exception('violates unique constraint "uq_rooms_slug"')
+        )
+
+    monkeypatch.setattr(db, "commit", failing_commit)
+
+    response = client.post(URL, json=_room_body())
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "DUPLICATE"
+
+
+def test_create_room_unrelated_integrity_error_is_raised(client, db, monkeypatch):
+    from sqlalchemy.exc import IntegrityError
+
+    def failing_commit():
+        raise IntegrityError("INSERT", {}, Exception("violates check constraint"))
+
+    monkeypatch.setattr(db, "commit", failing_commit)
+
+    with pytest.raises(IntegrityError):
+        client.post(URL, json=_room_body())
