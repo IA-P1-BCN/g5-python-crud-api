@@ -75,6 +75,7 @@ POSTGRES_HOST=           # not read by the API
 POSTGRES_PORT=           # not read by the API
 SUPABASE_URL=            # Sprint 2
 SUPABASE_JWT_SECRET=     # Sprint 2
+ADMIN_EMAILS=            # Optional: comma-separated emails granted admin role on first login only
 ```
 
 The log level is fixed to `INFO` in `back/app/config/logging.py` (no `LOG_LEVEL` variable for now).
