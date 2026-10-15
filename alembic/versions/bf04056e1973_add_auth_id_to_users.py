@@ -1,7 +1,7 @@
 """add auth_id to users
 
 Revision ID: bf04056e1973
-Revises: 11f302616e11
+Revises: 2a3b4c5d6e7f
 Create Date: 2026-10-08 11:14:45.738855
 
 """

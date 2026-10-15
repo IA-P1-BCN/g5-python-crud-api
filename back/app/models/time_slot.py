@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from back.app.core.datetimes import as_utc
@@ -44,6 +44,7 @@ class TimeSlot(Base):
             "status IN ('available', 'blocked')",
             name="ck_time_slots_status",
         ),
+        Index("ix_time_slots_room_starts", "room_id", "starts_at"),
     )
 
     room: Mapped["Room"] = relationship(

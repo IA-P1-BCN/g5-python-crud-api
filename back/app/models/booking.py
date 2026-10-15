@@ -81,7 +81,8 @@ class Booking(Base):
             "status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')",
             name="ck_bookings_status",
         ),
-        # COMPLETED was added by ticket 043.
+        Index("ix_bookings_user_id", "user_id"),
+        Index("ix_bookings_time_slot_id", "time_slot_id"),
         Index(
             "uq_bookings_active_time_slot",
             "time_slot_id",
