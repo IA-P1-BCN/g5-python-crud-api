@@ -54,6 +54,8 @@ Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphe
 | DELETE | `/time-slots/{id}` | 1 | Delete (BR-S6) | 204 |
 | POST | `/rooms/{id}/time-slots/generate` | 2 | Bulk generate available slots (admin) | 200 |
 
+Every slot returned by `GET /time-slots` (the paginated list and the public day board) and by `GET /time-slots/{id}` includes `state`, computed by the API: `free` (bookable), `taken` (it has an active booking), `blocked` (blocked by an admin) or `past` (already ended). Precedence: `past`, then `blocked`, then `taken`. The list and `GET /time-slots/{id}` also include `is_bookable`. The `date` filter is a UTC day.
+
 `POST /rooms/{id}/time-slots/generate` is admin-only: 401 `UNAUTHORIZED` without a valid token, 403 `FORBIDDEN` for clients/staff. Body: `date_from`, `date_to` (inclusive UTC days, at most 90 days apart, BR-S8), `first_start`, `last_start`. It creates `available` slots per day spaced by `room.duration + 30 min` (BR-S7), skipping slots in the past (BR-S2) and overlaps (BR-S3). Returns `{"created_count": n, "skipped_count": m}`. An unknown room is 404 `NOT_FOUND`, an inactive room is 409 `ROOM_INACTIVE` (BR-R4), and an invalid date/time range is 422 `VALIDATION_ERROR`.
 
 ## Bookings (E3)
