@@ -241,8 +241,6 @@ def test_get_room_not_found(client):
     assert data["code"] == "NOT_FOUND"
 
 
-
-
 def _room_payload(**overrides) -> dict:
     payload = {
         "name": "El Faro",
@@ -424,8 +422,6 @@ def test_create_room_requires_catalog_fields(client):
     }
     response = client.post(URL, json=minimal)
     assert response.status_code == 422
-
-
 
 
 def test_update_room_partial_preserves_other_fields(client, db):
@@ -702,8 +698,6 @@ def test_activate_room_not_found(client):
     assert activate_res.json()["code"] == "NOT_FOUND"
 
 
-
-
 def test_room_response_exposes_is_active(client):
     room_id = _create_room(client, name="Sala Flag Activa")["id"]
 
@@ -901,3 +895,43 @@ def test_create_room_unrelated_integrity_error_is_raised(client, db, monkeypatch
 
     with pytest.raises(IntegrityError):
         client.post(URL, json=_room_body())
+
+
+def test_update_room_capacity_below_active_booking_players_returns_409(client, db):
+    from back.app.models import Booking, TimeSlot, User
+
+    room = Room(
+        name="Full Room",
+        slug="full-room",
+        capacity=6,
+        duration=60,
+        base_price=Decimal("50.00"),
+    )
+    user = User(email="cap@example.com", name="Cap")
+    start = datetime.now(UTC) + timedelta(days=3)
+    slot = TimeSlot(
+        room=room,
+        starts_at=start,
+        ends_at=start + timedelta(hours=1),
+        status="available",
+    )
+    booking = Booking(
+        user=user,
+        time_slot=slot,
+        players=5,
+        total_price=Decimal("250.00"),
+        status="CONFIRMED",
+    )
+    db.add_all([room, user, slot, booking])
+    db.commit()
+
+    response = client.put(f"{URL}/{room.id}", json={"capacity": 4})
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "INVALID_PLAYERS"
+    db.refresh(room)
+    assert room.capacity == 6
+
+
+def test_list_rooms_rejects_unknown_status_filter(client):
+    assert client.get(f"{URL}?status=banana").status_code == 422

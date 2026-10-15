@@ -81,12 +81,13 @@ def list_time_slots(
             TimeSlot.starts_at >= day_start,
             TimeSlot.starts_at < day_start + timedelta(days=1),
         )
-    if available:
+    if available is not None:
         has_active_booking = select(Booking.id).where(
             Booking.time_slot_id == TimeSlot.id,
             Booking.status.in_(ACTIVE_STATUSES),
         )
-        stmt = stmt.where(TimeSlot.status == "available", ~has_active_booking.exists())
+        bookable = and_(TimeSlot.status == "available", ~has_active_booking.exists())
+        stmt = stmt.where(bookable if available else ~bookable)
     return paginate(db, stmt.order_by(TimeSlot.starts_at, TimeSlot.id), params)
 
 
@@ -142,9 +143,7 @@ def update_time_slot(db: Session, slot_id: int, slot_in: TimeSlotUpdate) -> Time
 
     _ensure_valid_range(new_starts, new_ends, check_past="starts_at" in update_data)
     if "starts_at" in update_data or "ends_at" in update_data:
-        _ensure_no_overlap(
-            db, db_slot.room_id, new_starts, new_ends, ignore_id=slot_id
-        )
+        _ensure_no_overlap(db, db_slot.room_id, new_starts, new_ends, ignore_id=slot_id)
 
     if "starts_at" in update_data:
         db_slot.starts_at = new_starts
@@ -177,7 +176,19 @@ def get_day_board(db: Session, day: date) -> dict:
     day_end = day_start + timedelta(days=1)
 
     rooms = (
-        db.execute(select(Room).where(Room.status == "active").order_by(Room.name))
+        db.execute(
+            select(Room)
+            .options(
+                selectinload(
+                    Room.time_slots.and_(
+                        TimeSlot.status == "available",
+                        TimeSlot.starts_at > datetime.now(UTC),
+                    )
+                )
+            )
+            .where(Room.status == "active")
+            .order_by(Room.name)
+        )
         .scalars()
         .all()
     )

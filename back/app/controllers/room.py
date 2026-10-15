@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, time, timedelta
+from typing import Literal
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -49,6 +50,24 @@ def _ensure_slug_is_available(
         raise AppError(
             message="Room with this slug already exists",
             code="DUPLICATE",
+            status_code=409,
+        )
+
+
+def _ensure_capacity_fits_bookings(db: Session, room_id: int, capacity: int) -> None:
+    too_big = db.execute(
+        select(Booking.id)
+        .join(TimeSlot, Booking.time_slot_id == TimeSlot.id)
+        .where(
+            TimeSlot.room_id == room_id,
+            Booking.status.in_(ACTIVE_STATUSES),
+            Booking.players > capacity,
+        )
+    ).first()
+    if too_big:
+        raise AppError(
+            message="Capacity is lower than the players of an active booking",
+            code="INVALID_PLAYERS",
             status_code=409,
         )
 
@@ -128,6 +147,9 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
             status_code=422,
         )
 
+    if "capacity" in update_data:
+        _ensure_capacity_fits_bookings(db, room_id, effective_capacity)
+
     for key, value in update_data.items():
         setattr(room, key, value)
 
@@ -181,7 +203,9 @@ def deactivate_room(db: Session, room_id: int) -> Room:
     return room
 
 
-def list_rooms(db: Session, params: PageParams, status: str | None = None) -> dict:
+def list_rooms(
+    db: Session, params: PageParams, status: Literal["active", "inactive"] | None = None
+) -> dict:
     upcoming_slots = selectinload(
         Room.time_slots.and_(
             TimeSlot.status == "available", TimeSlot.starts_at > datetime.now(UTC)

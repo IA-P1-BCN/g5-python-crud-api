@@ -222,9 +222,7 @@ def test_delete_time_slot_success(client: TestClient, db: Session):
     db.commit()
     db.refresh(room)
 
-    starts_at = datetime.now(UTC) + timedelta(
-        days=3
-    )
+    starts_at = datetime.now(UTC) + timedelta(days=3)
     ends_at = starts_at + timedelta(hours=1)
 
     slot = TimeSlot(
@@ -582,8 +580,6 @@ def _create_bulk_room(db: Session, *, status: str = "active", **overrides) -> Ro
     db.commit()
     db.refresh(room)
     return room
-
-
 
 
 def _simple_room(db: Session, name: str, slug: str, status: str = "active") -> Room:
@@ -1038,7 +1034,10 @@ def test_update_time_slot_to_the_past_returns_422(client, db):
 
     response = client.put(
         f"/api/v1/time-slots/{slot.id}",
-        json={"starts_at": past.isoformat(), "ends_at": (past + timedelta(hours=1)).isoformat()},
+        json={
+            "starts_at": past.isoformat(),
+            "ends_at": (past + timedelta(hours=1)).isoformat(),
+        },
     )
 
     assert response.status_code == 422
@@ -1067,3 +1066,14 @@ def test_update_time_slot_overlap_returns_409(client, db):
 @pytest.fixture(autouse=True)
 def _as_admin(client, admin_headers):
     client.headers.update(admin_headers)
+
+
+def test_list_time_slots_available_false_returns_only_unavailable(
+    client: TestClient, db: Session
+):
+    room, slots = _room_with_slots(db, [None, "CONFIRMED", "PENDING", "CANCELLED"])
+
+    body = client.get(f"/api/v1/time-slots?room_id={room.id}&available=false").json()
+
+    assert [s["id"] for s in body["items"]] == [slots[1].id, slots[2].id]
+    assert not any(s["is_bookable"] for s in body["items"])
