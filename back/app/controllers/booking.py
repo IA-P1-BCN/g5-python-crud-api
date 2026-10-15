@@ -11,7 +11,7 @@ from back.app.core.errors import AppError
 from back.app.core.integrity import is_violation_of
 from back.app.core.pagination import PageParams, paginate
 from back.app.models import Booking, GameResult, TimeSlot, User
-from back.app.models.booking import ACTIVE_STATUSES, ensure_transition
+from back.app.models.booking import ACTIVE_STATUSES
 from back.app.schemas.booking import (
     BookingCreate,
     BookingDetail,
@@ -24,7 +24,30 @@ logger = logging.getLogger(__name__)
 
 MODIFIABLE_STATUSES = ("PENDING", "CONFIRMED")
 MIN_NOTICE = timedelta(hours=24)
+RESULT_MARKERS = (
+    "game_results.booking_id",
+    "game_results_booking_id_key",
+    "uq_game_results_booking_id",
+)
 SLOT_INDEX_MARKERS = ("uq_bookings_active_time_slot", "bookings.time_slot_id")
+
+
+TRANSITIONS: dict[str, set[str]] = {
+    "PENDING": {"CONFIRMED", "CANCELLED"},
+    "CONFIRMED": {"IN_PROGRESS", "CANCELLED"},
+    "IN_PROGRESS": {"COMPLETED"},
+    "COMPLETED": set(),
+    "CANCELLED": set(),
+}
+
+
+def ensure_transition(current: str, new: str, action: str) -> None:
+    if new not in TRANSITIONS[current]:
+        raise AppError(
+            f"Cannot {action} a {current} booking",
+            code="INVALID_TRANSITION",
+            status_code=409,
+        )
 
 
 def _utcnow() -> datetime:
@@ -48,11 +71,15 @@ def _commit_or_slot_taken(db: Session) -> None:
         ) from exc
 
 
-def _get_booking_or_404(db: Session, booking_id: int) -> Booking:
-    booking = db.get(Booking, booking_id, with_for_update=True)
+def _get_booking_or_404(db: Session, booking_id: int, *, lock: bool = False) -> Booking:
+    booking = db.get(Booking, booking_id, with_for_update=lock)
     if booking is None:
         raise AppError("Booking not found", code="NOT_FOUND", status_code=404)
     return booking
+
+
+def _result_duplicate() -> AppError:
+    return AppError("A result is already registered", code="DUPLICATE", status_code=409)
 
 
 def _to_detail(booking: Booking) -> BookingDetail:
@@ -87,12 +114,8 @@ def _ensure_slot_is_bookable(
         )
 
     remaining = as_utc(slot.starts_at) - _utcnow()
-    if remaining < min_notice:
+    if remaining < min_notice or remaining <= timedelta(0):
         raise AppError(late_message, code=late_code, status_code=409)
-    if remaining <= timedelta(0):
-        raise AppError(
-            "Time slot already started", code="SLOT_NOT_AVAILABLE", status_code=409
-        )
 
     already_booked = db.execute(
         select(Booking.id).where(
@@ -114,8 +137,7 @@ def _ensure_under_booking_limit(db: Session, user_id: int) -> None:
     )
     if active >= settings.max_active_bookings:
         raise AppError(
-            f"You cannot hold more than {settings.max_active_bookings} "
-            "active bookings",
+            f"You cannot hold more than {settings.max_active_bookings} active bookings",
             code="BOOKING_LIMIT_REACHED",
             status_code=409,
         )
@@ -153,7 +175,7 @@ def create_booking(
     if slot is None:
         raise AppError("Time slot not found", code="SLOT_NOT_FOUND", status_code=404)
 
-    user = db.get(User, booking_in.user_id)
+    user = db.get(User, booking_in.user_id, with_for_update=True)
     if user is None:
         raise AppError("User not found", code="USER_NOT_FOUND", status_code=404)
 
@@ -264,7 +286,7 @@ def get_booking(db: Session, booking_id: int, current_user: User) -> BookingDeta
 def update_booking(
     db: Session, booking_id: int, booking_in: BookingUpdate, current_user: User
 ) -> Booking:
-    booking = _get_booking_or_404(db, booking_id)
+    booking = _get_booking_or_404(db, booking_id, lock=True)
     _ensure_can_access(booking, current_user)
     if booking.status not in MODIFIABLE_STATUSES:
         raise AppError(
@@ -316,7 +338,7 @@ def update_booking(
 
 
 def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
-    booking = _get_booking_or_404(db, booking_id)
+    booking = _get_booking_or_404(db, booking_id, lock=True)
     _ensure_can_access(booking, current_user)
     ensure_transition(booking.status, "CANCELLED", "cancel")
 
@@ -334,7 +356,7 @@ def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
 
 
 def confirm_booking(db: Session, booking_id: int) -> Booking:
-    booking = _get_booking_or_404(db, booking_id)
+    booking = _get_booking_or_404(db, booking_id, lock=True)
 
     ensure_transition(booking.status, "CONFIRMED", "confirm")
 
@@ -345,7 +367,7 @@ def confirm_booking(db: Session, booking_id: int) -> Booking:
 
 
 def start_booking(db: Session, booking_id: int) -> Booking:
-    booking = _get_booking_or_404(db, booking_id)
+    booking = _get_booking_or_404(db, booking_id, lock=True)
 
     ensure_transition(booking.status, "IN_PROGRESS", "start")
 
@@ -363,7 +385,7 @@ def start_booking(db: Session, booking_id: int) -> Booking:
 
 
 def finish_booking(db: Session, booking_id: int) -> Booking:
-    booking = _get_booking_or_404(db, booking_id)
+    booking = _get_booking_or_404(db, booking_id, lock=True)
 
     ensure_transition(booking.status, "COMPLETED", "finish")
 
@@ -376,7 +398,7 @@ def finish_booking(db: Session, booking_id: int) -> Booking:
 def register_result(
     db: Session, booking_id: int, result_in: GameResultCreate
 ) -> GameResult:
-    booking = _get_booking_or_404(db, booking_id)
+    booking = _get_booking_or_404(db, booking_id, lock=True)
 
     if booking.status != "COMPLETED":
         raise AppError(
@@ -384,19 +406,19 @@ def register_result(
             code="INVALID_TRANSITION",
             status_code=409,
         )
-    duplicate = AppError(
-        "A result is already registered", code="DUPLICATE", status_code=409
-    )
     if booking.result is not None:
-        raise duplicate
+        raise _result_duplicate()
 
     result = GameResult(booking_id=booking.id, **result_in.model_dump())
     db.add(result)
     try:
         db.commit()
-    except IntegrityError:
+    except IntegrityError as exc:
         db.rollback()
-        raise duplicate from None
+        if not is_violation_of(exc, *RESULT_MARKERS):
+            raise
+        logger.warning("result rejected by the unique booking index")
+        raise _result_duplicate() from exc
     db.refresh(booking)
     return result
 
@@ -408,6 +430,8 @@ def list_user_history(
         raise AppError(
             "You can only see your own history", code="FORBIDDEN", status_code=403
         )
+    if db.get(User, user_id) is None:
+        raise AppError("User not found", code="USER_NOT_FOUND", status_code=404)
     stmt = _bookings_stmt(user_id=user_id, status="COMPLETED")
     games = [_to_detail(b) for b in db.scalars(stmt)]
     return sorted(games, key=lambda b: b.time_slot.starts_at, reverse=True)

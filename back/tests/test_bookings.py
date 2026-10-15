@@ -813,3 +813,28 @@ def test_staff_and_admin_are_not_limited(client, seed, db, monkeypatch):
 @pytest.fixture(autouse=True)
 def _as_admin(client, admin_headers):
     client.headers.update(admin_headers)
+
+
+def test_reading_a_booking_does_not_lock_the_row(client, seed, db, monkeypatch):
+    booking = make_booking(db, seed, seed.free_slot)
+    locks = []
+    original_get = db.get
+
+    def spy_get(entity, ident, **kwargs):
+        locks.append(kwargs.get("with_for_update", False))
+        return original_get(entity, ident, **kwargs)
+
+    monkeypatch.setattr(db, "get", spy_get)
+
+    assert client.get(f"{URL}/{booking.id}").status_code == 200
+    assert not any(locks)
+
+    assert client.put(f"{URL}/{booking.id}/confirm").status_code == 200
+    assert locks[-1] is True
+
+
+def test_history_of_unknown_user_returns_404(client):
+    response = client.get("/api/v1/users/9999/history")
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "USER_NOT_FOUND"

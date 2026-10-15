@@ -1,7 +1,7 @@
 import pytest
 
+from back.app.controllers.booking import TRANSITIONS, ensure_transition
 from back.app.core.errors import AppError
-from back.app.models.booking import TRANSITIONS, ensure_transition
 
 ALLOWED = [
     ("PENDING", "CONFIRMED"),

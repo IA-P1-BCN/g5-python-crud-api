@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 from sqlalchemy import event
+from sqlalchemy.exc import IntegrityError
 
 from back.app.models import Booking, Room, TimeSlot, User
 
@@ -147,3 +148,37 @@ def test_list_bookings_loads_results_in_one_query(client, db, login, add_booking
         event.remove(engine, "before_cursor_execute", count)
 
     assert len([q for q in queries if "FROM bookings" in q]) == 2
+
+
+def test_register_result_unrelated_integrity_error_is_not_duplicate(
+    client, db, login, add_booking, monkeypatch
+):
+    booking = add_booking()
+    headers = login("staff")
+
+    def failing_commit():
+        raise IntegrityError("INSERT", {}, Exception("violates foreign key constraint"))
+
+    monkeypatch.setattr(db, "commit", failing_commit)
+
+    with pytest.raises(IntegrityError):
+        client.post(URL.format(booking.id), json=BODY, headers=headers)
+
+
+def test_register_result_concurrent_request_returns_duplicate(
+    client, db, login, add_booking, monkeypatch
+):
+    booking = add_booking()
+    headers = login("staff")
+
+    def failing_commit():
+        raise IntegrityError(
+            "INSERT", {}, Exception("UNIQUE constraint failed: game_results.booking_id")
+        )
+
+    monkeypatch.setattr(db, "commit", failing_commit)
+
+    response = client.post(URL.format(booking.id), json=BODY, headers=headers)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "DUPLICATE"
