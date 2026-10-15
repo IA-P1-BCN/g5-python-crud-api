@@ -21,4 +21,17 @@ export default {
   adminRooms,
   adminUsers,
   adminStats,
-}
+  slots: {
+    title: 'Gestión de Franjas Horarias',
+    createSlot: 'Crear Franja',
+    editSlot: 'Editar Franja',
+    block: 'Bloquear',
+    unblock: 'Desbloquear',
+    delete: 'Eliminar',
+    errors: {
+      SLOT_OVERLAP: 'La franja horaria se solapa con otra existente.',
+      SLOT_ACTIVE_BOOKING: 'No se puede modificar o eliminar una franja con reserva activa.',
+    }
+  }
+};
+
