@@ -6,17 +6,7 @@ import { DayPicker } from '../components/DayPicker.jsx'
 import { SlotGrid } from '../components/SlotGrid.jsx'
 import { useSlots } from '../hooks/useSlots.js'
 import { useBookingDraftStore } from '../model/bookingDraft.store.js'
-
-const getUpcomingDates = (days = 3) =>
-  Array.from({ length: days }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() + i)
-    return {
-      dateString: d.toISOString().split('T')[0],
-      dayOfWeek: d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', ''),
-      dayNumber: d.getDate().toString().padStart(2, '0'),
-    }
-  })
+import { getUpcomingDates } from '../model/upcomingDates.js'
 
 export function BookingPage() {
   const { slug } = useParams()
