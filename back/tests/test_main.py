@@ -1,7 +1,6 @@
 import logging
 
 import pytest
-
 from fastapi.testclient import TestClient
 
 from back.app.core.errors import AppError

@@ -1,12 +1,12 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
 
 from back.app.controllers import booking as booking_controller
 from back.app.controllers import user as user_controller
 from back.app.core.pagination import Page, PageParams
-from back.app.database import get_db
+from back.app.core.responses import ADMIN_ERRORS
+from back.app.database import SessionDep
 from back.app.dependencies.auth import get_current_user, require_role
 from back.app.models import User
 from back.app.schemas.booking import BookingDetail
@@ -17,15 +17,9 @@ from back.app.schemas.user import (
     UserUpdate,
 )
 
-router = APIRouter(prefix="", tags=["Users"])
+router = APIRouter()
 
-SessionDep = Annotated[Session, Depends(get_db)]
 UserDep = Annotated[User, Depends(get_current_user)]
-
-ADMIN_ERRORS = {
-    401: {"description": "UNAUTHORIZED: missing or invalid token"},
-    403: {"description": "FORBIDDEN: role not allowed (admin only)"},
-}
 
 
 @router.post(

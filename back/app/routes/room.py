@@ -1,11 +1,11 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
 
 from back.app.controllers import room as room_controller
 from back.app.core.pagination import Page, PageParams
-from back.app.database import get_db
+from back.app.core.responses import ADMIN_ERRORS
+from back.app.database import SessionDep
 from back.app.dependencies.auth import require_role
 from back.app.schemas.room import (
     RoomCreate,
@@ -15,14 +15,8 @@ from back.app.schemas.room import (
     TimeSlotBulkGenerateResponse,
 )
 
-router = APIRouter(prefix="", tags=["Rooms"])
+router = APIRouter()
 
-ADMIN_ERRORS = {
-    401: {"description": "UNAUTHORIZED: missing or invalid token"},
-    403: {"description": "FORBIDDEN: role not allowed (admin only)"},
-}
-
-SessionDep = Annotated[Session, Depends(get_db)]
 
 
 @router.post(

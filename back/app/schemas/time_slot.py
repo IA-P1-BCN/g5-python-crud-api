@@ -2,7 +2,7 @@ from datetime import date, datetime
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from back.app.schemas.room import RoomResponse
 
@@ -35,6 +35,13 @@ class TimeSlotUpdate(BaseModel):
     status: Literal["available", "blocked"] | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def reject_explicit_null(self):
+        nulls = [name for name in self.model_fields_set if getattr(self, name) is None]
+        if nulls:
+            raise ValueError(f"{', '.join(sorted(nulls))} cannot be null")
+        return self
 
 
 class TimeSlotResponse(TimeSlotBase):
