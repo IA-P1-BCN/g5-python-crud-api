@@ -1,10 +1,11 @@
 import logging
 from datetime import UTC, date, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
+from back.app.config.settings import settings
 from back.app.core.datetimes import as_utc
 from back.app.core.errors import AppError
 from back.app.core.integrity import is_violation_of
@@ -48,7 +49,7 @@ def _commit_or_slot_taken(db: Session) -> None:
 
 
 def _get_booking_or_404(db: Session, booking_id: int) -> Booking:
-    booking = db.get(Booking, booking_id)
+    booking = db.get(Booking, booking_id, with_for_update=True)
     if booking is None:
         raise AppError("Booking not found", code="NOT_FOUND", status_code=404)
     return booking
@@ -105,6 +106,21 @@ def _ensure_slot_is_bookable(
         )
 
 
+def _ensure_under_booking_limit(db: Session, user_id: int) -> None:
+    active = db.scalar(
+        select(func.count(Booking.id)).where(
+            Booking.user_id == user_id, Booking.status.in_(ACTIVE_STATUSES)
+        )
+    )
+    if active >= settings.max_active_bookings:
+        raise AppError(
+            f"You cannot hold more than {settings.max_active_bookings} "
+            "active bookings",
+            code="BOOKING_LIMIT_REACHED",
+            status_code=409,
+        )
+
+
 def _ensure_can_access(booking: Booking, user: User) -> None:
     if user.role == "client" and booking.user_id != user.id:
         raise AppError(
@@ -143,6 +159,9 @@ def create_booking(
 
     if not user.is_active:
         raise AppError("User is inactive", code="USER_INACTIVE", status_code=409)
+
+    if current_user.role == "client":
+        _ensure_under_booking_limit(db, user.id)
 
     _ensure_slot_is_bookable(
         db,

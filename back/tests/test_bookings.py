@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 from sqlalchemy.exc import IntegrityError
 
+from back.app.config.settings import settings
 from back.app.controllers import booking as booking_controller
 from back.app.models import Booking, Room, TimeSlot, User
 
@@ -784,6 +785,58 @@ def test_active_slot_index_allows_booking_after_cancellation(db, seed):
     make_booking(db, seed, seed.free_slot)
 
     assert db.query(Booking).filter_by(time_slot_id=seed.free_slot.id).count() == 2
+
+
+def _book_as(client, user, headers, slot):
+    return client.post(
+        URL, headers=headers, json=payload(user.id, slot.id, 2)
+    )
+
+
+def test_client_cannot_exceed_active_bookings_limit(
+    client, seed, db, client_user, monkeypatch
+):
+    """BR-B9: a client holds at most N active bookings."""
+    monkeypatch.setattr(settings, "max_active_bookings", 2)
+    user, headers = client_user
+    slots = [add_slot(db, seed.room, LATER + timedelta(hours=3 * i)) for i in range(3)]
+
+    assert _book_as(client, user, headers, slots[0]).status_code == 201
+    assert _book_as(client, user, headers, slots[1]).status_code == 201
+    response = _book_as(client, user, headers, slots[2])
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "BOOKING_LIMIT_REACHED"
+
+
+def test_cancelled_bookings_do_not_count_for_the_limit(
+    client, seed, db, client_user, monkeypatch
+):
+    monkeypatch.setattr(settings, "max_active_bookings", 1)
+    user, headers = client_user
+    first, second = (
+        add_slot(db, seed.room, LATER + timedelta(hours=3 * i)) for i in range(2)
+    )
+    db.add(
+        Booking(
+            user_id=user.id,
+            time_slot_id=first.id,
+            players=2,
+            total_price=40,
+            status="CANCELLED",
+        )
+    )
+    db.commit()
+
+    assert _book_as(client, user, headers, second).status_code == 201
+
+
+def test_staff_and_admin_are_not_limited(client, seed, db, monkeypatch):
+    monkeypatch.setattr(settings, "max_active_bookings", 1)
+    slots = [add_slot(db, seed.room, LATER + timedelta(hours=3 * i)) for i in range(2)]
+
+    for slot in slots:
+        assert client.post(URL, json=payload(seed.user.id, slot.id)).status_code == 201
 
 
 @pytest.fixture(autouse=True)

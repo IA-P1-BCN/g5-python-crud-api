@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     shared_database_url: str | None = None
     supabase_url: str
     admin_emails: str = ""
+    max_active_bookings: int = 5
 
     @property
     def effective_database_url(self) -> str:
