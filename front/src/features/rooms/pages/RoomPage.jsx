@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom'
+import Atmosphere from '../components/Atmosphere.jsx'
 import { useRoom } from '../hooks/useRoom.js'
 import Alert from '@/shared/ui/Alert.jsx'
 import Button from '@/shared/ui/Button.jsx'
@@ -34,7 +35,8 @@ export default function RoomPage() {
     )
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
+    <main className="relative isolate mx-auto max-w-3xl p-6">
+      <Atmosphere slug={room.slug} />
       <h1 className="heading-hero text-text mb-2">{room.name}</h1>
       {room.genre && <p className="text-muted mb-4">{room.genre}</p>}
       {room.hook && <p className="text-text mb-4">{room.hook}</p>}
