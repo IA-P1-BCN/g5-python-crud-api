@@ -12,7 +12,6 @@ from back.app.models import Booking, Room, TimeSlot, User
 
 @pytest.fixture
 def seed(db):
-    """Hardcoded data: one row per business rule we need to test."""
     start = datetime(2030, 1, 1, 10, tzinfo=UTC)
 
     def slot(room, hours, status="available"):
@@ -84,7 +83,6 @@ def payload(user_id, slot_id, players=2):
 
 
 def test_create_booking_success(client, seed):
-    """BR-B3 status is PENDING, BR-B4 total_price = base_price x players."""
     response = client.post(URL, json=payload(seed.user.id, seed.free_slot.id, 2))
 
     assert response.status_code == 201
@@ -117,7 +115,6 @@ def test_create_booking_unknown_user_returns_404(client, seed):
 
 
 def test_create_booking_inactive_user_returns_409(client, seed):
-    """BR-U5."""
     response = client.post(URL, json=payload(seed.inactive_user.id, seed.free_slot.id))
 
     assert response.status_code == 409
@@ -125,7 +122,6 @@ def test_create_booking_inactive_user_returns_409(client, seed):
 
 
 def test_create_booking_inactive_room_returns_409(client, seed):
-    """BR-R4, BR-B1."""
     response = client.post(URL, json=payload(seed.user.id, seed.closed_room_slot.id))
 
     assert response.status_code == 409
@@ -133,7 +129,6 @@ def test_create_booking_inactive_room_returns_409(client, seed):
 
 
 def test_create_booking_blocked_slot_returns_409(client, seed):
-    """BR-S5, BR-B1."""
     response = client.post(URL, json=payload(seed.user.id, seed.blocked_slot.id))
 
     assert response.status_code == 409
@@ -141,7 +136,6 @@ def test_create_booking_blocked_slot_returns_409(client, seed):
 
 
 def test_create_booking_already_booked_slot_returns_409(client, seed):
-    """BR-B1."""
     response = client.post(URL, json=payload(seed.user.id, seed.taken_slot.id))
 
     assert response.status_code == 409
@@ -149,7 +143,6 @@ def test_create_booking_already_booked_slot_returns_409(client, seed):
 
 
 def test_create_booking_concurrent_request_returns_409(client, seed, db, monkeypatch):
-    """BR-B8: the unique index rejects a request that passed the pre-check."""
 
     def failing_commit():
         raise IntegrityError("INSERT", {}, Exception(SLOT_INDEX_ERROR))
@@ -160,19 +153,16 @@ def test_create_booking_concurrent_request_returns_409(client, seed, db, monkeyp
 
     assert response.status_code == 409
     assert response.json()["code"] == "SLOT_TAKEN"
-    # only the seed booking remains: the failed one was rolled back
     assert db.query(Booking).count() == 1
 
 
 def test_create_booking_zero_players_returns_422(client, seed):
-    """BR-B2 lower bound, checked by Pydantic."""
     response = client.post(URL, json=payload(seed.user.id, seed.free_slot.id, 0))
 
     assert response.status_code == 422
 
 
 def test_create_booking_more_players_than_capacity_returns_422(client, seed):
-    """BR-B2 upper bound: room capacity is 6, checked by the controller."""
     response = client.post(URL, json=payload(seed.user.id, seed.free_slot.id, 7))
 
     assert response.status_code == 422
@@ -228,7 +218,6 @@ def test_get_booking_not_found(client, seed):
 
 
 def make_booking(db, seed, slot, status="PENDING", players=2):
-    """Insert a booking on the given slot and return it."""
     booking = Booking(
         user_id=seed.user.id,
         time_slot_id=slot.id,
@@ -242,7 +231,6 @@ def make_booking(db, seed, slot, status="PENDING", players=2):
 
 
 def test_update_booking_players_recalculates_price(client, seed, db):
-    """BR-B7 happy path, BR-B4 total_price = base_price x players."""
     booking = db.query(Booking).one()
 
     response = client.put(f"{URL}/{booking.id}", json={"players": 3})
@@ -254,7 +242,6 @@ def test_update_booking_players_recalculates_price(client, seed, db):
 
 
 def test_update_booking_too_late_returns_409(client, seed, db):
-    """BR-B7: the slot starts in less than 24h."""
     begin = datetime.now(UTC) + timedelta(hours=2)
     soon_slot = TimeSlot(
         room_id=seed.room.id, starts_at=begin, ends_at=begin + timedelta(hours=1)
@@ -270,7 +257,6 @@ def test_update_booking_too_late_returns_409(client, seed, db):
 
 
 def test_update_booking_cancelled_returns_409(client, seed, db):
-    """BR-B7: only PENDING or CONFIRMED bookings can be modified."""
     booking = make_booking(db, seed, seed.free_slot, status="CANCELLED")
 
     response = client.put(f"{URL}/{booking.id}", json={"players": 3})
@@ -280,7 +266,6 @@ def test_update_booking_cancelled_returns_409(client, seed, db):
 
 
 def test_update_booking_over_capacity_returns_422(client, seed, db):
-    """BR-B2 upper bound: room capacity is 6."""
     booking = db.query(Booking).one()
 
     response = client.put(f"{URL}/{booking.id}", json={"players": 7})
@@ -317,7 +302,6 @@ def test_cancel_confirmed_booking_success(client, seed, db):
 
 
 def test_cancel_booking_frees_the_slot(client, seed, db):
-    """BR-B6: after cancelling, the slot can be booked again."""
     booking = make_booking(db, seed, seed.free_slot)
     client.put(f"{URL}/{booking.id}/cancel")
 
@@ -444,11 +428,9 @@ def add_room(db, name, capacity, base_price):
 LATER = datetime(2030, 1, 2, 10, tzinfo=UTC)
 
 
-# ---- change slot (US17, BR-L5, BR-B7) ----
 
 
 def test_change_slot_success_and_frees_old_slot(client, seed, db):
-    """BR-L5: the booking moves and the old slot becomes bookable again."""
     booking = make_booking(db, seed, seed.free_slot)
     new_slot = add_slot(db, seed.room, LATER)
 
@@ -463,7 +445,6 @@ def test_change_slot_success_and_frees_old_slot(client, seed, db):
 
 
 def test_change_slot_already_taken_returns_409(client, seed, db):
-    """BR-L5: the new slot already has an active booking."""
     booking = make_booking(db, seed, seed.free_slot)
 
     response = client.put(
@@ -475,7 +456,6 @@ def test_change_slot_already_taken_returns_409(client, seed, db):
 
 
 def test_change_slot_too_late_returns_409(client, seed, db):
-    """BR-L5: the new slot starts in less than 24h."""
     booking = make_booking(db, seed, seed.free_slot)
     soon_slot = add_slot(db, seed.room, datetime.now(UTC) + timedelta(hours=2))
 
@@ -486,7 +466,6 @@ def test_change_slot_too_late_returns_409(client, seed, db):
 
 
 def test_change_slot_to_another_room_recalculates_price(client, seed, db):
-    """BR-L5, BR-B4: other room, price uses the new room's base_price."""
     booking = make_booking(db, seed, seed.free_slot, players=2)
     other_room = add_room(db, "Mummy", capacity=8, base_price="30.00")
     other_slot = add_slot(db, other_room, LATER)
@@ -500,7 +479,6 @@ def test_change_slot_to_another_room_recalculates_price(client, seed, db):
 
 
 def test_change_slot_to_smaller_room_returns_422(client, seed, db):
-    """BR-B2: players must fit the capacity of the new room."""
     booking = make_booking(db, seed, seed.free_slot, players=4)
     small_room = add_room(db, "Tiny", capacity=2, base_price="10.00")
     small_slot = add_slot(db, small_room, LATER)
@@ -564,7 +542,6 @@ def test_update_booking_empty_body_returns_422(client, seed, db):
 
 
 def test_change_slot_concurrent_request_returns_409(client, seed, db, monkeypatch):
-    """BR-B8: the unique index rejects a move that passed the pre-check."""
     booking = make_booking(db, seed, seed.free_slot)
     new_slot = add_slot(db, seed.room, LATER)
 
@@ -580,7 +557,6 @@ def test_change_slot_concurrent_request_returns_409(client, seed, db, monkeypatc
 
 
 def test_update_players_only_too_late_returns_409(client, seed, db):
-    """BR-B7: players-only change is also blocked under 24h."""
     soon_slot = add_slot(db, seed.room, datetime.now(UTC) + timedelta(hours=2))
     booking = make_booking(db, seed, soon_slot)
 
@@ -591,7 +567,6 @@ def test_update_players_only_too_late_returns_409(client, seed, db):
 
 
 def test_change_slot_to_same_slot_is_a_noop(client, seed, db):
-    """Sending the current time_slot_id changes nothing."""
     booking = make_booking(db, seed, seed.free_slot)
 
     response = client.put(
@@ -643,11 +618,11 @@ def test_can_modify_false_when_cancelled(client, seed, db):
 
 
 def test_list_bookings_filter_date_from(client, seed, db):
-    make_booking(db, seed, add_slot(db, seed.room, LATER))  # 2030-01-02
+    make_booking(db, seed, add_slot(db, seed.room, LATER))
 
     data = client.get(URL, params={"date_from": "2030-01-02"}).json()["items"]
 
-    assert len(data) == 1  # the seed booking is on 2030-01-01
+    assert len(data) == 1
 
 
 def test_list_bookings_filter_date_to_is_inclusive(client, seed, db):
@@ -674,7 +649,7 @@ def test_list_bookings_invalid_date_returns_422(client, seed):
 
 
 def test_booking_room_slug_is_the_stored_slug(client, seed, db):
-    seed.room.slug = "custom-slug"  # differs from the name "Pharaoh"
+    seed.room.slug = "custom-slug"
     db.flush()
     booking_id = client.get(URL).json()["items"][0]["id"]
 
@@ -692,13 +667,12 @@ def test_list_bookings_date_from_after_date_to_returns_422(client, seed):
 
 
 def _add_bookings(db, seed, n):
-    """Seed already has 1 booking: add n more on distinct slots."""
     for i in range(n):
         make_booking(db, seed, add_slot(db, seed.room, LATER + timedelta(hours=2 * i)))
 
 
 def test_list_bookings_second_page(client, seed, db):
-    _add_bookings(db, seed, 4)  # 5 bookings in total
+    _add_bookings(db, seed, 4)
 
     body = client.get(URL, params={"page": 2, "size": 2}).json()
 
@@ -750,7 +724,6 @@ def test_list_bookings_invalid_pagination_returns_422(client, seed, qs):
 
 
 def test_create_booking_in_the_past_returns_409(client, seed, db):
-    """BR-B1: a slot that already started cannot be booked."""
     past_slot = add_slot(db, seed.room, datetime.now(UTC) - timedelta(days=3))
 
     response = client.post(URL, json=payload(seed.user.id, past_slot.id))
@@ -772,7 +745,6 @@ def test_create_booking_unrelated_integrity_error_is_not_slot_taken(
 
 
 def test_active_slot_index_rejects_two_active_bookings(db, seed):
-    """BR-B8 for real: the partial unique index, not a mock."""
     make_booking(db, seed, seed.free_slot)
 
     with pytest.raises(IntegrityError):
@@ -796,7 +768,6 @@ def _book_as(client, user, headers, slot):
 def test_client_cannot_exceed_active_bookings_limit(
     client, seed, db, client_user, monkeypatch
 ):
-    """BR-B9: a client holds at most N active bookings."""
     monkeypatch.setattr(settings, "max_active_bookings", 2)
     user, headers = client_user
     slots = [add_slot(db, seed.room, LATER + timedelta(hours=3 * i)) for i in range(3)]
@@ -841,5 +812,4 @@ def test_staff_and_admin_are_not_limited(client, seed, db, monkeypatch):
 
 @pytest.fixture(autouse=True)
 def _as_admin(client, admin_headers):
-    """Bookings are protected (US05): act as admin unless a test sends its own headers."""
     client.headers.update(admin_headers)

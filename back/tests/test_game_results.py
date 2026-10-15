@@ -12,7 +12,6 @@ BODY = {"completed": True, "completion_time": 2540}
 
 @pytest.fixture
 def add_booking(db):
-    """Creates a booking (today's slot) with the given status."""
     room = Room(
         name="Pharaoh",
         slug="pharaoh",
@@ -147,6 +146,4 @@ def test_list_bookings_loads_results_in_one_query(client, db, login, add_booking
     finally:
         event.remove(engine, "before_cursor_execute", count)
 
-    # one COUNT for the total + one SELECT for the page, whatever the row count
-    # (the auth lookup also runs a query, so only count the bookings ones)
     assert len([q for q in queries if "FROM bookings" in q]) == 2

@@ -9,7 +9,6 @@ URL = "/api/v1/rooms"
 
 
 def test_update_room_success(client, db):
-    """Verify successful update of a room (200 OK)."""
     room = Room(
         name="Original Room",
         slug="original-room",
@@ -39,7 +38,6 @@ def test_update_room_success(client, db):
 
 
 def test_update_room_not_found(client):
-    """Verify that updating a non-existent room returns 404."""
     response = client.put(
         f"{URL}/9999",
         json={"name": "Ghost Room", "capacity": 4, "duration": 60, "base_price": 50.00},
@@ -50,7 +48,6 @@ def test_update_room_not_found(client):
 
 
 def test_update_room_duplicate_name(client, db):
-    """Verify that renaming a room to an already existing name returns 409."""
     room1 = Room(
         name="Room A",
         slug="room-a",
@@ -80,7 +77,6 @@ def test_update_room_duplicate_name(client, db):
 
 
 def test_update_room_invalid_values(client, db):
-    """Verify that invalid values (e.g., capacity < 1) return 422."""
     room = Room(
         name="Valid Room",
         slug="valid-room",
@@ -96,7 +92,7 @@ def test_update_room_invalid_values(client, db):
         f"{URL}/{room.id}",
         json={
             "name": "Invalid Room",
-            "capacity": 0,  # Invalid
+            "capacity": 0,
             "duration": 60,
             "base_price": 50.00,
         },
@@ -105,7 +101,6 @@ def test_update_room_invalid_values(client, db):
 
 
 def test_deactivate_room_success(client, db):
-    """Verify successful deactivation of a room (200 OK)."""
     room = Room(
         name="Active Room",
         slug="active-room",
@@ -125,7 +120,6 @@ def test_deactivate_room_success(client, db):
 
 
 def test_deactivate_room_conflict_future_bookings(client, db):
-    """Verify that deactivating a room with future active bookings returns 409 (D-03)."""
     from back.app.models import Booking, TimeSlot, User
 
     room = Room(
@@ -162,7 +156,6 @@ def test_deactivate_room_conflict_future_bookings(client, db):
 
 
 def test_deactivate_room_not_found(client):
-    """Verify that deactivating a non-existent room returns 404."""
     response = client.put(f"{URL}/9999/deactivate")
     assert response.status_code == 404
     data = response.json()
@@ -170,7 +163,6 @@ def test_deactivate_room_not_found(client):
 
 
 def test_list_rooms_all(client, db):
-    """Verify listing all rooms returns 200 and the full list."""
     room1 = Room(
         name="Room 1",
         slug="room-1",
@@ -197,7 +189,6 @@ def test_list_rooms_all(client, db):
 
 
 def test_list_rooms_filter_status(client, db):
-    """Verify filtering rooms by status=active works correctly."""
     room1 = Room(
         name="Active Room",
         slug="active-room-filter",
@@ -224,7 +215,6 @@ def test_list_rooms_filter_status(client, db):
 
 
 def test_get_room_success(client, db):
-    """Verify getting an existing room by ID returns 200."""
     room = Room(
         name="Specific Room",
         slug="specific-room",
@@ -245,14 +235,12 @@ def test_get_room_success(client, db):
 
 
 def test_get_room_not_found(client):
-    """Verify getting a non-existent room returns 404."""
     response = client.get(f"{URL}/9999")
     assert response.status_code == 404
     data = response.json()
     assert data["code"] == "NOT_FOUND"
 
 
-# --- Ticket 056 Catalog Fields Acceptance Criteria Tests ---
 
 
 def _room_payload(**overrides) -> dict:
@@ -274,7 +262,6 @@ def _room_payload(**overrides) -> dict:
 
 
 def _create_room(client, **overrides) -> dict:
-    """Create a room through the API and return its JSON body."""
     payload = _room_payload(**overrides)
     payload.pop("slug", None)
     response = client.post(URL, json=payload)
@@ -283,7 +270,6 @@ def _create_room(client, **overrides) -> dict:
 
 
 def test_ac_01_schema_defaults_and_fields(db):
-    """AC-01: catalog columns exist and get their default values."""
     room = Room(
         name="Faro Defaults",
         slug="faro-defaults",
@@ -305,7 +291,6 @@ def test_ac_01_schema_defaults_and_fields(db):
 
 
 def test_ac_02_crud_catalog_fields(client):
-    """AC-02: create / edit / get / list accept and return the new fields."""
     create = client.post(URL, json=_room_payload())
     assert create.status_code == 201
     assert create.json()["slug"] == "el-faro"
@@ -326,7 +311,6 @@ def test_ac_02_crud_catalog_fields(client):
 
 
 def test_ac_03_duplicate_slug_returns_409(client):
-    """AC-03: a repeated slug is rejected with 409 DUPLICATE."""
     first = client.post(URL, json=_room_payload(name="Faro Unico", slug="faro-unico"))
     assert first.status_code == 201
 
@@ -338,7 +322,6 @@ def test_ac_03_duplicate_slug_returns_409(client):
 
 
 def test_ac_03_duplicate_name_returns_409(client):
-    """BR-R1: a repeated room name is rejected with 409 DUPLICATE."""
     first = client.post(URL, json=_room_payload(name="Faro Twin", slug="faro-twin-1"))
     assert first.status_code == 201
 
@@ -350,7 +333,6 @@ def test_ac_03_duplicate_name_returns_409(client):
 
 
 def test_ac_03_min_players_over_capacity_returns_422(client):
-    """AC-03 + BR-X1: min_players > capacity returns the project error shape."""
     response = client.post(
         URL, json=_room_payload(slug="faro-bad-min", capacity=5, min_players=6)
     )
@@ -359,7 +341,6 @@ def test_ac_03_min_players_over_capacity_returns_422(client):
 
 
 def test_ac_03_difficulty_out_of_range_returns_422(client):
-    """AC-03: difficulty must be between 1 and 5."""
     for difficulty in (0, 6):
         response = client.post(
             URL,
@@ -369,13 +350,11 @@ def test_ac_03_difficulty_out_of_range_returns_422(client):
 
 
 def test_ac_03_invalid_slug_format_returns_422(client):
-    """AC-03: client-supplied slugs must be lowercase with hyphens only."""
     response = client.post(URL, json=_room_payload(slug="Faro Uno"))
     assert response.status_code == 422
 
 
 def test_ac_04_get_room_by_slug(client):
-    """AC-04: a room can be fetched by slug."""
     payload = _room_payload(name="Faro Route", slug="faro-route")
     create = client.post(URL, json=payload)
     assert create.status_code == 201
@@ -386,21 +365,18 @@ def test_ac_04_get_room_by_slug(client):
 
 
 def test_get_room_by_missing_slug_returns_404(client):
-    """A lookup by an unknown slug returns 404 NOT_FOUND."""
     response = client.get(f"{URL}/no-such-room")
     assert response.status_code == 404
     assert response.json()["code"] == "NOT_FOUND"
 
 
 def test_get_room_unicode_numeric_lookup_returns_404(client):
-    """Unicode digits like \"²\" are not valid IDs or slugs."""
     response = client.get(f"{URL}/\u00b2")
     assert response.status_code == 404
     assert response.json()["code"] == "NOT_FOUND"
 
 
 def test_create_room_generates_slug_from_name(client):
-    """A room created without a slug gets one generated from its name."""
     payload = _room_payload(name="Escape Room Alpha", slug=None)
     response = client.post(URL, json=payload)
     assert response.status_code == 201
@@ -408,7 +384,6 @@ def test_create_room_generates_slug_from_name(client):
 
 
 def test_create_room_numeric_name_gets_lettered_slug(client):
-    """A digits-only name must still produce a valid slug (BR: at least one letter)."""
     response = client.post(URL, json=_room_payload(name="1923", slug=None))
     assert response.status_code == 201
     assert response.json()["slug"] == "sala-1923"
@@ -419,13 +394,11 @@ def test_create_room_numeric_name_gets_lettered_slug(client):
 
 
 def test_create_room_rejects_digits_only_slug(client):
-    """A client-supplied slug without any letter is rejected with 422."""
     response = client.post(URL, json=_room_payload(slug="1923"))
     assert response.status_code == 422
 
 
 def test_list_rooms_survives_legacy_digits_only_slug(client, db):
-    """A stored digits-only slug (pre-fix data) no longer breaks GET /rooms."""
     room = Room(
         name="Legacy 1923",
         slug="1923",
@@ -443,7 +416,6 @@ def test_list_rooms_survives_legacy_digits_only_slug(client, db):
 
 
 def test_create_room_requires_catalog_fields(client):
-    """The catalog fields are required when creating a room."""
     minimal = {
         "name": "Minimal Room",
         "capacity": 4,
@@ -454,11 +426,9 @@ def test_create_room_requires_catalog_fields(client):
     assert response.status_code == 422
 
 
-# --- Partial update regression tests ---
 
 
 def test_update_room_partial_preserves_other_fields(client, db):
-    """PUT with a single field keeps every stored value untouched."""
     room = Room(
         name="Partial Room",
         capacity=6,
@@ -489,7 +459,6 @@ def test_update_room_partial_preserves_other_fields(client, db):
 
 
 def test_update_room_rejects_null_for_not_null_columns(client, db):
-    """Explicit NULL for a NOT NULL column returns 422, not a silent no-op."""
     room = Room(
         name="Keep Name",
         slug="keep-name",
@@ -508,7 +477,6 @@ def test_update_room_rejects_null_for_not_null_columns(client, db):
 
 
 def test_update_room_rejects_unknown_fields(client, db):
-    """PUT ignores nothing: unknown fields (e.g. slug) return 422."""
     room = Room(
         name="Immutable Slug",
         slug="immutable-slug",
@@ -525,7 +493,6 @@ def test_update_room_rejects_unknown_fields(client, db):
 
 
 def test_update_room_partial_validates_effective_state(client, db):
-    """BR-R7 is checked against stored + supplied values on partial updates."""
     room = Room(
         name="BR Room",
         capacity=4,
@@ -548,10 +515,6 @@ def test_update_room_partial_validates_effective_state(client, db):
 
 
 def test_criterion_1_catalog_fields_and_defaults(client):
-    """
-    Criterion 1: Room has slug (unique), genre, min_players, difficulty (1 to 5),
-    hook, story and audience. Omitting optional fields applies safe defaults.
-    """
     response = client.post(
         "/api/v1/rooms",
         json={
@@ -579,10 +542,6 @@ def test_criterion_1_catalog_fields_and_defaults(client):
 
 
 def test_criterion_2_crud_accepts_and_returns_catalog_fields(client):
-    """
-    Criterion 2: Create / edit / get / list rooms accept and return the new fields.
-    """
-    # 1. Create
     create_res = client.post(
         "/api/v1/rooms",
         json={
@@ -601,12 +560,10 @@ def test_criterion_2_crud_accepts_and_returns_catalog_fields(client):
     assert create_res.status_code == 201
     room_id = create_res.json()["id"]
 
-    # 2. Get by ID
     get_res = client.get(f"/api/v1/rooms/{room_id}")
     assert get_res.status_code == 200
     assert get_res.json()["genre"] == "Aventura"
 
-    # 3. Edit (partial PUT)
     update_res = client.put(
         f"/api/v1/rooms/{room_id}",
         json={"genre": "Ciencia Ficción", "difficulty": 5},
@@ -615,7 +572,6 @@ def test_criterion_2_crud_accepts_and_returns_catalog_fields(client):
     assert update_res.json()["genre"] == "Ciencia Ficción"
     assert update_res.json()["difficulty"] == 5
 
-    # 4. List rooms
     list_res = client.get("/api/v1/rooms")
     assert list_res.status_code == 200
     rooms = list_res.json()["items"]
@@ -623,10 +579,6 @@ def test_criterion_2_crud_accepts_and_returns_catalog_fields(client):
 
 
 def test_criterion_3_business_validations_and_duplicate_slug(client):
-    """
-    Criterion 3: Validation: min_players between 1 and capacity, difficulty 1-5,
-    slug unique (409 DUPLICATE).
-    """
     payload_base = {
         "capacity": 4,
         "duration": 60,
@@ -639,14 +591,12 @@ def test_criterion_3_business_validations_and_duplicate_slug(client):
         "audience": "General",
     }
 
-    # Create the first room to force a duplicate slug
     res1 = client.post(
         "/api/v1/rooms",
         json={**payload_base, "name": "Sala Única", "slug": "sala-unica"},
     )
     assert res1.status_code == 201
 
-    # Attempt 1: Duplicate slug -> 409 DUPLICATE
     res_dup = client.post(
         "/api/v1/rooms",
         json={**payload_base, "name": "Otra Sala", "slug": "sala-unica"},
@@ -654,7 +604,6 @@ def test_criterion_3_business_validations_and_duplicate_slug(client):
     assert res_dup.status_code == 409
     assert res_dup.json()["code"] == "DUPLICATE"
 
-    # Attempt 2: min_players > capacity -> 422 VALIDATION_ERROR (BR-R7)
     res_min = client.post(
         "/api/v1/rooms",
         json={
@@ -666,7 +615,6 @@ def test_criterion_3_business_validations_and_duplicate_slug(client):
     )
     assert res_min.status_code == 422
 
-    # Attempt 3: difficulty out of range (> 5) -> 422
     res_diff = client.post(
         "/api/v1/rooms",
         json={**payload_base, "name": "Sala Diff Invalida", "difficulty": 6},
@@ -675,9 +623,6 @@ def test_criterion_3_business_validations_and_duplicate_slug(client):
 
 
 def test_criterion_4_get_room_by_slug_routing(client):
-    """
-    Criterion 4: GET /api/v1/rooms/{slug} so the front can route /salas/faro.
-    """
     client.post(
         "/api/v1/rooms",
         json={
@@ -703,7 +648,6 @@ def test_criterion_4_get_room_by_slug_routing(client):
 
 
 def test_activate_room_success(client, db):
-    """PUT /api/v1/rooms/{id}/activate sets status=active (200)."""
     room_id = _create_room(client, name="Sala para Activar")["id"]
     client.put(f"{URL}/{room_id}/deactivate")
 
@@ -714,7 +658,6 @@ def test_activate_room_success(client, db):
 
 
 def test_activate_room_idempotent(client, db):
-    """An already active room is returned unchanged (idempotent)."""
     room_id = _create_room(client, name="Sala Ya Activa")["id"]
 
     activate_res = client.put(f"{URL}/{room_id}/activate")
@@ -724,7 +667,6 @@ def test_activate_room_idempotent(client, db):
 
 
 def test_activate_room_with_past_bookings(client, db):
-    """A room whose only bookings are in the past can be reactivated (200)."""
     from back.app.models import Booking, TimeSlot, User
 
     room_id = _create_room(client, name="Sala con Historial")["id"]
@@ -755,17 +697,14 @@ def test_activate_room_with_past_bookings(client, db):
 
 
 def test_activate_room_not_found(client):
-    """Activating an unknown room returns 404 NOT_FOUND."""
     activate_res = client.put("/api/v1/rooms/99999/activate")
     assert activate_res.status_code == 404
     assert activate_res.json()["code"] == "NOT_FOUND"
 
 
-# --- Ticket 059: is_active and has_upcoming_slots (BR-R6) ---
 
 
 def test_room_response_exposes_is_active(client):
-    """GET /rooms/{id} returns the derived is_active flag."""
     room_id = _create_room(client, name="Sala Flag Activa")["id"]
 
     body = client.get(f"{URL}/{room_id}").json()
@@ -775,7 +714,6 @@ def test_room_response_exposes_is_active(client):
 
 
 def test_room_response_is_active_false_when_deactivated(client, db):
-    """A deactivated room reports is_active=False."""
     room_id = _create_room(client, name="Sala Flag Inactiva")["id"]
     client.put(f"{URL}/{room_id}/deactivate")
 
@@ -786,7 +724,6 @@ def test_room_response_is_active_false_when_deactivated(client, db):
 
 
 def test_has_upcoming_slots_false_without_slots(client):
-    """BR-R6: a room without slots is not shown to clients."""
     room_id = _create_room(client, name="Sala Sin Slots")["id"]
 
     body = client.get(f"{URL}/{room_id}").json()
@@ -795,7 +732,6 @@ def test_has_upcoming_slots_false_without_slots(client):
 
 
 def test_has_upcoming_slots_false_with_only_past_slots(client, db):
-    """BR-R6: a room whose slots are all in the past is hidden."""
     from back.app.models import TimeSlot
 
     room_id = _create_room(client, name="Sala Solo Pasado")["id"]
@@ -816,7 +752,6 @@ def test_has_upcoming_slots_false_with_only_past_slots(client, db):
 
 
 def test_has_upcoming_slots_true_with_free_future_slot(client, db):
-    """BR-R6: a future free slot keeps the room visible."""
     from back.app.models import TimeSlot
 
     room_id = _create_room(client, name="Sala Libre Futuro")["id"]
@@ -837,7 +772,6 @@ def test_has_upcoming_slots_true_with_free_future_slot(client, db):
 
 
 def test_has_upcoming_slots_true_when_all_future_slots_taken(client, db):
-    """BR-R6: a fully booked room stays visible (shown as full)."""
     from back.app.models import Booking, TimeSlot, User
 
     room_id = _create_room(client, name="Sala Llena")["id"]
@@ -865,7 +799,6 @@ def test_has_upcoming_slots_true_when_all_future_slots_taken(client, db):
 
 
 def test_has_upcoming_slots_false_with_only_blocked_slots(client, db):
-    """BR-R6: a blocked slot is neither free nor taken, so it does not count."""
     from back.app.models import TimeSlot
 
     room_id = _create_room(client, name="Sala Bloqueada")["id"]
@@ -923,7 +856,6 @@ def test_list_rooms_invalid_params_returns_422(client, qs):
 
 @pytest.fixture(autouse=True)
 def _as_admin(client, admin_headers):
-    """Rooms are admin-only (US05): act as admin unless a test sends its own headers."""
     client.headers.update(admin_headers)
 
 

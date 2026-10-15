@@ -353,7 +353,6 @@ def test_get_current_user_recovers_from_concurrent_first_login(
         user_metadata={"full_name": "First Request"},
     )
 
-    # Simulate another request winning the insert race.
     original_commit = db.commit
 
     def commit_with_concurrent_insert():
@@ -369,8 +368,6 @@ def test_get_current_user_recovers_from_concurrent_first_login(
         db.add(concurrent_user)
         original_commit()
 
-        # The competing request has committed the user.
-        # Simulate the unique-constraint error of our insert.
         raise IntegrityError(
             "INSERT INTO users",
             {},

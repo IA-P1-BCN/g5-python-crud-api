@@ -24,7 +24,6 @@ class RoomBase(BaseModel):
         ..., ge=0, decimal_places=2, description="Base price per player"
     )
 
-    # Catalog fields (Ticket 056 / #105)
     slug: str | None = Field(
         default=None,
         description="Unique URL slug (lowercase letters, digits and hyphens). "
@@ -43,8 +42,6 @@ class RoomBase(BaseModel):
 
 
 class RoomCreate(RoomBase):
-    # Validated only on input: responses must render whatever is stored, so a
-    # legacy numeric slug cannot 500 the whole room listing.
     @field_validator("slug")
     @classmethod
     def validate_slug(cls, value: str | None) -> str | None:
@@ -76,7 +73,6 @@ class RoomResponse(RoomBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# --- Time Slot Bulk Generation Schemas (Ticket 058) ---
 
 
 class TimeSlotBulkGenerateRequest(BaseModel):

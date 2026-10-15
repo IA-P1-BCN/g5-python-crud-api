@@ -15,11 +15,6 @@ if TYPE_CHECKING:
 
 
 def generate_slug(name: str) -> str:
-    """Build a URL-friendly slug from a room name (e.g. "Escape Room Alpha").
-
-    Slugs must contain at least one letter (see RoomCreate.validate_slug), so a
-    digits-only slug gets a "sala-" prefix: "1923" becomes "sala-1923".
-    """
     normalized = unicodedata.normalize("NFKD", name)
     ascii_name = normalized.encode("ascii", "ignore").decode("ascii")
     slug = re.sub(r"[^a-z0-9]+", "-", ascii_name.lower()).strip("-")
@@ -46,7 +41,6 @@ class Room(Base):
         server_default=text("'active'"),
     )
 
-    # Catalog fields (Ticket 056 / #105)
     slug: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
@@ -89,7 +83,6 @@ class Room(Base):
             "status IN ('active', 'inactive')",
             name="ck_rooms_status",
         ),
-        # Business Rules DB Constraints (BR-R7, difficulty 1-5)
         CheckConstraint(
             "min_players >= 1 AND min_players <= capacity",
             name="ck_rooms_min_players_range",
@@ -106,17 +99,10 @@ class Room(Base):
 
     @property
     def is_active(self) -> bool:
-        """Rooms are archived with ``status=inactive`` (BR-R3)."""
         return self.status == "active"
 
     @property
     def has_upcoming_slots(self) -> bool:
-        """BR-R6: an active room is shown while it has a future slot.
-
-        A slot counts when it is available (free or taken, i.e. not blocked)
-        and has not started yet. A fully booked room therefore still returns
-        ``True`` and stays visible as full.
-        """
         now = datetime.now(UTC)
         return any(
             slot.status == "available" and as_utc(slot.starts_at) > now

@@ -31,7 +31,6 @@ def room(db):
 
 @pytest.fixture
 def add_booking(db, room):
-    """Creates a slot (offset_days from today, at `hour` UTC) with one booking."""
     count = 0
 
     def _add(offset_days, hour, status="CONFIRMED"):
@@ -60,7 +59,6 @@ def add_booking(db, room):
 
 @pytest.fixture
 def login(db, client, make_token):
-    """Creates a user with the given role and returns auth headers for it."""
 
     def _login(role):
         sub = f"auth-{role}"

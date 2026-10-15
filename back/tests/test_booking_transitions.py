@@ -14,18 +14,18 @@ ALLOWED = [
 
 @pytest.mark.parametrize(("current", "new"), ALLOWED)
 def test_allowed_transition_passes(current, new):
-    ensure_transition(current, new, "change")  # does not raise
+    ensure_transition(current, new, "change")
 
 
 @pytest.mark.parametrize(
     ("current", "new"),
     [
-        ("PENDING", "IN_PROGRESS"),  # cannot skip CONFIRMED
-        ("CONFIRMED", "COMPLETED"),  # cannot skip IN_PROGRESS
-        ("IN_PROGRESS", "CANCELLED"),  # a running game cannot be cancelled
-        ("COMPLETED", "CANCELLED"),  # final state
-        ("CANCELLED", "CONFIRMED"),  # final state
-        ("COMPLETED", "IN_PROGRESS"),  # no going back
+        ("PENDING", "IN_PROGRESS"),
+        ("CONFIRMED", "COMPLETED"),
+        ("IN_PROGRESS", "CANCELLED"),
+        ("COMPLETED", "CANCELLED"),
+        ("CANCELLED", "CONFIRMED"),
+        ("COMPLETED", "IN_PROGRESS"),
     ],
 )
 def test_forbidden_transition_raises_409(current, new):

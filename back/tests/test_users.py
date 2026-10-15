@@ -480,7 +480,6 @@ def test_deactivate_unknown_user_returns_404(client, admin_headers):
 
 
 def _history_setup(db, make_token):
-    """Alice (client), Bob (client), Staff; Alice owns 2 slots."""
     alice = User(name="Alice", email="a@h.com", auth_id="alice-sub")
     bob = User(name="Bob", email="b@h.com", auth_id="bob-sub")
     staff = User(name="Sam", email="s@h.com", auth_id="staff-sub", role="staff")
@@ -629,7 +628,6 @@ def test_list_users_invalid_params_returns_422(client, admin_headers, qs):
     assert client.get(f"{URL}?{qs}", headers=admin_headers).status_code == 422
 
 
-# Ticket 039: own profile
 
 
 def test_get_my_profile_returns_authenticated_user(client, client_user):

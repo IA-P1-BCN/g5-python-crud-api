@@ -12,7 +12,6 @@ class Page[T](BaseModel):
 
 
 class PageParams:
-    # Query(ge/le) makes FastAPI answer 422 by itself: no manual check needed
     def __init__(
         self,
         page: int = Query(1, ge=1),
@@ -23,7 +22,6 @@ class PageParams:
 
 
 def paginate(db: Session, stmt, params: PageParams) -> dict:
-    # the count must not carry the ORDER BY: useless and slower
     total = db.scalar(select(func.count()).select_from(stmt.order_by(None).subquery()))
     rows = db.scalars(
         stmt.offset((params.page - 1) * params.size).limit(params.size)

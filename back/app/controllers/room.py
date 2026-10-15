@@ -20,10 +20,8 @@ from back.app.schemas.room import (
 
 DUPLICATE_MARKERS = ("uq_rooms_slug", "rooms_name_key", "rooms.slug", "rooms.name")
 
-# BR-S7: bulk generation spaces slot starts by duration + reset buffer.
 SLOT_RESET_BUFFER_MINUTES = 30
 
-# BR-S8: cap the generated range so one request cannot create thousands of rows.
 MAX_BULK_GENERATE_DAYS = 90
 
 
@@ -56,7 +54,6 @@ def _ensure_slug_is_available(
 
 
 def create_room(db: Session, room_in: RoomCreate) -> Room:
-    # BR-R7: validated here, like on update, so both return the same error shape.
     if room_in.min_players > room_in.capacity:
         raise AppError(
             message="BR-R7: min_players must be lower than or equal to capacity",
@@ -109,8 +106,6 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
             status_code=404,
         )
 
-    # Only apply fields the client actually sent (partial update). NULL values on
-    # NOT NULL columns are rejected above, so none reach the ORM object.
     raw_updates = room_in.model_dump(exclude_unset=True)
     for field_name, value in raw_updates.items():
         if value is None:
@@ -124,7 +119,6 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
     if "name" in update_data and update_data["name"] != room.name:
         _ensure_name_is_available(db, update_data["name"], room_id=room_id)
 
-    # BR-R7: validate against the effective room state (stored + supplied).
     effective_capacity = update_data.get("capacity", room.capacity)
     effective_min_players = update_data.get("min_players", room.min_players)
     if effective_min_players > effective_capacity:
@@ -200,8 +194,6 @@ def list_rooms(db: Session, params: PageParams, status: str | None = None) -> di
 
 
 def get_room_by_id_or_slug(db: Session, room_id_or_slug: str) -> Room:
-    # isascii() rules out unicode digits ("²".isdigit() is True) and slugs always
-    # contain at least one letter, so a pure number is an ID.
     if room_id_or_slug.isascii() and room_id_or_slug.isdigit():
         room = db.get(Room, int(room_id_or_slug))
     else:
@@ -226,7 +218,6 @@ def activate_room(db: Session, room_id: int) -> Room:
             code="NOT_FOUND",
             status_code=404,
         )
-    # Idempotent: an already active room is returned unchanged
     if room.status == "active":
         return room
 
@@ -254,7 +245,6 @@ def bulk_generate_time_slots(
             status_code=409,
         )
 
-    # BR-S8: validated here, like BR-R7, so the error keeps the API error shape.
     if payload.date_from > payload.date_to:
         raise AppError(
             message="date_from must not be after date_to",
@@ -284,7 +274,6 @@ def bulk_generate_time_slots(
         payload.date_to + timedelta(days=1), time.min, tzinfo=UTC
     )
 
-    # Load existing slots of the range once instead of querying per slot.
     existing_rows = db.execute(
         select(TimeSlot.starts_at, TimeSlot.ends_at).where(
             TimeSlot.room_id == room_id,
@@ -297,8 +286,6 @@ def bulk_generate_time_slots(
     created_count = 0
     skipped_count = 0
 
-    # Work with full datetimes: stepping with time() alone wraps around midnight
-    # and a slot after 23:59 would never leave the inner loop.
     current_date = payload.date_from
     while current_date <= payload.date_to:
         slot_start_dt = datetime.combine(current_date, payload.first_start, tzinfo=UTC)
@@ -307,13 +294,9 @@ def bulk_generate_time_slots(
         while slot_start_dt <= last_start_dt:
             slot_end_dt = slot_start_dt + timedelta(minutes=duration_minutes)
 
-            if slot_start_dt < now:
-                # BR-S2: a slot cannot start in the past
-                skipped_count += 1
-            elif any(
+            if slot_start_dt < now or any(
                 start < slot_end_dt and end > slot_start_dt for start, end in existing
             ):
-                # BR-S3: slots of the same room cannot overlap
                 skipped_count += 1
             else:
                 db.add(

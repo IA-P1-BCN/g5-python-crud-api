@@ -9,7 +9,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-# Default configuration so the app does not fail when importing settings.
 os.environ.setdefault("DATABASE_URL", "sqlite://")
 os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
 
@@ -120,7 +119,6 @@ def make_token():
 
 @pytest.fixture
 def db():
-    """In-memory SQLite database, brand new and isolated for each test."""
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -141,7 +139,6 @@ def db():
 
 @pytest.fixture
 def client(db):
-    """FastAPI HTTP client that points the database to the test environment."""
 
     def override_get_db():
         yield db
@@ -155,7 +152,6 @@ def client(db):
 
 @pytest.fixture
 def admin_headers(db, make_token):
-    """Create an admin user and return valid authentication headers."""
     admin = User(
         auth_id="test-admin-sub",
         name="Test Admin",
@@ -183,7 +179,6 @@ def _headers_for(db, make_token, auth_id, name, email, role):
 
 @pytest.fixture
 def staff_headers(db, make_token):
-    """Create a staff user and return valid authentication headers."""
     return _headers_for(
         db, make_token, "test-staff-sub", "Test Staff", "staff@example.com", "staff"
     )[1]
@@ -191,7 +186,6 @@ def staff_headers(db, make_token):
 
 @pytest.fixture
 def client_user(db, make_token):
-    """A regular client user plus its headers: (user, headers)."""
     return _headers_for(
         db, make_token, "test-client-sub", "Test Client", "client@example.com", "client"
     )

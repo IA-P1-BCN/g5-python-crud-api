@@ -12,7 +12,6 @@ from back.app.models.user import User
 
 @pytest.fixture
 def login(db: Session, make_token):
-    """Creates a user with the given role and returns auth headers for it."""
 
     def _login(role: str) -> dict[str, str]:
         sub = f"auth-{role}"
@@ -181,7 +180,6 @@ def test_delete_time_slot_with_active_booking(client: TestClient, db: Session):
     db.commit()
     db.refresh(room)
 
-    # Create a real user using the correct model fields (name and email)
     user = User(name="Test User", email="test@escape.com")
     db.add(user)
     db.commit()
@@ -226,7 +224,7 @@ def test_delete_time_slot_success(client: TestClient, db: Session):
 
     starts_at = datetime.now(UTC) + timedelta(
         days=3
-    )  # Use a different day to avoid overlaps
+    )
     ends_at = starts_at + timedelta(hours=1)
 
     slot = TimeSlot(
@@ -247,7 +245,6 @@ def test_delete_time_slot_success(client: TestClient, db: Session):
 def _room_with_slots(
     db: Session, statuses: list[str | None]
 ) -> tuple[Room, list[TimeSlot]]:
-    """One room; one slot per entry (None = no booking, else booking status)."""
     room = Room(
         name="Get Room",
         capacity=4,
@@ -323,7 +320,6 @@ def test_list_time_slots_second_page(client: TestClient, db: Session):
 def test_list_time_slots_available_total_counts_all_pages(
     client: TestClient, db: Session
 ):
-    """The available filter runs in SQL: total ignores the page size."""
     room, slots = _room_with_slots(db, [None, "CONFIRMED", "PENDING", None, None])
 
     body = client.get(
@@ -437,7 +433,6 @@ def test_bulk_generate_time_slots_one_day(client: TestClient, db: Session, login
 
     assert response.status_code == 200
     data = response.json()
-    # duration 60 + 30 min buffer = 90 min step: starts at 09:00 and 10:30.
     assert data["created_count"] == 2
     assert data["skipped_count"] == 0
 
@@ -476,7 +471,6 @@ def test_bulk_generate_time_slots_several_days(client: TestClient, db: Session, 
 
     assert response.status_code == 200
     data = response.json()
-    # 90 min step: 10:00 and 11:30, two slots per day over three days.
     assert data["created_count"] == 6
     assert data["skipped_count"] == 0
 
@@ -590,7 +584,6 @@ def _create_bulk_room(db: Session, *, status: str = "active", **overrides) -> Ro
     return room
 
 
-# --- Ticket 059: computed slot state and public day board ---
 
 
 def _simple_room(db: Session, name: str, slug: str, status: str = "active") -> Room:
@@ -780,7 +773,6 @@ def test_bulk_generate_time_slots_skips_past_dates(
 def test_bulk_generate_time_slots_midnight_boundary(
     client: TestClient, db: Session, login
 ):
-    """Regression: stepping with time() wrapped past midnight (infinite loop)."""
     room = _create_bulk_room(db, slug="bulk-room-midnight")
 
     tomorrow = (datetime.now(UTC) + timedelta(days=1)).date()
@@ -797,7 +789,6 @@ def test_bulk_generate_time_slots_midnight_boundary(
 
     assert response.status_code == 200
     data = response.json()
-    # 90 min step: 22:00 and 23:30, then the next candidate (01:00) is out of range.
     assert data["created_count"] == 2
     assert data["skipped_count"] == 0
 
@@ -843,7 +834,7 @@ def test_bulk_generate_time_slots_invalid_time_range(
 
 
 def test_bulk_generate_time_slots_requires_admin(client: TestClient, db: Session):
-    client.headers.pop("Authorization", None)  # sin token: debe dar 401
+    client.headers.pop("Authorization", None)
     response = client.post(
         "/api/v1/rooms/1/time-slots/generate",
         json={
@@ -1075,5 +1066,4 @@ def test_update_time_slot_overlap_returns_409(client, db):
 
 @pytest.fixture(autouse=True)
 def _as_admin(client, admin_headers):
-    """Slots are admin-only (US05): act as admin unless a test sends its own headers."""
     client.headers.update(admin_headers)
