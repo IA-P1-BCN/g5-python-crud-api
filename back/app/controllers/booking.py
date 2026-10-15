@@ -1,10 +1,13 @@
+import logging
 from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
+from back.app.core.datetimes import as_utc
 from back.app.core.errors import AppError
+from back.app.core.integrity import is_violation_of
 from back.app.core.pagination import PageParams, paginate
 from back.app.models import Booking, GameResult, TimeSlot, User
 from back.app.models.booking import ACTIVE_STATUSES, ensure_transition
@@ -16,25 +19,32 @@ from back.app.schemas.booking import (
     GameResultCreate,
 )
 
+logger = logging.getLogger(__name__)
+
 MODIFIABLE_STATUSES = ("PENDING", "CONFIRMED")
 MIN_NOTICE = timedelta(hours=24)
+SLOT_INDEX_MARKERS = ("uq_bookings_active_time_slot", "bookings.time_slot_id")
 
 
 def _utcnow() -> datetime:
-    """Single source of 'now', so tests can freeze it (24h boundary)."""
     return datetime.now(UTC)
 
 
-def _slot_start_utc(slot: TimeSlot) -> datetime:
-    """Slot start as tz-aware UTC (SQLite returns naive datetimes)."""
-    starts_at = slot.starts_at
-    if starts_at.tzinfo is None:
-        starts_at = starts_at.replace(tzinfo=UTC)
-    return starts_at
-
-
 def _starts_at_utc(booking: Booking) -> datetime:
-    return _slot_start_utc(booking.time_slot)
+    return as_utc(booking.time_slot.starts_at)
+
+
+def _commit_or_slot_taken(db: Session) -> None:
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        if not is_violation_of(exc, *SLOT_INDEX_MARKERS):
+            raise
+        logger.warning("booking rejected by the active slot index")
+        raise AppError(
+            "Time slot is already booked", code="SLOT_TAKEN", status_code=409
+        ) from exc
 
 
 def _get_booking_or_404(db: Session, booking_id: int) -> Booking:
@@ -45,7 +55,6 @@ def _get_booking_or_404(db: Session, booking_id: int) -> Booking:
 
 
 def _to_detail(booking: Booking) -> BookingDetail:
-    """Enriched view; can_modify uses the same rule as update/cancel."""
     can_modify = (
         booking.status in MODIFIABLE_STATUSES
         and _starts_at_utc(booking) - _utcnow() >= MIN_NOTICE
@@ -60,8 +69,14 @@ def _to_detail(booking: Booking) -> BookingDetail:
     )
 
 
-def _ensure_slot_can_receive_booking(db: Session, slot: TimeSlot) -> None:
-    """BR-L5: the new slot must be bookable and 24h or more away."""
+def _ensure_slot_is_bookable(
+    db: Session,
+    slot: TimeSlot,
+    *,
+    min_notice: timedelta,
+    late_code: str,
+    late_message: str,
+) -> None:
     if slot.room.status != "active":
         raise AppError("Room is inactive", code="ROOM_INACTIVE", status_code=409)
 
@@ -70,11 +85,12 @@ def _ensure_slot_can_receive_booking(db: Session, slot: TimeSlot) -> None:
             "Time slot is not available", code="SLOT_NOT_AVAILABLE", status_code=409
         )
 
-    if _slot_start_utc(slot) - _utcnow() < MIN_NOTICE:
+    remaining = as_utc(slot.starts_at) - _utcnow()
+    if remaining < min_notice:
+        raise AppError(late_message, code=late_code, status_code=409)
+    if remaining <= timedelta(0):
         raise AppError(
-            "The new slot must start 24h or more from now",
-            code="TOO_LATE_TO_MODIFY",
-            status_code=409,
+            "Time slot already started", code="SLOT_NOT_AVAILABLE", status_code=409
         )
 
     already_booked = db.execute(
@@ -90,7 +106,6 @@ def _ensure_slot_can_receive_booking(db: Session, slot: TimeSlot) -> None:
 
 
 def _ensure_can_access(booking: Booking, user: User) -> None:
-    """Clients only touch their own bookings; staff and admin touch any (US05)."""
     if user.role == "client" and booking.user_id != user.id:
         raise AppError(
             "You can only access your own bookings",
@@ -100,7 +115,6 @@ def _ensure_can_access(booking: Booking, user: User) -> None:
 
 
 def resolve_user_filter(current_user: User, user_id: int | None) -> int | None:
-    """Clients can only list their own bookings; others may filter freely."""
     if current_user.role != "client":
         return user_id
     if user_id not in (None, current_user.id):
@@ -130,24 +144,13 @@ def create_booking(
     if not user.is_active:
         raise AppError("User is inactive", code="USER_INACTIVE", status_code=409)
 
-    if slot.room.status != "active":
-        raise AppError("Room is inactive", code="ROOM_INACTIVE", status_code=409)
-
-    if slot.status != "available":
-        raise AppError(
-            "Time slot is not available", code="SLOT_NOT_AVAILABLE", status_code=409
-        )
-
-    already_booked = db.execute(
-        select(Booking.id).where(
-            Booking.time_slot_id == slot.id,
-            Booking.status.in_(ACTIVE_STATUSES),
-        )
-    ).first()
-    if already_booked:
-        raise AppError(
-            "Time slot is already booked", code="SLOT_TAKEN", status_code=409
-        )
+    _ensure_slot_is_bookable(
+        db,
+        slot,
+        min_notice=timedelta(0),
+        late_code="SLOT_NOT_AVAILABLE",
+        late_message="Time slot already started",
+    )
 
     if booking_in.players > slot.room.capacity:
         raise AppError(
@@ -164,13 +167,7 @@ def create_booking(
         status="PENDING",
     )
     db.add(booking)
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise AppError(
-            "Time slot is already booked", code="SLOT_TAKEN", status_code=409
-        )
+    _commit_or_slot_taken(db)
     db.refresh(booking)
     return booking
 
@@ -182,7 +179,6 @@ def _bookings_stmt(
     date_to: date | None = None,
     room_id: int | None = None,
 ):
-    """Filtered, ordered query shared by the list, today and history views."""
     if date_from is not None and date_to is not None and date_from > date_to:
         raise AppError(
             "date_from must not be after date_to",
@@ -230,7 +226,6 @@ def list_bookings(
 
 
 def list_today_bookings(db: Session) -> list[BookingDetail]:
-    """Today's (UTC) games for the staff, earliest first, cancelled ones hidden."""
     today = _utcnow().date()
     stmt = (
         _bookings_stmt(date_from=today, date_to=today)
@@ -276,7 +271,13 @@ def update_booking(
             raise AppError(
                 "Time slot not found", code="SLOT_NOT_FOUND", status_code=404
             )
-        _ensure_slot_can_receive_booking(db, new_slot)
+        _ensure_slot_is_bookable(
+            db,
+            new_slot,
+            min_notice=MIN_NOTICE,
+            late_code="TOO_LATE_TO_MODIFY",
+            late_message="The new slot must start 24h or more from now",
+        )
 
     room = new_slot.room
     players = booking_in.players if booking_in.players is not None else booking.players
@@ -290,13 +291,7 @@ def update_booking(
     booking.time_slot = new_slot
     booking.players = players
     booking.total_price = room.base_price * players
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise AppError(
-            "Time slot is already booked", code="SLOT_TAKEN", status_code=409
-        )
+    _commit_or_slot_taken(db)
     db.refresh(booking)
     return booking
 
@@ -380,17 +375,16 @@ def register_result(
     db.add(result)
     try:
         db.commit()
-    except IntegrityError:  # two requests at once: the unique index wins (BR-G4)
+    except IntegrityError:
         db.rollback()
         raise duplicate from None
-    db.refresh(booking)  # reload booking.result
+    db.refresh(booking)
     return result
 
 
 def list_user_history(
     db: Session, user_id: int, current_user: User
 ) -> list[BookingDetail]:
-    """Finished games of a user, most recent first (BR-G5)."""
     if current_user.id != user_id and current_user.role not in ("staff", "admin"):
         raise AppError(
             "You can only see your own history", code="FORBIDDEN", status_code=403

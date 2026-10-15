@@ -73,6 +73,9 @@ def seed(db):
 
 
 URL = "/api/v1/bookings"
+SLOT_INDEX_ERROR = (
+    'duplicate key value violates unique constraint "uq_bookings_active_time_slot"'
+)
 
 
 def payload(user_id, slot_id, players=2):
@@ -148,7 +151,7 @@ def test_create_booking_concurrent_request_returns_409(client, seed, db, monkeyp
     """BR-B8: the unique index rejects a request that passed the pre-check."""
 
     def failing_commit():
-        raise IntegrityError("INSERT", {}, Exception("unique violation"))
+        raise IntegrityError("INSERT", {}, Exception(SLOT_INDEX_ERROR))
 
     monkeypatch.setattr(db, "commit", failing_commit)
 
@@ -565,7 +568,7 @@ def test_change_slot_concurrent_request_returns_409(client, seed, db, monkeypatc
     new_slot = add_slot(db, seed.room, LATER)
 
     def failing_commit():
-        raise IntegrityError("UPDATE", {}, Exception("unique violation"))
+        raise IntegrityError("UPDATE", {}, Exception(SLOT_INDEX_ERROR))
 
     monkeypatch.setattr(db, "commit", failing_commit)
 
@@ -743,6 +746,44 @@ def test_list_bookings_filter_by_room(client, seed, db):
 @pytest.mark.parametrize("qs", ["page=0", "size=0", "size=101", "page=abc"])
 def test_list_bookings_invalid_pagination_returns_422(client, seed, qs):
     assert client.get(f"{URL}?{qs}").status_code == 422
+
+
+def test_create_booking_in_the_past_returns_409(client, seed, db):
+    """BR-B1: a slot that already started cannot be booked."""
+    past_slot = add_slot(db, seed.room, datetime.now(UTC) - timedelta(days=3))
+
+    response = client.post(URL, json=payload(seed.user.id, past_slot.id))
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "SLOT_NOT_AVAILABLE"
+
+
+def test_create_booking_unrelated_integrity_error_is_not_slot_taken(
+    client, seed, db, monkeypatch
+):
+    def failing_commit():
+        raise IntegrityError("INSERT", {}, Exception("violates foreign key constraint"))
+
+    monkeypatch.setattr(db, "commit", failing_commit)
+
+    with pytest.raises(IntegrityError):
+        client.post(URL, json=payload(seed.user.id, seed.free_slot.id))
+
+
+def test_active_slot_index_rejects_two_active_bookings(db, seed):
+    """BR-B8 for real: the partial unique index, not a mock."""
+    make_booking(db, seed, seed.free_slot)
+
+    with pytest.raises(IntegrityError):
+        make_booking(db, seed, seed.free_slot)
+
+
+def test_active_slot_index_allows_booking_after_cancellation(db, seed):
+    make_booking(db, seed, seed.free_slot, status="CANCELLED")
+
+    make_booking(db, seed, seed.free_slot)
+
+    assert db.query(Booking).filter_by(time_slot_id=seed.free_slot.id).count() == 2
 
 
 @pytest.fixture(autouse=True)
