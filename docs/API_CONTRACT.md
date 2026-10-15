@@ -12,7 +12,7 @@ The browser client (`front/`) calls the relative path `/api/v1/...` on its own o
 { "detail": "Time slot is already booked", "code": "SLOT_TAKEN" }
 ```
 
-Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUPLICATE`, `SLOT_TAKEN`, `SLOT_NOT_AVAILABLE`, `SLOT_OVERLAP`, `ROOM_INACTIVE`, `USER_INACTIVE`, `INVALID_PLAYERS`, `TOO_LATE_TO_CANCEL`, `TOO_LATE_TO_MODIFY`, `INVALID_TRANSITION`, `UNAUTHORIZED` (401, missing or invalid token), `FORBIDDEN`, `INTERNAL_ERROR` (unexpected 500, message is always "Internal server error").
+Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUPLICATE`, `SLOT_TAKEN`, `SLOT_NOT_AVAILABLE`, `SLOT_OVERLAP`, `ROOM_INACTIVE`, `USER_INACTIVE`, `INVALID_PLAYERS`, `TOO_LATE_TO_CANCEL`, `TOO_LATE_TO_MODIFY`, `INVALID_TRANSITION`, `UNAUTHORIZED` (401, missing or invalid token), `FORBIDDEN`, `AUTH_UNAVAILABLE` (503, Supabase keys cannot be fetched), `BOOKING_LIMIT_REACHED` (409, BR-B9), `LAST_ADMIN` (409, BR-A5), `ROOM_HAS_BOOKINGS` (409, BR-R5), `METHOD_NOT_ALLOWED` (405), `HTTP_ERROR` (other HTTP errors), `INTERNAL_ERROR` (unexpected 500, message is always "Internal server error").
 
 ## Users (E1)
 
@@ -24,7 +24,7 @@ Codes: `NOT_FOUND`, `SLOT_NOT_FOUND`, `USER_NOT_FOUND`, `VALIDATION_ERROR`, `DUP
 | PUT | `/users/{id}` | 1 | Update name, phone | 200 |
 | PUT | `/users/{id}/deactivate` | 1 | Deactivate | 200 |
 | PUT | `/users/{id}/role` | 2 | Change role (admin) | 200 |
-| GET | `/users/me` | 2 | Current user from JWT (**not built yet**) | 200 |
+| GET | `/users/me` | 2 | Current user from JWT; `PUT /users/me` updates own name and phone | 200 |
 | GET | `/users/me/history` | 2 | My finished games (COMPLETED) with result, most recent first | 200 |
 | GET | `/users/{id}/history` | 2 | Same for a user: own history, or any for staff/admin (else 403 `FORBIDDEN`) | 200 |
 
@@ -50,8 +50,8 @@ Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphe
 | POST | `/time-slots` | 1 | Create slot (`room_id`, `starts_at`, `ends_at`) | 201 |
 | GET | `/time-slots` | 1 | List (`?room_id=&date=&available=true`), paginated. With only `date`, returns the public day board (active rooms with their slots, BR-R6), not paginated | 200 |
 | GET | `/time-slots/{id}` | 1 | Get slot, includes computed `is_bookable` | 200 |
-| PUT | `/time-slots/{id}` | 1 | Update times / status | 200 |
-| DELETE | `/time-slots/{id}` | 1 | Delete (BR-S6) | 204 |
+| PUT | `/time-slots/{id}` | 1 | Update times / status; an explicit `null` returns 422 | 200 |
+| DELETE | `/time-slots/{id}` | 1 | Delete; blocked (409 `SLOT_TAKEN`) if the slot has any booking (BR-S6) | 204 |
 | POST | `/rooms/{id}/time-slots/generate` | 2 | Bulk generate available slots (admin) | 200 |
 
 Every slot returned by `GET /time-slots` (the paginated list and the public day board) and by `GET /time-slots/{id}` includes `state`, computed by the API: `free` (bookable), `taken` (it has an active booking), `blocked` (blocked by an admin) or `past` (already ended). Precedence: `past`, then `blocked`, then `taken`. The list and `GET /time-slots/{id}` also include `is_bookable`. The `date` filter is a UTC day.
