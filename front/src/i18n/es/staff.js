@@ -9,11 +9,28 @@ export default {
   client: 'Cliente',
   players: 'Jugadores',
   status: 'Estado',
+  actionsColumn: 'Acciones',
   statuses: {
     PENDING: 'Pendiente',
     CONFIRMED: 'Confirmada',
     IN_PROGRESS: 'En curso',
     COMPLETED: 'Terminada',
     CANCELLED: 'Cancelada',
+  },
+  timeRequired: 'Indica el tiempo en segundos.',
+  timeInvalid: 'El tiempo debe ser un número entero de segundos, 0 o más.',
+  actions: {
+    confirm: 'Confirmar',
+    start: 'Iniciar partida',
+    finish: 'Terminar partida',
+  },
+  resultForm: {
+    completed: 'Sala completada',
+    time: 'Tiempo (segundos)',
+    save: 'Guardar resultado',
+  },
+  errors: {
+    INVALID_TRANSITION: 'Esta partida ya cambió de estado. Recarga la lista.',
+    DUPLICATE: 'Esta partida ya tiene un resultado.',
   },
 }
