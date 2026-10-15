@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -22,11 +22,11 @@ def _duplicate_email() -> AppError:
 def _ensure_not_last_admin(db: Session, user: User) -> None:
     if user.role != "admin" or not user.is_active:
         return
-    other_admins = db.scalar(
-        select(func.count())
-        .select_from(User)
+    other_admins = db.scalars(
+        select(User.id)
         .where(User.role == "admin", User.is_active, User.id != user.id)
-    )
+        .with_for_update()
+    ).all()
     if not other_admins:
         raise AppError(
             message="Cannot remove the last active admin",
