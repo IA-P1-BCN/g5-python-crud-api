@@ -48,7 +48,7 @@ Room catalog fields (ticket 056): `slug` (unique, lowercase letters/digits/hyphe
 | Method | Path | Sprint | Description | Success |
 |--------|------|:------:|-------------|---------|
 | POST | `/time-slots` | 1 | Create slot (`room_id`, `starts_at`, `ends_at`) | 201 |
-| GET | `/time-slots` | 1 | List (`?room_id=&date=&available=true`), paginated. With only `date`, returns the public day board (active rooms with their slots, BR-R6), not paginated | 200 |
+| GET | `/time-slots` | 1 | List (`?room_id=&date=&available=true|false`; `false` returns the slots that are not bookable), paginated. With only `date`, returns the public day board (active rooms with their slots, BR-R6), not paginated | 200 |
 | GET | `/time-slots/{id}` | 1 | Get slot, includes computed `is_bookable` | 200 |
 | PUT | `/time-slots/{id}` | 1 | Update times / status; an explicit `null` returns 422 | 200 |
 | DELETE | `/time-slots/{id}` | 1 | Delete; blocked (409 `SLOT_TAKEN`) if the slot has any booking (BR-S6) | 204 |
@@ -92,6 +92,10 @@ The staff/admin endpoints above answer 401 `UNAUTHORIZED` without a valid token 
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/stats/overview` | Bookings, occupancy, revenue (admin) |
+
+## Request limits and headers
+
+Write bodies reject unknown fields (422 `VALIDATION_ERROR`). Ids are 1 to 2147483647, room `capacity` and `min_players` at most 50, `duration` at most 600 minutes, `base_price` at most 10 digits, `hook` 500 and `story` 5000 characters. `GET /rooms?status=` accepts `active` or `inactive`. Every response carries an `X-Request-ID` header, also written in the request log.
 
 ## Pagination (Sprint 2)
 

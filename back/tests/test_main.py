@@ -50,8 +50,10 @@ def test_request_logging(caplog):
         response = client.get("/api/v1/health")
 
     assert response.status_code == 200
+    request_id = response.headers["X-Request-ID"]
     assert any(
-        "request | method=GET | path=/api/v1/health | status=200" in record.message
+        f"request | id={request_id} | method=GET | path=/api/v1/health | status=200"
+        in record.message
         for record in caplog.records
     )
 

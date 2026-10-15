@@ -24,14 +24,14 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | BR-R4 | Inactive rooms are hidden from client listings and accept no new slots or bookings | 409 |
 | BR-R5 | A room with future active bookings cannot be deactivated **(to validate)** | 409 |
 | BR-R6 | A room is shown to clients only if it is active **and** has at least one upcoming time slot, free or taken. A fully booked room stays visible (shown as full); a room with no upcoming slot is hidden. The API exposes it as `has_upcoming_slots` **(to validate)** | - |
-| BR-R7 | `min_players` between 1 and room `capacity` | 422 |
+| BR-R7 | `min_players` between 1 and room `capacity`. Capacity cannot be lowered under the players of an active booking | 422, 409 `INVALID_PLAYERS` |
 
 ### Time slots (E2)
 | ID | Rule | Error |
 |----|------|-------|
 | BR-S1 | `ends_at` must be after `starts_at` | 422 |
 | BR-S2 | A slot cannot start in the past | 422 |
-| BR-S3 | Slots of the same room cannot overlap | 409 |
+| BR-S3 | Slots of the same room cannot overlap (checked in the API and enforced by the PostgreSQL exclusion constraint `ex_time_slots_no_overlap`) | 409 |
 | BR-S4 | Slot `status` is `available` or `blocked` (admin-managed) | 422 |
 | BR-S5 | A slot is **bookable** when `status=available` AND it has no active booking. This is computed, not stored | - |
 | BR-S6 | A slot with an active booking cannot be edited; a slot with any booking (even cancelled) cannot be deleted | 409 |

@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -28,13 +29,16 @@ logger = logging.getLogger(__name__)
 @app.middleware("http")
 async def request_logging_middleware(request: Request, call_next):
     response = None
+    request_id = uuid.uuid4().hex[:12]
 
     try:
         response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
         return response
     finally:
         logger.info(
-            "request | method=%s | path=%s | status=%s",
+            "request | id=%s | method=%s | path=%s | status=%s",
+            request_id,
             request.method,
             request.url.path,
             response.status_code if response is not None else 500,
