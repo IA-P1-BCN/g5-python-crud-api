@@ -223,7 +223,7 @@ def test_get_current_user_duplicate_email_with_other_identity_does_not_link(
     assert existing_user.auth_id == "first-google-user"
 
 
-def test_get_current_user_untrusted_provider_never_becomes_admin(
+def test_get_current_user_untrusted_provider_cannot_create_account(
     make_token, db, monkeypatch
 ):
     monkeypatch.setattr(settings, "admin_emails", "admin@example.com")
@@ -231,9 +231,32 @@ def test_get_current_user_untrusted_provider_never_becomes_admin(
         subject="email-signup", email="admin@example.com", provider="email"
     )
 
-    current_user = get_current_user(credentials=make_credentials(token), db=db)
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_user(credentials=make_credentials(token), db=db)
 
-    assert current_user.role == "client"
+    assert exc_info.value.status_code == 401
+    assert db.query(User).count() == 0
+
+
+def test_get_current_user_inactive_user_is_not_linked(make_token, db):
+    existing = User(
+        auth_id=None,
+        name="Old",
+        email="old@example.com",
+        role="client",
+        is_active=False,
+    )
+    db.add(existing)
+    db.commit()
+
+    token = make_token(subject="google-old", email="old@example.com")
+
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_user(credentials=make_credentials(token), db=db)
+
+    assert exc_info.value.status_code == 401
+    db.refresh(existing)
+    assert existing.auth_id is None
 
 
 def test_get_current_user_jwks_unreachable_returns_503(make_token, db, monkeypatch):
@@ -401,19 +424,12 @@ def test_get_current_user_rejects_invalid_email(make_token, db):
     assert db.query(User).count() == 0
 
 
-def test_get_current_user_rejects_name_over_100_characters(
-    make_token,
-    db,
-):
-    token = make_token(
-        user_metadata={"full_name": "A" * 101},
-    )
+def test_get_current_user_truncates_name_over_100_characters(make_token, db):
+    token = make_token(user_metadata={"full_name": "A" * 101})
 
-    with pytest.raises(HTTPException) as exc_info:
-        get_current_user(credentials=make_credentials(token), db=db)
+    current_user = get_current_user(credentials=make_credentials(token), db=db)
 
-    assert exc_info.value.status_code == 401
-    assert db.query(User).count() == 0
+    assert current_user.name == "A" * 100
 
 
 def test_get_current_user_prefers_full_name(make_token, db):
@@ -672,3 +688,30 @@ def test_get_current_user_empty_admin_emails_defaults_to_client(
     )
 
     assert current_user.role == "client"
+
+
+def test_decode_rejects_unexpected_algorithm_without_fetching_keys(make_token):
+    import jwt
+
+    from back.app.core.security import decode_access_token
+
+    with pytest.raises(jwt.PyJWTError):
+        decode_access_token(make_token(algorithm="HS256"))
+
+
+def test_decode_rejects_token_without_kid(make_token):
+    import jwt
+
+    from back.app.core.security import decode_access_token
+
+    with pytest.raises(jwt.PyJWTError):
+        decode_access_token(make_token(kid=None))
+
+
+def test_settings_reject_non_https_supabase_url():
+    from pydantic import ValidationError
+
+    from back.app.config.settings import Settings
+
+    with pytest.raises(ValidationError):
+        Settings(database_url="sqlite://", supabase_url="http://x.supabase.co")

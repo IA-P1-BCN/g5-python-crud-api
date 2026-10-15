@@ -58,10 +58,12 @@ def _decode(token: str) -> dict:
 def _email_from(payload: dict) -> str:
     email_claim = payload.get("email")
     if not isinstance(email_claim, str) or not email_claim.strip():
+        logger.warning("token without email")
         raise unauthorized("Token is missing a valid email")
     try:
         return str(email_adapter.validate_python(email_claim.strip())).lower()
     except ValidationError:
+        logger.warning("token with invalid email")
         raise unauthorized("Token is missing a valid email") from None
 
 
@@ -72,12 +74,11 @@ def _name_from(payload: dict) -> str:
     name_claim = (
         metadata.get("full_name") or metadata.get("name") or payload.get("name")
     )
-    if not isinstance(name_claim, str):
+    name = name_claim.strip() if isinstance(name_claim, str) else ""
+    if not name:
+        logger.warning("token without name")
         raise unauthorized("Token is missing a valid name")
-    name = name_claim.strip()
-    if not name or len(name) > 100:
-        raise unauthorized("Token is missing a valid name")
-    return name
+    return name[:100]
 
 
 def _is_trusted_identity(payload: dict) -> bool:
@@ -111,9 +112,13 @@ def _first_login(db: Session, payload: dict, auth_id: str) -> User:
     if existing is not None:
         if not (trusted and existing.auth_id is None):
             raise _duplicate_email()
+        _active_or_401(existing)
         existing.auth_id = auth_id
         user = existing
     else:
+        if not trusted:
+            logger.warning("account creation refused | untrusted provider")
+            raise unauthorized("Sign in with Google")
         role = "admin" if trusted and email in _admin_emails() else "client"
         user = User(auth_id=auth_id, name=name, email=email, role=role)
         db.add(user)

@@ -10,6 +10,10 @@ jwks_client = PyJWKClient(SUPABASE_JWKS_URL, timeout=5)
 
 
 def decode_access_token(token: str) -> dict:
+    header = jwt.get_unverified_header(token)
+    if header.get("alg") != "ES256" or not header.get("kid"):
+        raise jwt.InvalidTokenError("Unexpected token header")
+
     signing_key = jwks_client.get_signing_key_from_jwt(token)
 
     return jwt.decode(
