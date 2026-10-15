@@ -1077,3 +1077,58 @@ def test_list_time_slots_available_false_returns_only_unavailable(
 
     assert [s["id"] for s in body["items"]] == [slots[1].id, slots[2].id]
     assert not any(s["is_bookable"] for s in body["items"])
+
+
+def _overlap_error():
+    from sqlalchemy.exc import IntegrityError
+
+    return IntegrityError(
+        "INSERT",
+        {},
+        Exception('violates exclusion constraint "ex_time_slots_no_overlap"'),
+    )
+
+
+def test_create_time_slot_concurrent_overlap_returns_409(client, db, monkeypatch):
+    room = _simple_room(db, "Race Room", "race-room")
+    start = datetime.now(UTC) + timedelta(days=5)
+
+    def failing_commit():
+        raise _overlap_error()
+
+    monkeypatch.setattr(db, "commit", failing_commit)
+
+    response = client.post(
+        "/api/v1/time-slots",
+        json={
+            "room_id": room.id,
+            "starts_at": start.isoformat(),
+            "ends_at": (start + timedelta(hours=1)).isoformat(),
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "SLOT_OVERLAP"
+
+
+def test_bulk_generate_concurrent_overlap_returns_409(client, db, monkeypatch):
+    room = _create_bulk_room(db)
+    day = (datetime.now(UTC) + timedelta(days=5)).date().isoformat()
+
+    def failing_commit():
+        raise _overlap_error()
+
+    monkeypatch.setattr(db, "commit", failing_commit)
+
+    response = client.post(
+        f"/api/v1/rooms/{room.id}/time-slots/generate",
+        json={
+            "date_from": day,
+            "date_to": day,
+            "first_start": "10:00:00",
+            "last_start": "12:00:00",
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "SLOT_OVERLAP"

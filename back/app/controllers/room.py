@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
+from back.app.controllers.time_slot import commit_slots
 from back.app.core.datetimes import as_utc
 from back.app.core.errors import AppError
 from back.app.core.integrity import is_violation_of
@@ -338,7 +339,7 @@ def bulk_generate_time_slots(
 
         current_date += timedelta(days=1)
 
-    db.commit()
+    commit_slots(db)
 
     return TimeSlotBulkGenerateResponse(
         created_count=created_count,

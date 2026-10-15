@@ -2,10 +2,12 @@ from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import and_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from back.app.core.datetimes import as_utc
 from back.app.core.errors import AppError
+from back.app.core.integrity import is_violation_of
 from back.app.core.pagination import PageParams, paginate
 from back.app.models.booking import ACTIVE_STATUSES, Booking
 from back.app.models.room import Room
@@ -13,8 +15,28 @@ from back.app.models.time_slot import TimeSlot
 from back.app.schemas.time_slot import TimeSlotCreate, TimeSlotUpdate
 
 
-def _get_slot_or_404(db: Session, slot_id: int) -> TimeSlot:
-    slot = db.get(TimeSlot, slot_id)
+def commit_slots(db: Session) -> None:
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        if is_violation_of(exc, "ex_time_slots_no_overlap"):
+            raise AppError(
+                message="Time slot overlaps with an existing slot",
+                code="SLOT_OVERLAP",
+                status_code=409,
+            ) from exc
+        if is_violation_of(exc, "bookings_time_slot_id_fkey", "foreign key"):
+            raise AppError(
+                message="Cannot delete a time slot that has bookings",
+                code="SLOT_TAKEN",
+                status_code=409,
+            ) from exc
+        raise
+
+
+def _get_slot_or_404(db: Session, slot_id: int, *, lock: bool = False) -> TimeSlot:
+    slot = db.get(TimeSlot, slot_id, with_for_update=lock)
     if slot is None:
         raise AppError(message="Time slot not found", code="NOT_FOUND", status_code=404)
     return slot
@@ -116,13 +138,13 @@ def create_time_slot(db: Session, slot_in: TimeSlotCreate) -> TimeSlot:
         status=slot_in.status or "available",
     )
     db.add(db_slot)
-    db.commit()
+    commit_slots(db)
     db.refresh(db_slot)
     return db_slot
 
 
 def update_time_slot(db: Session, slot_id: int, slot_in: TimeSlotUpdate) -> TimeSlot:
-    db_slot = _get_slot_or_404(db, slot_id)
+    db_slot = _get_slot_or_404(db, slot_id, lock=True)
 
     room = db.get(Room, db_slot.room_id)
     if not room or room.status != "active":
@@ -152,13 +174,13 @@ def update_time_slot(db: Session, slot_id: int, slot_in: TimeSlotUpdate) -> Time
     if "status" in update_data:
         db_slot.status = update_data["status"]
 
-    db.commit()
+    commit_slots(db)
     db.refresh(db_slot)
     return db_slot
 
 
 def delete_time_slot(db: Session, slot_id: int) -> None:
-    db_slot = _get_slot_or_404(db, slot_id)
+    db_slot = _get_slot_or_404(db, slot_id, lock=True)
 
     if _has_booking(db, slot_id, only_active=False):
         raise AppError(
@@ -168,7 +190,7 @@ def delete_time_slot(db: Session, slot_id: int) -> None:
         )
 
     db.delete(db_slot)
-    db.commit()
+    commit_slots(db)
 
 
 def get_day_board(db: Session, day: date) -> dict:
