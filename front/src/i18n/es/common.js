@@ -7,6 +7,15 @@ export default {
   next: 'Siguiente',
   pagination: 'Paginación',
   pageOf: (page, pages) => `Página ${page} de ${pages}`,
+  nav: {
+    label: 'Navegación principal',
+    rooms: 'Salas',
+    history: 'Historial',
+    staff: 'Planning de hoy',
+    adminRooms: 'Gestión de salas',
+    login: 'Acceder',
+    logout: 'Cerrar sesión',
+  },
   errors: {
     UNAUTHORIZED: 'Tu sesión ha caducado. Vuelve a iniciar sesión.',
     FORBIDDEN: 'No tienes permiso para esta acción.',
