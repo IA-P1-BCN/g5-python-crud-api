@@ -1,3 +1,19 @@
 // Profile texts. (Spanish). One file per feature: no conflicts.
 
-export default {}
+export default {
+  title: 'Mi perfil',
+  name: 'Nombre',
+  phone: 'Teléfono',
+  email: 'Correo (no se puede cambiar)',
+  save: 'Guardar cambios',
+  saved: 'Cambios guardados.',
+  loadError: 'No hemos podido cargar tu perfil.',
+  scoreTitle: 'Tu marcador',
+  scoreLoadError: 'No hemos podido cargar tu marcador.',
+  played: 'partidas',
+  escaped: 'escapadas',
+  bestTime: 'mejor tiempo',
+  nameRequired: 'El nombre es obligatorio',
+  nameTooLong: 'El nombre no puede superar los 100 caracteres',
+  phoneTooLong: 'El teléfono no puede superar los 50 caracteres',
+}
