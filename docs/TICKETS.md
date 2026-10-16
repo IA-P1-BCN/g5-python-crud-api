@@ -4,7 +4,7 @@ Board `escape_room_project`:
 
 - **Backlog**: user stories (`US01`...), each with its acceptance criteria and the list of its tickets.
 - **Ready**: tickets (`Ticket 001`...) with Size, and labels for the Epic (`E1 - Users`) and the User Story (`US01`) they belong to. Ticket 003 (CI) was dropped: no CI pipeline for now.
-- **Labels `back` / `front`**: every ticket says which side it touches. Front tickets (064 to 086) build the React client in `front/` (see `ARCHI.md`, section Frontend).
+- **Labels `back` / `front`**: every ticket says which side it touches. Front tickets (064 to 088) build the React client in `front/` (see `ARCHI.md`, section Frontend).
 
 Pick a ticket by epic (filter the board by `Epic`). Assignment is decided by the team when taking a ticket.
 Each story has one **Implement ... + tests** ticket: code and tests are done together. Workflow: `CONTRIBUTING.md`.
@@ -106,5 +106,7 @@ Corridor and rooms (tickets 059, 065, 066, 067, 068, 069): a room is shown to cl
 | 084 | Admin: statistics dashboard + tests | E5 Admin | US23 | M | `admin-stats/` |
 | 085 | Admin: CSV export and pagination on lists + tests | E5 Admin | US24, US25 | S | `admin-stats/`, `shared/ui` |
 | 086 | Front design system: tokens, fonts, shadcn/ui and shared UI components + tests | E0 Foundation | - | M | `index.css`, `shared/ui`, `main.jsx` |
+| 087 | Login page, dashboard redirect and protected routes + tests | E1 Users | US04 | M | `auth/`, `dashboard/`, `app/routes.jsx` |
+| 088 | Register page (create account) + tests | E1 Users | US04 | M | `auth/` |
 
 Dependencies: the front tickets consume the back endpoints of the same epic (`API_CONTRACT.md`). Login, roles, games, statistics and CSV (tickets 035 to 047) are Sprint 2 back tickets, so their front tickets can start with MSW mocks and switch to the real API when the endpoint is merged.

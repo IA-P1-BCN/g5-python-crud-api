@@ -116,13 +116,24 @@ front/
 │   │   │   │   └── authApi.js             # session / first login
 │   │   │   ├── components/
 │   │   │   │   ├── AuthProvider.jsx       # Context: user + role
+│   │   │   │   ├── RequireAuth.jsx        # no session -> redirect to /login (ticket 087)
 │   │   │   │   └── RequireRole.jsx        # route guard (API stays the authority)
 │   │   │   ├── hooks/
-│   │   │   │   └── useAuth.js
+│   │   │   │   ├── useAuth.js
+│   │   │   │   ├── useLogin.js            # ticket 087
+│   │   │   │   └── useRegister.js         # ticket 088
 │   │   │   ├── model/
+│   │   │   │   ├── loginSchema.js         # Zod schema (ticket 087)
+│   │   │   │   ├── registerSchema.js      # Zod schema (ticket 088)
 │   │   │   │   └── supabaseClient.js      # single Supabase client (Google login)
 │   │   │   ├── pages/
-│   │   │   │   └── LoginPage.jsx
+│   │   │   │   ├── LoginPage.jsx          # /login
+│   │   │   │   └── RegisterPage.jsx       # /register
+│   │   │   ├── index.js                   # public API of the feature
+│   │   │   └── routes.js                  # routes of this feature
+│   │   ├── dashboard/
+│   │   │   ├── pages/
+│   │   │   │   └── DashboardPage.jsx      # /dashboard, where login and register land (ticket 087)
 │   │   │   ├── index.js                   # public API of the feature
 │   │   │   └── routes.js                  # routes of this feature
 │   │   ├── booking/
@@ -322,7 +333,8 @@ front/
 | `corridor` | Room PRESENTATION: 3D corridor and its no-WebGL fallback. Receives `rooms` as props, never fetches | 066 |
 | `booking` | Day picker, slot grid, players dial, checkout, confirmation | 071, 072, 073 |
 | `my-bookings` | Client area: list, modify, cancel, change slot, game history | 074, 075, 076, 083 |
-| `auth` | Google login, `AuthProvider`, `RequireRole` | 077, 078 |
+| `auth` | Google login, email login and register pages, `AuthProvider`, `RequireAuth`, `RequireRole` | 077, 078, 087, 088 |
+| `dashboard` | Landing page after login | 087 |
 | `profile` | Own profile (`/users/me`) | 079 |
 | `staff` | Today's games, start, finish, result | 081, 082 |
 | `admin-rooms` | Rooms and time slots management | 069, 070 |
@@ -407,6 +419,8 @@ RoomsCorridor (rooms)  ->  CorridorView (corridor)  ->  Corridor.jsx -> scene/cr
 **Doors come from the data.** The corridor is built from `GET /rooms?status=active`, a paginated list (`{items,total,page,size}`): `roomsApi` reads `items` of the first page (20 rooms by default, more than the corridor can show). One door per room the API returns, with its name on the sign. The API returns every room with its `status` and a `has_upcoming_slots` flag (true if it has at least one upcoming time slot, free or taken: BR-R6, ticket 059), and the front keeps only the rooms that are active **and** have that flag. So a deactivated room (BR-R3, BR-R4) has no door, a new room has none until the admin has created slots for it, and a fully booked room keeps its door and is shown as full. A room created by the admin (`POST /rooms`) appears the next time the list is loaded (page load or TanStack Query refetch, no real-time push). Visual themes come from the `roomThemes` registry by slug, with a **default theme** for slugs not in it, so a new room never breaks the corridor. Opening `/salas/<slug>` of an inactive room shows "room not found".
 
 ### Access control
+
+Every route except `/login` and `/register` needs a session: `RequireAuth` (ticket 087) redirects to `/login` otherwise, and a successful login or sign-up lands on `/dashboard`.
 
 `<RequireRole role="staff">` hides routes by role in the UI. The API remains the real authority (`BUSINESS_RULES.md`).
 
