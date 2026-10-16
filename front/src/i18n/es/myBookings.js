@@ -37,9 +37,13 @@ export default {
     tooLateToCancel: 'Ya no se puede cancelar: faltan menos de 24 horas.',
     tooLateToModify: 'Ya no se puede modificar: faltan menos de 24 horas.',
     invalidPlayers: 'El número de jugadores no es válido para esta sala.',
+    slotTaken: 'Ese horario acaba de ser reservado. Elige otro.',
+    slotNotAvailable: 'Ese horario ya no está disponible. Elige otro.',
+    slotNotFound: 'Ese horario ya no existe. Elige otro.',
   },
   actions: {
     modify: 'Modificar jugadores',
+    changeSlot: 'Cambiar horario',
     cancel: 'Cancelar reserva',
     tooLate: 'No se puede modificar ni cancelar con menos de 24 horas de antelación.',
   },
@@ -54,5 +58,10 @@ export default {
     title: 'Modificar jugadores',
     description: 'Elige el número de jugadores para {room}.',
     save: 'Guardar',
+  },
+  changeSlotDialog: {
+    title: 'Cambiar horario',
+    description: 'Elige otro día y horario para {room}.',
+    save: 'Cambiar horario',
   },
 }
