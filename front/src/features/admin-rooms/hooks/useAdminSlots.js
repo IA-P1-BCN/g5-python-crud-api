@@ -1,72 +1,52 @@
-import { useState, useEffect, useCallback } from 'react';
-import * as api from '../api/adminSlotsApi';
+import { useState, useEffect, useCallback } from 'react'
+import * as slotsApi from '../api/adminSlotsApi'
+import { getErrorCode } from '../model/errors'
+
+const INITIAL = { roomId: null, slots: [], loadError: null }
 
 export function useAdminSlots(roomId) {
-  const [slots, setSlots] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [state, setState] = useState(INITIAL)
 
-  const loadSlots = useCallback(async () => {
+  const refresh = useCallback(async () => {
     try {
-      const data = await api.fetchSlots(roomId);
-      setSlots(data);
-      setError(null);
+      const slots = await slotsApi.fetchSlots(roomId)
+      setState({ roomId, slots, loadError: null })
     } catch (err) {
-      setError(err);
+      setState((prev) => ({
+        roomId,
+        slots: prev.roomId === roomId ? prev.slots : [],
+        loadError: getErrorCode(err),
+      }))
     }
-  }, [roomId]);
+  }, [roomId])
 
   useEffect(() => {
-    let isMounted = true;
-    async function init() {
-      setLoading(true);
+    refresh()
+  }, [refresh])
+
+  const run = useCallback(
+    async (action) => {
       try {
-        const data = await api.fetchSlots(roomId);
-        if (isMounted) {
-          setSlots(data);
-          setError(null);
-        }
+        await action()
+        await refresh()
+        return { success: true }
       } catch (err) {
-        if (isMounted) setError(err);
-      } finally {
-        if (isMounted) setLoading(false);
+        return { success: false, error: getErrorCode(err) }
       }
-    }
-    init();
-    return () => {
-      isMounted = false;
-    };
-  }, [roomId]);
+    },
+    [refresh],
+  )
 
-  const handleCreate = async (data) => {
-    try {
-      await api.createSlot(roomId, data);
-      await loadSlots();
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err.code || err.message };
-    }
-  };
-
-  const handleUpdate = async (slotId, data) => {
-    try {
-      await api.updateSlot(roomId, slotId, data);
-      await loadSlots();
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err.code || err.message };
-    }
-  };
-
-  const handleDelete = async (slotId) => {
-    try {
-      await api.deleteSlot(roomId, slotId);
-      await loadSlots();
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err.code || err.message };
-    }
-  };
-
-  return { slots, loading, error, createSlot: handleCreate, updateSlot: handleUpdate, deleteSlot: handleDelete, refresh: loadSlots };
+  return {
+    slots: state.slots,
+    // Cargando mientras los datos guardados no son de la sala actual
+    loading: state.roomId !== roomId,
+    loadError: state.loadError,
+    refresh,
+    createSlot: (form) => run(() => slotsApi.createSlot(roomId, form)),
+    updateSlot: (id, form) => run(() => slotsApi.updateSlot(id, form)),
+    setBlocked: (id, blocked) =>
+      run(() => slotsApi.setSlotStatus(id, blocked ? 'blocked' : 'available')),
+    deleteSlot: (id) => run(() => slotsApi.deleteSlot(id)),
+  }
 }

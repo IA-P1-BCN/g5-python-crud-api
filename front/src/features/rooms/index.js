@@ -2,4 +2,3 @@
 export { default as GateLayer } from './components/GateLayer.jsx'
 export { useRoom } from './hooks/useRoom.js'
 export { roomsRoutes } from './routes.js'
-

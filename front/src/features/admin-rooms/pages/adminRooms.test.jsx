@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { JSDOM } from 'jsdom'
 import { setupServer } from 'msw/node'
-import { adminRoomsHandlers } from "@/test/mocks/handlers/adminRooms.js";
+import { adminRoomsHandlers } from '@/test/mocks/handlers/adminRooms.js'
 
 if (typeof globalThis.document === 'undefined') {
   const dom = new JSDOM('<!doctype html><html><body></body></html>', {
@@ -64,8 +64,8 @@ describe('AdminRooms Acceptance Tests', () => {
 
     const slugInput = screen.getByLabelText(/slug/i)
     const nameInput = screen.getByLabelText(/nombre/i)
-    
-    await userEvent.type(slugInput, 'duplicate-slug')
+
+    await userEvent.type(slugInput, 'slug-duplicado')
     await userEvent.type(nameInput, 'Duplicate Room')
     await userEvent.click(screen.getByRole('button', { name: /guardar sala/i }))
 
@@ -75,10 +75,11 @@ describe('AdminRooms Acceptance Tests', () => {
   test('Activate / Deactivate toggle works in the rooms table', async () => {
     render(<AdminRoomsPage />)
 
-    const toggleBtn = await screen.findByRole('button', { name: /desactivar/i })
-    await userEvent.click(toggleBtn)
+    const toggleBtns = await screen.findAllByRole('button', { name: /desactivar/i })
+    await userEvent.click(toggleBtns[0])
 
-    expect(await screen.findByRole('button', { name: /activar/i })).toBeInTheDocument()
+    const activateBtns = await screen.findAllByRole('button', { name: /activar/i })
+    expect(activateBtns[0]).toBeInTheDocument()
   })
 
   test('After creating a room, form notifies admin that clients see it only with upcoming time slots (BR-R6)', async () => {
@@ -94,6 +95,8 @@ describe('AdminRooms Acceptance Tests', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /guardar sala/i }))
 
-    expect(await screen.findByText(/los clientes la verán solo cuando tenga franjas horarias próximas/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(/los clientes la verán solo cuando tenga franjas horarias próximas/i),
+    ).toBeInTheDocument()
   })
 })

@@ -1,84 +1,76 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useAdminSlots } from '../hooks/useAdminSlots';
-import SlotsTable from '../components/SlotsTable';
-import SlotForm from '../components/SlotForm';
+import { useState } from 'react'
+import { useParams } from 'react-router-dom'
+import adminRooms from '@/i18n/es/adminRooms'
+import { useAdminSlots } from '../hooks/useAdminSlots'
+import SlotsTable from '../components/SlotsTable'
+import SlotForm from '../components/SlotForm'
 
-const t = {
-  title: 'Gestión de Franjas Horarias',
-  createSlot: 'Crear Franja',
-  errors: {
-    SLOT_OVERLAP: 'La franja horaria se solapa con otra existente.',
-    SLOT_ACTIVE_BOOKING: 'No se puede modificar o eliminar una franja con reserva activa.',
-  }
-};
+const t = adminRooms.slots
+const errorMessage = (code) => t.errors[code] ?? t.errors.UNKNOWN
 
 export default function AdminSlotsPage() {
-  const { id: roomId } = useParams();
-  const { slots, loading, createSlot, updateSlot, deleteSlot } = useAdminSlots(roomId);
-  const [editingSlot, setEditingSlot] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [actionError, setActionError] = useState(null);
+  const { id: roomId } = useParams()
+  const { slots, loading, loadError, createSlot, updateSlot, setBlocked, deleteSlot } =
+    useAdminSlots(roomId)
+  const [editingSlot, setEditingSlot] = useState(null)
+  const [showForm, setShowForm] = useState(false)
+  const [actionError, setActionError] = useState(null)
+
+  const openForm = (slot = null) => {
+    setEditingSlot(slot)
+    setShowForm(true)
+  }
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingSlot(null)
+  }
+
+  const report = (res) => {
+    setActionError(res.success ? null : errorMessage(res.error))
+    return res.success
+  }
 
   const handleSave = async (data) => {
-    setActionError(null);
-    let res;
-    if (editingSlot) {
-      res = await updateSlot(editingSlot.id, data);
-    } else {
-      res = await createSlot(data);
-    }
-    if (res.success) {
-      setShowForm(false);
-      setEditingSlot(null);
-    } else {
-      setActionError(t.errors[res.error] || res.error);
-    }
-  };
+    const res = editingSlot ? await updateSlot(editingSlot.id, data) : await createSlot(data)
+    if (report(res)) closeForm()
+  }
+  const handleDelete = async (slot) => report(await deleteSlot(slot.id))
+  const handleToggleBlock = async (slot) => report(await setBlocked(slot.id, !slot.isBlocked))
 
-  const handleDelete = async (slotId) => {
-    setActionError(null);
-    const res = await deleteSlot(slotId);
-    if (!res.success) {
-      setActionError(t.errors[res.error] || res.error);
-    }
-  };
+  if (loading) return <p role="status">{t.loading}</p>
 
-  const handleToggleBlock = async (slot) => {
-    setActionError(null);
-    const res = await updateSlot(slot.id, { ...slot, isBlocked: !slot.isBlocked });
-    if (!res.success) {
-      setActionError(t.errors[res.error] || res.error);
-    }
-  };
-
-  if (loading) return <div>Cargando...</div>;
+  const message = actionError ?? (loadError ? errorMessage(loadError) : null)
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 p-6">
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t.title}</h1>
-        <button onClick={() => { setEditingSlot(null); setShowForm(true); }} className="px-4 py-2 bg-green-600 text-white rounded">
+        <button onClick={() => openForm()} className="rounded border px-4 py-2">
           {t.createSlot}
         </button>
       </div>
 
-      {actionError && <div className="p-3 bg-red-100 text-red-700 rounded">{actionError}</div>}
+      {message && (
+        <div role="alert" className="rounded border p-3">
+          {message}
+        </div>
+      )}
 
       {showForm && (
         <SlotForm
-          initialData={editingSlot || { startTime: '', endTime: '', isBlocked: false }}
+          key={editingSlot?.id ?? 'new'}
+          initialData={editingSlot ?? undefined}
           onSubmit={handleSave}
-          onCancel={() => { setShowForm(false); setEditingSlot(null); }}
+          onCancel={closeForm}
         />
       )}
 
       <SlotsTable
         slots={slots}
-        onEdit={(slot) => { setEditingSlot(slot); setShowForm(true); }}
+        onEdit={openForm}
         onDelete={handleDelete}
         onToggleBlock={handleToggleBlock}
       />
     </div>
-  );
+  )
 }

@@ -31,7 +31,6 @@ export default {
     errors: {
       SLOT_OVERLAP: 'La franja horaria se solapa con otra existente.',
       SLOT_ACTIVE_BOOKING: 'No se puede modificar o eliminar una franja con reserva activa.',
-    }
-  }
-};
-
+    },
+  },
+}
