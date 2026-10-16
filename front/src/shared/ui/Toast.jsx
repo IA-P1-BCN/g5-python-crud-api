@@ -1,37 +1,53 @@
-import { cva } from 'class-variance-authority'
-import es from '@/i18n/es.js'
-import { cn } from '../lib/cn.js'
+import { useNavigate } from 'react-router-dom';
+import { useCreateBooking } from '../hooks/useCreateBooking';
+import { useBookingDraftStore } from '../model/bookingDraft.store';
+import texts from '@/i18n/es/booking';
+import Toast from '@/shared/ui/Toast';
 
-const toastStyles = cva('flex items-start gap-3 rounded-lg border px-4 py-3 text-sm', {
-  variants: {
-    tone: {
-      info: 'border-line bg-surface text-text',
-      success: 'border-confirmed/50 bg-surface text-text',
-      error: 'border-error/50 bg-surface text-text',
-    },
-  },
-  defaultVariants: { tone: 'info' },
-})
+export default function CheckoutPage() {
+  const navigate = useNavigate();
+  const { submitBooking, isSubmitting, error } = useCreateBooking();
+  const { clientDetails, slotId } = useBookingDraftStore();
+  
+  const t = texts.checkout;
 
-// Generic toast notification. No business logic. Errors use role="alert" so screen readers
-// announce them at once; the rest are polite statuses.
-export default function Toast({ tone, onClose, className, children }) {
+  const handleConfirm = async () => {
+    if (!slotId) return;
+
+    const result = await submitBooking();
+    
+    if (result.success) {
+      navigate('/booking/confirmation', { state: { booking: result.data } });
+    }
+  };
+
   return (
-    <div
-      role={tone === 'error' ? 'alert' : 'status'}
-      className={cn(toastStyles({ tone }), className)}
-    >
-      <p className="flex-1">{children}</p>
-      {onClose && (
+    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold mb-6">{t.title}</h2>
+      
+      <div className="mb-6 space-y-2">
+        <p><span className="font-semibold">{t.name}:</span> {clientDetails.name || t.unspecified}</p>
+        <p><span className="font-semibold">{t.email}:</span> {clientDetails.email || t.unspecified}</p>
+        <p><span className="font-semibold">{t.phone}:</span> {clientDetails.phone || t.unspecified}</p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {error === 'SLOT_TAKEN' && (
+          <Toast tone="error">{t.errors.slotTaken}</Toast>
+        )}
+        
+        {error === 'UNEXPECTED_ERROR' && (
+          <Toast tone="error">{t.errors.unexpected}</Toast>
+        )}
+
         <button
-          type="button"
-          onClick={onClose}
-          aria-label={es.common.close}
-          className="hover:bg-surface-2 -my-2 -mr-2 min-h-11 min-w-11 rounded-lg"
+          onClick={handleConfirm}
+          disabled={isSubmitting || !slotId}
+          className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
-          <span aria-hidden="true">×</span>
+          {isSubmitting ? t.submitting : t.submit}
         </button>
-      )}
+      </div>
     </div>
-  )
+  );
 }

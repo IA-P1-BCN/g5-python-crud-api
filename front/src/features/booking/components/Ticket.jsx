@@ -1,27 +1,38 @@
-import es from '@/i18n/es.js'
-import { formatPrice } from '@/shared/lib/format.js'
-import { computeTotalPrice } from '../model/price'
+import texts from '@/i18n/es/booking';
 
-export function Ticket({ roomName, players, pricePerPlayer }) {
-  const total = computeTotalPrice({ pricePerPlayer, players })
-
+export default function Ticket({ bookingId, clientName, slotId }) {
+  const t = texts.confirmation.ticket;
+  
   return (
-    <section className="bg-surface border-line rounded-lg border p-5">
-      <h2 className="heading-title">{roomName}</h2>
-      <dl className="mt-4 space-y-2">
-        <div className="flex justify-between">
-          <dt className="text-muted">{es.booking.ticket.players}</dt>
-          <dd className="font-mono">{players}</dd>
+    <div className="relative bg-[#faf7f2] rounded-xl overflow-hidden shadow-2xl border border-dashed border-gray-400 max-w-sm w-full mx-auto">
+      {/* Cabecera del ticket */}
+      <div className="bg-gray-900 text-white p-5 text-center">
+        <h3 className="font-bold text-xl tracking-[0.2em] uppercase">{t.header}</h3>
+      </div>
+      
+      {/* Cuerpo de datos */}
+      <div className="p-8 space-y-6">
+        <div className="flex flex-col border-b border-gray-200 pb-2">
+          <span className="text-gray-500 text-xs font-semibold uppercase">ID Reserva</span>
+          <span className="font-mono text-lg font-bold text-gray-800">{bookingId || 'PENDIENTE'}</span>
         </div>
-        <div className="flex justify-between">
-          <dt className="text-muted">{es.booking.ticket.pricePerPlayer}</dt>
-          <dd className="font-mono">{formatPrice(pricePerPlayer)}</dd>
+        
+        <div className="flex flex-col border-b border-gray-200 pb-2">
+          <span className="text-gray-500 text-xs font-semibold uppercase">Titular</span>
+          <span className="text-lg font-medium text-gray-800">{clientName || texts.checkout.unspecified}</span>
         </div>
-        <div className="border-line flex justify-between border-t pt-2">
-          <dt>{es.booking.ticket.total}</dt>
-          <dd className="text-exit font-mono">{formatPrice(total)}</dd>
+
+        <div className="flex justify-between items-end border-b border-gray-200 pb-2">
+          <div className="flex flex-col">
+            <span className="text-gray-500 text-xs font-semibold uppercase">{t.date} / {t.time}</span>
+            <span className="text-lg font-medium text-gray-800">{slotId}</span>
+          </div>
         </div>
-      </dl>
-    </section>
-  )
+      </div>
+
+      {/* Perforaciones decorativas (recortes laterales) */}
+      <div className="absolute top-[80px] -left-4 w-8 h-8 bg-white rounded-full shadow-inner border-r border-gray-200"></div>
+      <div className="absolute top-[80px] -right-4 w-8 h-8 bg-white rounded-full shadow-inner border-l border-gray-200"></div>
+    </div>
+  );
 }
