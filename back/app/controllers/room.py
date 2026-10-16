@@ -119,7 +119,7 @@ def create_room(db: Session, room_in: RoomCreate) -> Room:
 
 
 def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
-    room = db.get(Room, room_id)
+    room = db.get(Room, room_id, with_for_update=True)
     if not room:
         raise AppError(
             message="Room not found",

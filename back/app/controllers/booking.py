@@ -10,7 +10,7 @@ from back.app.core.datetimes import as_utc
 from back.app.core.errors import AppError
 from back.app.core.integrity import is_violation_of
 from back.app.core.pagination import PageParams, paginate
-from back.app.models import Booking, GameResult, TimeSlot, User
+from back.app.models import Booking, GameResult, Room, TimeSlot, User
 from back.app.models.booking import ACTIVE_STATUSES
 from back.app.schemas.booking import (
     BookingCreate,
@@ -175,6 +175,7 @@ def create_booking(
     if slot is None:
         raise AppError("Time slot not found", code="SLOT_NOT_FOUND", status_code=404)
 
+    db.get(Room, slot.room_id, with_for_update=True, populate_existing=True)
     user = db.get(User, booking_in.user_id, with_for_update=True)
     if user is None:
         raise AppError("User not found", code="USER_NOT_FOUND", status_code=404)
@@ -320,7 +321,7 @@ def update_booking(
             late_message="The new slot must start 24h or more from now",
         )
 
-    room = new_slot.room
+    room = db.get(Room, new_slot.room_id, with_for_update=True, populate_existing=True)
     players = booking_in.players if booking_in.players is not None else booking.players
     if players > room.capacity:
         raise AppError(
