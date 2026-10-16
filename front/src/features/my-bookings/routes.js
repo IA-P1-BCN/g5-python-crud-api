@@ -1,5 +1,12 @@
-// Routes of the my-bookings feature: /mis-reservas -> MyBookingsPage, /historial -> GameHistoryPage. Route objects { path, Component }; composed in app/routes.jsx.
+// Routes of the my-bookings feature: /mis-reservas -> MyBookingsPage, /historial -> GameHistoryPage. Route objects { path, Component | element }; composed in app/routes.jsx.
+import { createElement } from 'react'
+import { RequireRole } from '@/features/auth'
 import GameHistoryPage from './pages/GameHistoryPage.jsx'
 
-// TODO(078): wrap with <RequireRole role="client"> once the auth feature exists.
-export const myBookingsRoutes = [{ path: '/historial', Component: GameHistoryPage }]
+// This file has no JSX, so the guard is built with createElement.
+export const myBookingsRoutes = [
+  {
+    path: '/historial',
+    element: createElement(RequireRole, { role: 'client' }, createElement(GameHistoryPage)),
+  },
+]
