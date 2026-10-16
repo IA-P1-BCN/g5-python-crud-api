@@ -1,18 +1,19 @@
-import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, within, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { adminRoomsHandlers, resetMockSlots } from '@/test/mocks/handlers/adminRooms'
+import { server } from '@/test/mocks/server'
 import AdminSlotsPage from './AdminSlotsPage'
 
-const server = setupServer(...adminRoomsHandlers)
-
-beforeAll(() => server.listen())
-beforeEach(() => resetMockSlots())
-afterEach(() => server.resetHandlers())
-afterAll(() => server.close())
+// Use the global MSW server (test/setup.js). A second server here made every POST run twice
+// (the new slot appeared twice). server.use() puts the admin handlers before booking's
+// GET /time-slots, and setup.js resets it after each test.
+beforeEach(() => {
+  resetMockSlots()
+  server.use(...adminRoomsHandlers)
+})
 
 function renderPage() {
   return render(

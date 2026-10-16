@@ -12,3 +12,13 @@ export async function fetchMyBookings() {
   const { data } = await api.get('/bookings', { params: { size: 100 } })
   return data.items
 }
+
+export async function updateBookingPlayers({ id, players }) {
+  const { data } = await api.put(`/bookings/${id}`, { players })
+  return data
+}
+
+export async function cancelBooking(id) {
+  const { data } = await api.put(`/bookings/${id}/cancel`)
+  return data
+}
