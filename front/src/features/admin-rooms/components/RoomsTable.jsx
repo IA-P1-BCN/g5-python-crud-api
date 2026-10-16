@@ -27,10 +27,7 @@ export function RoomsTable({ rooms, onToggleActive }) {
               </Badge>
             </td>
             <td className="px-4 py-3 text-right">
-              <Button
-                variant="ghost"
-                onClick={() => onToggleActive(room.id, !room.is_active)}
-              >
+              <Button variant="ghost" onClick={() => onToggleActive(room.id, !room.is_active)}>
                 {room.is_active ? 'Desactivar' : 'Activar'}
               </Button>
             </td>
