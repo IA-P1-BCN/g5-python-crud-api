@@ -68,6 +68,7 @@ const ART = {
   lab: '<svg viewBox="0 0 100 100"><path d="M40 12h20M44 12v28L22 80a6 6 0 005 9h46a6 6 0 005-9L56 40V12" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg>'
 };
 const ICON = {
+  google: '<svg class="ic" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-dasharray="38 12"/><path d="M12 12h8" stroke="currentColor" stroke-width="2.4"/></svg>',
   lock: '<svg class="ic" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
   trophy: '<svg class="ic" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 4h10v5a5 5 0 01-10 0zM7 6H4v2a3 3 0 003 3M17 6h3v2a3 3 0 01-3 3M12 14v4M8 20h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
 };
@@ -83,7 +84,9 @@ const SCREENS = [
   { id: 'mis', group: 'Cliente', label: 'Mis reservas' },
   { id: 'perfil', group: 'Cliente', label: 'Mi perfil' },
   { id: 'staff', group: 'Staff', label: 'Hoy' },
-  { id: 'admin', group: 'Admin', label: 'Panel' }
+  { id: 'admin', group: 'Admin', label: 'Panel' },
+  { id: 'login', group: 'Acceso', label: 'Entrar' },
+  { id: 'registro', group: 'Acceso', label: 'Crear cuenta' }
 ];
 
 const V = {
@@ -174,6 +177,29 @@ const V = {
       '<div class="kpis"><div class="kpi"><span>Reservas</span><b>' + d.b + '</b></div><div class="kpi"><span>Ocupación</span><b>' + d.o + ' %</b></div><div class="kpi"><span>Ingresos</span><b>' + d.r + '</b></div></div>' +
       '<h3 class="sec">Reservas por sala</h3><div class="bars">' + bars + '</div><p class="hint">Las reservas canceladas no cuentan en los ingresos.</p>' +
       '<h3 class="sec">Salas</h3><table class="tbl"><thead><tr><th>Sala</th><th>Jugadores</th><th>Duración</th><th>Precio</th><th>Estado</th><th></th></tr></thead><tbody>' + rooms + '</tbody></table>';
+  },
+  login() {
+    return '<div class="auth"><div class="ph"><div><h1>Entrar</h1><p class="lead">Accede a tu cuenta para reservar y ver tus partidas.</p></div></div>' +
+      '<form class="authform" onsubmit="return false" novalidate><div class="field"><label for="lg-email">Correo electrónico</label><input id="lg-email" type="email" autocomplete="email" placeholder="tu@correo.com"></div>' +
+      '<div class="field"><label for="lg-pass">Contraseña</label><input id="lg-pass" type="password" autocomplete="current-password"></div>' +
+      (S.err ? '<div class="alert err" role="alert">Correo o contraseña incorrectos.</div>' : '') +
+      '<button class="cta full" onclick="A.go(0)">Entrar</button>' +
+      '<div class="or"><span>o</span></div><button class="btn ghost full" type="button">' + ICON.google + ' Continuar con Google</button>' +
+      '<p class="hint">¿No tienes cuenta? <a href="#" onclick="A.go(8);return false">Crear cuenta</a></p>' +
+      '<p class="hint"><a href="#" onclick="A.fail();return false">Simular error: credenciales incorrectas</a></p></form></div>';
+  },
+
+  registro() {
+    return '<div class="auth"><div class="ph"><div><h1>Crear cuenta</h1><p class="lead">Un minuto y ya puedes reservar tu primera sala.</p></div></div>' +
+      '<form class="authform" onsubmit="return false" novalidate><div class="field"><label for="rg-name">Nombre</label><input id="rg-name" autocomplete="name"></div>' +
+      '<div class="field"><label for="rg-email">Correo electrónico</label><input id="rg-email" type="email" autocomplete="email" placeholder="tu@correo.com"></div>' +
+      '<div class="field"><label for="rg-pass">Contraseña</label><input id="rg-pass" type="password" autocomplete="new-password"><p class="hint">Mínimo 8 caracteres.</p></div>' +
+      '<div class="field"><label for="rg-pass2">Repite la contraseña</label><input id="rg-pass2" type="password" autocomplete="new-password"></div>' +
+      (S.err ? '<div class="alert err" role="alert"><b>DUPLICATE</b> · Ya existe una cuenta con este correo.</div>' : '') +
+      '<button class="cta full" onclick="A.go(0)">Crear cuenta</button>' +
+      '<div class="or"><span>o</span></div><button class="btn ghost full" type="button">' + ICON.google + ' Continuar con Google</button>' +
+      '<p class="hint">¿Ya tienes cuenta? <a href="#" onclick="A.go(7);return false">Entrar</a></p>' +
+      '<p class="hint"><a href="#" onclick="A.fail();return false">Simular error: correo ya registrado</a></p></form></div>';
   }
 };
 
