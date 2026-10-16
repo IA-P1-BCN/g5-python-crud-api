@@ -1,63 +1,76 @@
-// CheckoutPage: players dial + ticket + validated form (name, email, phone). Does not call the API.
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { describe, it, expect, vi } from 'vitest'
-import es from '@/i18n/es.js'
-import { formatPrice } from '@/shared/lib/format.js'
-import { CheckoutPage } from './CheckoutPage'
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { BrowserRouter } from 'react-router-dom';
+import CheckoutPage from './CheckoutPage';
+import { useBookingDraftStore } from '../model/bookingDraft.store';
 
-const room = { name: 'El Faro', minPlayers: 2, maxPlayers: 5, pricePerPlayer: 15 }
-const t = es.booking.checkout
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
-// formatPrice uses a non-breaking space before the euro sign; Testing Library turns it into a normal one.
-const price = (amount) => formatPrice(amount).replace(/\s/g, ' ')
+const renderWithRouter = (ui) => {
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
+};
 
-function setup() {
-  const onSubmit = vi.fn()
-  render(<CheckoutPage room={room} onSubmit={onSubmit} />)
-  return { user: userEvent.setup(), onSubmit }
-}
+describe('CheckoutPage Acceptance Tests', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useBookingDraftStore.getState().resetDraft();
+    
+    // Semillamos el store con los campos correctos (name, email, phone)
+    useBookingDraftStore.getState().setClientDetails({
+      name: 'Isbel',
+      email: 'isbel@example.com',
+      phone: '555-1234',
+    });
+  });
 
-describe('CheckoutPage', () => {
-  it('starts at the minimum number of players and shows the total', () => {
-    setup()
+  it('completes the success flow and redirects to the confirmation screen with booking state', async () => {
+    const user = userEvent.setup();
+    useBookingDraftStore.getState().setSlotId('valid-slot-123');
+    
+    renderWithRouter(<CheckoutPage />);
+    
+    const submitButton = screen.getByRole('button', { name: /confirmar reserva/i });
+    await user.click(submitButton);
+    
+    // Verificamos que navigate fue llamado incluyendo el state con la reserva
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/booking/confirmation',
+        expect.objectContaining({
+          state: expect.objectContaining({
+            booking: expect.objectContaining({
+              slotId: 'valid-slot-123',
+              clientName: 'Isbel',
+            }),
+          }),
+        })
+      );
+    });
+    
+    expect(useBookingDraftStore.getState().slotId).toBeNull();
+  });
 
-    expect(screen.getByText(price(30))).toBeInTheDocument() // 2 players x 15
-  })
-
-  it('updates the total when another number of players is chosen', async () => {
-    const { user } = setup()
-
-    await user.click(screen.getByRole('button', { name: '4' }))
-
-    expect(screen.getByText(price(60))).toBeInTheDocument() // 4 players x 15
-  })
-
-  it('shows the errors and does not submit an empty form', async () => {
-    const { user, onSubmit } = setup()
-
-    await user.click(screen.getByRole('button', { name: t.submit }))
-
-    expect(await screen.findByText(es.booking.errors.nameRequired)).toBeInTheDocument()
-    expect(screen.getByText(es.booking.errors.emailInvalid)).toBeInTheDocument()
-    expect(onSubmit).not.toHaveBeenCalled()
-  })
-
-  it('submits the form data with the number of players', async () => {
-    const { user, onSubmit } = setup()
-
-    await user.type(screen.getByLabelText(t.name), 'Ana Lopez')
-    await user.type(screen.getByLabelText(t.email), 'ana@example.com')
-    await user.click(screen.getByRole('button', { name: '3' }))
-    await user.click(screen.getByRole('button', { name: t.submit }))
-
-    await waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({
-        name: 'Ana Lopez',
-        email: 'ana@example.com',
-        phone: '',
-        players: 3,
-      }),
-    )
-  })
-})
+  it('displays a SLOT_TAKEN error near the submit button when the slot is snatched', async () => {
+    const user = userEvent.setup();
+    useBookingDraftStore.getState().setSlotId('error-slot-taken');
+    
+    renderWithRouter(<CheckoutPage />);
+    
+    const submitButton = screen.getByRole('button', { name: /confirmar reserva/i });
+    await user.click(submitButton);
+    
+    const errorMessage = await screen.findByText(/el horario seleccionado ya no está disponible/i);
+    expect(errorMessage).toBeInTheDocument();
+    
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(useBookingDraftStore.getState().clientDetails.name).toBe('Isbel');
+  });
+});
