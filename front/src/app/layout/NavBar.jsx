@@ -7,11 +7,12 @@ import es from '@/i18n/es.js'
 const nav = es.common.nav
 
 // Only links to routes that are registered today. Add a link in the same PR that registers its
-// route (my-bookings list, profile, admin-users and admin-stats are still empty).
+// route (my-bookings list, admin-users and admin-stats are still empty).
 // No `role` = public. Otherwise the link shows for that role and above (see hasRole).
 const links = [
   { to: '/salas', label: nav.rooms },
   { to: '/historial', label: nav.history, role: 'client' },
+  { to: '/perfil', label: nav.profile, role: 'client' },
   { to: '/staff', label: nav.staff, role: 'staff' },
   { to: '/admin/salas', label: nav.adminRooms, role: 'admin' },
 ]
