@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from back.app.core.datetimes import as_utc
@@ -44,6 +44,7 @@ class TimeSlot(Base):
             "status IN ('available', 'blocked')",
             name="ck_time_slots_status",
         ),
+        Index("ix_time_slots_room_starts", "room_id", "starts_at"),
     )
 
     room: Mapped["Room"] = relationship(
@@ -55,28 +56,20 @@ class TimeSlot(Base):
 
     @property
     def is_blocked(self) -> bool:
-        """Admin-managed state: the slot cannot be booked (BR-S4)."""
         return self.status == "blocked"
 
     @property
     def is_taken(self) -> bool:
-        """True when an active booking occupies the slot (BR-S5)."""
         return any(b.status in ACTIVE_STATUSES for b in self.bookings)
 
     @property
     def is_bookable(self) -> bool:
-        """BR-S5: available and without active bookings."""
         if self.status != "available":
             return False
         return not self.is_taken
 
     @property
     def state(self) -> str:
-        """Computed slot state for clients (BR-S5, ticket 059).
-
-        One of ``free``, ``taken``, ``blocked`` or ``past``. ``past`` wins
-        over the admin-managed status: once the slot has ended it is history.
-        """
         if as_utc(self.ends_at) <= datetime.now(UTC):
             return "past"
         if self.is_blocked:

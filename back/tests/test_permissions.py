@@ -1,4 +1,3 @@
-"""US05 / ticket 037: roles and permissions (BUSINESS_RULES.md matrix)."""
 
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -12,7 +11,6 @@ API = "/api/v1"
 ADMIN = ("admin",)
 STAFF_UP = ("staff", "admin")
 
-# (method, url, roles allowed by the matrix)
 PROTECTED = [
     ("POST", f"{API}/users", ADMIN),
     ("GET", f"{API}/users", ADMIN),
@@ -62,14 +60,12 @@ def test_role_against_protected_endpoint(
     response = client.request(method, url, json={}, headers=headers_by_role[role])
 
     if role in allowed:
-        # Past the permission check: any other outcome (404, 422...) is fine here.
         assert response.status_code not in (401, 403)
     else:
         assert response.status_code == 403
         assert response.json()["code"] == "FORBIDDEN"
 
 
-# ---------- PUT /users/{id}/role (BR-A4) ----------
 
 
 @pytest.fixture
@@ -120,12 +116,10 @@ def test_client_cannot_promote_themselves(client, db, client_user):
     assert db.get(User, user.id).role == "client"
 
 
-# ---------- Clients only see and cancel their own bookings ----------
 
 
 @pytest.fixture
 def bookings(db, client_user):
-    """One booking of the client and one of someone else, both 3+ days away."""
     owner, _ = client_user
     other = User(auth_id="other-sub", name="Other", email="other@example.com")
     room = Room(

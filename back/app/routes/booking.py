@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from back.app.controllers import booking as booking_controller
+from back.app.core.limits import IdPath, IdQuery
 from back.app.core.pagination import Page, PageParams
 from back.app.database import get_db
 from back.app.dependencies.auth import get_current_user, require_role
@@ -69,8 +70,8 @@ def create_booking_endpoint(
 )
 def list_bookings_endpoint(
     params: Annotated[PageParams, Depends()],
-    user_id: int | None = None,
-    room_id: int | None = None,
+    user_id: IdQuery = None,
+    room_id: IdQuery = None,
     status: Literal["PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
     | None = None,
     date_from: date | None = None,
@@ -117,7 +118,7 @@ def today_bookings_endpoint(
     responses={**AUTH_ERRORS, 404: {"description": "NOT_FOUND"}},
 )
 def get_booking_endpoint(
-    booking_id: int,
+    booking_id: IdPath,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -146,7 +147,7 @@ def get_booking_endpoint(
     },
 )
 def update_booking_endpoint(
-    booking_id: int,
+    booking_id: IdPath,
     booking_in: BookingUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -172,7 +173,7 @@ def update_booking_endpoint(
     },
 )
 def cancel_booking_endpoint(
-    booking_id: int,
+    booking_id: IdPath,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -194,7 +195,7 @@ def cancel_booking_endpoint(
     },
 )
 def confirm_booking_endpoint(
-    booking_id: int,
+    booking_id: IdPath,
     db: Session = Depends(get_db),
 ):
     return booking_controller.confirm_booking(db=db, booking_id=booking_id)
@@ -218,7 +219,7 @@ def confirm_booking_endpoint(
     dependencies=[Depends(require_role("staff", "admin"))],
 )
 def start_booking_endpoint(
-    booking_id: int,
+    booking_id: IdPath,
     db: Session = Depends(get_db),
 ):
     return booking_controller.start_booking(db=db, booking_id=booking_id)
@@ -238,7 +239,7 @@ def start_booking_endpoint(
     dependencies=[Depends(require_role("staff", "admin"))],
 )
 def finish_booking_endpoint(
-    booking_id: int,
+    booking_id: IdPath,
     db: Session = Depends(get_db),
 ):
     return booking_controller.finish_booking(db=db, booking_id=booking_id)
@@ -261,7 +262,7 @@ def finish_booking_endpoint(
     dependencies=[Depends(require_role("staff", "admin"))],
 )
 def register_result_endpoint(
-    booking_id: int,
+    booking_id: IdPath,
     result_in: GameResultCreate,
     db: Session = Depends(get_db),
 ):

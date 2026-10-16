@@ -3,7 +3,7 @@ class AppError(Exception):
         self,
         message: str,
         *,
-        code: str = "BR-X1",
+        code: str,
         status_code: int = 400,
     ) -> None:
         super().__init__(message)

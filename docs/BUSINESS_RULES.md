@@ -24,24 +24,24 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | BR-R4 | Inactive rooms are hidden from client listings and accept no new slots or bookings | 409 |
 | BR-R5 | A room with future active bookings cannot be deactivated **(to validate)** | 409 |
 | BR-R6 | A room is shown to clients only if it is active **and** has at least one upcoming time slot, free or taken. A fully booked room stays visible (shown as full); a room with no upcoming slot is hidden. The API exposes it as `has_upcoming_slots` **(to validate)** | - |
-| BR-R7 | `min_players` between 1 and room `capacity` | 422 |
+| BR-R7 | `min_players` between 1 and room `capacity`. Capacity cannot be lowered under the players of an active booking | 422, 409 `INVALID_PLAYERS` |
 
 ### Time slots (E2)
 | ID | Rule | Error |
 |----|------|-------|
 | BR-S1 | `ends_at` must be after `starts_at` | 422 |
 | BR-S2 | A slot cannot start in the past | 422 |
-| BR-S3 | Slots of the same room cannot overlap | 409 |
+| BR-S3 | Slots of the same room cannot overlap (checked in the API and enforced by the PostgreSQL exclusion constraint `ex_time_slots_no_overlap`) | 409 |
 | BR-S4 | Slot `status` is `available` or `blocked` (admin-managed) | 422 |
 | BR-S5 | A slot is **bookable** when `status=available` AND it has no active booking. This is computed, not stored | - |
-| BR-S6 | A slot with an active booking cannot be deleted or edited | 409 |
+| BR-S6 | A slot with an active booking cannot be edited; a slot with any booking (even cancelled) cannot be deleted | 409 |
 | BR-S7 | Bulk generation spaces slot starts by `duration + 30 min` (room reset buffer), skipping past (BR-S2) and overlapping (BR-S3) slots | - |
 | BR-S8 | A bulk generation request covers at most 90 days, and `date_from` must not be after `date_to` nor `first_start` after `last_start` | 422 |
 
 ### Bookings (E3)
 | ID | Rule | Error |
 |----|------|-------|
-| BR-B1 | The slot must be bookable (BR-S5) and its room active | 409 |
+| BR-B1 | The slot must be bookable (BR-S5), in the future, and its room active | 409 |
 | BR-B2 | `players` between 1 and room `capacity` | 422 |
 | BR-B3 | Initial status is `PENDING` (assigned by the system) | - |
 | BR-B4 | `total_price = room.base_price x players` (price per player) **(to validate)** | - |
@@ -49,6 +49,7 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | BR-B6 | **Cancel**: only `PENDING`/`CONFIRMED`, and only if the slot starts in **24h or more**. Cancelling frees the slot | 409 |
 | BR-B7 | **Modify**: `players` (and slot, see BR-L5), only while `PENDING`/`CONFIRMED` and 24h or more before start | 409 |
 | BR-B8 | Double booking is impossible: DB partial unique index on `bookings(time_slot_id)` where status in (`PENDING`,`CONFIRMED`,`IN_PROGRESS`). `IN_PROGRESS` is introduced in Sprint 2 (BR-G1): the status CHECK now accepts `IN_PROGRESS` and `COMPLETED` (ticket 042 onwards), and the index has included it from the start | 409 |
+| BR-B9 | A client holds at most `MAX_ACTIVE_BOOKINGS` (default 5) active bookings; staff and admin are not limited | 409 `BOOKING_LIMIT_REACHED` |
 
 ### Cross-cutting (technical)
 | ID | Rule |
@@ -65,9 +66,10 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | ID | Rule |
 |----|------|
 | BR-A1 | Login via Supabase Auth (Google). The API validates the Supabase JWT |
-| BR-A2 | First login creates a `users` row and stores `auth_id` (Supabase user id). The default role is `client`; if the email matches an address configured in `ADMIN_EMAILS`, the new user receives `role=admin` on first login only. Existing users' roles are not changed by this configuration. |
+| BR-A2 | First login creates a `users` row and stores `auth_id` (Supabase user id). The default role is `client`; if the email matches an address configured in `ADMIN_EMAILS`, the new user receives `role=admin` on first login only, whatever the login method. Existing users' roles are not changed by this configuration. A pre-existing user with the same email and no `auth_id` is linked on its first Google login (any other method gets 409 `DUPLICATE`). |
 | BR-A3 | Role lives in OUR `users` table, not in Supabase **(to validate)** |
 | BR-A4 | Only `admin` can change a user's role |
+| BR-A5 | The last active admin cannot lose the role or be deactivated (409 `LAST_ADMIN`) |
 
 ### Permission matrix
 | Action | Client | Staff | Admin |

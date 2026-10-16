@@ -1,11 +1,12 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Query, status
 
 from back.app.controllers import room as room_controller
+from back.app.core.limits import IdPath
 from back.app.core.pagination import Page, PageParams
-from back.app.database import get_db
+from back.app.core.responses import ADMIN_ERRORS
+from back.app.database import SessionDep
 from back.app.dependencies.auth import require_role
 from back.app.schemas.room import (
     RoomCreate,
@@ -15,14 +16,7 @@ from back.app.schemas.room import (
     TimeSlotBulkGenerateResponse,
 )
 
-router = APIRouter(prefix="", tags=["Rooms"])
-
-ADMIN_ERRORS = {
-    401: {"description": "UNAUTHORIZED: missing or invalid token"},
-    403: {"description": "FORBIDDEN: role not allowed (admin only)"},
-}
-
-SessionDep = Annotated[Session, Depends(get_db)]
+router = APIRouter()
 
 
 @router.post(
@@ -52,7 +46,7 @@ def create_room_endpoint(room_in: RoomCreate, db: SessionDep):
         409: {"description": "Room name or slug already exists."},
     },
 )
-def update_room_endpoint(room_id: int, room_in: RoomUpdate, db: SessionDep):
+def update_room_endpoint(room_id: IdPath, room_in: RoomUpdate, db: SessionDep):
     return room_controller.update_room(db=db, room_id=room_id, room_in=room_in)
 
 
@@ -67,7 +61,7 @@ def update_room_endpoint(room_id: int, room_in: RoomUpdate, db: SessionDep):
         409: {"description": "Room has future active bookings."},
     },
 )
-def deactivate_room_endpoint(room_id: int, db: SessionDep):
+def deactivate_room_endpoint(room_id: IdPath, db: SessionDep):
     return room_controller.deactivate_room(db=db, room_id=room_id)
 
 
@@ -77,13 +71,16 @@ def deactivate_room_endpoint(room_id: int, db: SessionDep):
     status_code=status.HTTP_200_OK,
     summary="List rooms",
     description="Paginated list of rooms: page (default 1) and size (default 20, max 100). "
-    "Optional filter: status.",
-    responses={422: {"description": "Invalid page or size"}},
+    "Optional filter: status (active or inactive).",
+    responses={422: {"description": "Invalid page, size or status"}},
 )
 def list_rooms_endpoint(
     db: SessionDep,
     params: Annotated[PageParams, Depends()],
-    status: str | None = None,
+    status: Annotated[
+        Literal["active", "inactive"] | None,
+        Query(description="Filter by status: active or inactive"),
+    ] = None,
 ):
     return room_controller.list_rooms(db=db, params=params, status=status)
 
@@ -116,7 +113,7 @@ def get_room_endpoint(room_id_or_slug: str, db: SessionDep):
         404: {"description": "Room not found."},
     },
 )
-def activate_room_endpoint(room_id: int, db: SessionDep):
+def activate_room_endpoint(room_id: IdPath, db: SessionDep):
     return room_controller.activate_room(db=db, room_id=room_id)
 
 
@@ -139,7 +136,7 @@ def activate_room_endpoint(room_id: int, db: SessionDep):
     dependencies=[Depends(require_role("admin"))],
 )
 def bulk_generate_time_slots_endpoint(
-    room_id: int, payload: TimeSlotBulkGenerateRequest, db: SessionDep
+    room_id: IdPath, payload: TimeSlotBulkGenerateRequest, db: SessionDep
 ):
     return room_controller.bulk_generate_time_slots(
         db=db, room_id=room_id, payload=payload

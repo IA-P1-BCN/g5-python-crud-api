@@ -6,10 +6,14 @@ from back.app.config.settings import settings
 SUPABASE_ISSUER = f"{settings.supabase_url.rstrip('/')}/auth/v1"
 SUPABASE_JWKS_URL = f"{SUPABASE_ISSUER}/.well-known/jwks.json"
 
-jwks_client = PyJWKClient(SUPABASE_JWKS_URL)
+jwks_client = PyJWKClient(SUPABASE_JWKS_URL, timeout=5)
 
 
 def decode_access_token(token: str) -> dict:
+    header = jwt.get_unverified_header(token)
+    if header.get("alg") != "ES256" or not header.get("kid"):
+        raise jwt.InvalidTokenError("Unexpected token header")
+
     signing_key = jwks_client.get_signing_key_from_jwt(token)
 
     return jwt.decode(

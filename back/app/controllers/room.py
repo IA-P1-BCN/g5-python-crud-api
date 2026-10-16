@@ -1,12 +1,18 @@
 from datetime import UTC, datetime, time, timedelta
+from typing import Literal
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
+from back.app.controllers.time_slot import commit_slots
+from back.app.core.datetimes import as_utc
 from back.app.core.errors import AppError
+from back.app.core.integrity import is_violation_of
+from back.app.core.limits import MAX_INT
 from back.app.core.pagination import PageParams, paginate
 from back.app.models import Booking, Room, TimeSlot
+from back.app.models.booking import ACTIVE_STATUSES
 from back.app.models.room import generate_slug
 from back.app.schemas.room import (
     RoomCreate,
@@ -15,34 +21,11 @@ from back.app.schemas.room import (
     TimeSlotBulkGenerateResponse,
 )
 
-ACTIVE_STATUSES = ("PENDING", "CONFIRMED", "IN_PROGRESS")
+DUPLICATE_MARKERS = ("uq_rooms_slug", "rooms_name_key", "rooms.slug", "rooms.name")
 
-DUPLICATE_CONSTRAINTS = ("uq_rooms_slug", "rooms_name_key")
-
-# BR-S7: bulk generation spaces slot starts by duration + reset buffer.
 SLOT_RESET_BUFFER_MINUTES = 30
 
-# BR-S8: cap the generated range so one request cannot create thousands of rows.
 MAX_BULK_GENERATE_DAYS = 90
-
-
-def _as_utc(value: datetime) -> datetime:
-    """SQLite returns naive datetimes; normalize before comparing."""
-    if value.tzinfo is None:
-        return value.replace(tzinfo=UTC)
-    return value.astimezone(UTC)
-
-
-def _is_unique_violation(exc: IntegrityError) -> bool:
-    """Return True only for name/slug unique-constraint failures."""
-    diag = getattr(exc.orig, "diag", None)
-    constraint_name = getattr(diag, "constraint_name", None)
-    message = str(exc.orig)
-    return (
-        constraint_name in DUPLICATE_CONSTRAINTS
-        or "rooms.slug" in message
-        or "rooms.name" in message
-    )
 
 
 def _ensure_name_is_available(
@@ -73,8 +56,25 @@ def _ensure_slug_is_available(
         )
 
 
+def _ensure_capacity_fits_bookings(db: Session, room_id: int, capacity: int) -> None:
+    too_big = db.execute(
+        select(Booking.id)
+        .join(TimeSlot, Booking.time_slot_id == TimeSlot.id)
+        .where(
+            TimeSlot.room_id == room_id,
+            Booking.status.in_(ACTIVE_STATUSES),
+            Booking.players > capacity,
+        )
+    ).first()
+    if too_big:
+        raise AppError(
+            message="Capacity is lower than the players of an active booking",
+            code="INVALID_PLAYERS",
+            status_code=409,
+        )
+
+
 def create_room(db: Session, room_in: RoomCreate) -> Room:
-    # BR-R7: validated here, like on update, so both return the same error shape.
     if room_in.min_players > room_in.capacity:
         raise AppError(
             message="BR-R7: min_players must be lower than or equal to capacity",
@@ -106,20 +106,20 @@ def create_room(db: Session, room_in: RoomCreate) -> Room:
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        if not _is_unique_violation(exc):
+        if not is_violation_of(exc, *DUPLICATE_MARKERS):
             raise
         raise AppError(
             message="Room with this name or slug already exists",
             code="DUPLICATE",
             status_code=409,
-        )
+        ) from exc
     db.refresh(room)
 
     return room
 
 
 def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
-    room = db.get(Room, room_id)
+    room = db.get(Room, room_id, with_for_update=True)
     if not room:
         raise AppError(
             message="Room not found",
@@ -127,8 +127,6 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
             status_code=404,
         )
 
-    # Only apply fields the client actually sent (partial update). NULL values on
-    # NOT NULL columns are rejected above, so none reach the ORM object.
     raw_updates = room_in.model_dump(exclude_unset=True)
     for field_name, value in raw_updates.items():
         if value is None:
@@ -142,7 +140,6 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
     if "name" in update_data and update_data["name"] != room.name:
         _ensure_name_is_available(db, update_data["name"], room_id=room_id)
 
-    # BR-R7: validate against the effective room state (stored + supplied).
     effective_capacity = update_data.get("capacity", room.capacity)
     effective_min_players = update_data.get("min_players", room.min_players)
     if effective_min_players > effective_capacity:
@@ -152,6 +149,9 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
             status_code=422,
         )
 
+    if "capacity" in update_data:
+        _ensure_capacity_fits_bookings(db, room_id, effective_capacity)
+
     for key, value in update_data.items():
         setattr(room, key, value)
 
@@ -159,13 +159,13 @@ def update_room(db: Session, room_id: int, room_in: RoomUpdate) -> Room:
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        if not _is_unique_violation(exc):
+        if not is_violation_of(exc, *DUPLICATE_MARKERS):
             raise
         raise AppError(
             message="Room with this name already exists",
             code="DUPLICATE",
             status_code=409,
-        )
+        ) from exc
     db.refresh(room)
 
     return room
@@ -193,7 +193,7 @@ def deactivate_room(db: Session, room_id: int) -> Room:
     if future_booking:
         raise AppError(
             message="Cannot deactivate room with future active bookings",
-            code="CONFLICT",
+            code="ROOM_HAS_BOOKINGS",
             status_code=409,
         )
 
@@ -205,18 +205,24 @@ def deactivate_room(db: Session, room_id: int) -> Room:
     return room
 
 
-def list_rooms(db: Session, params: PageParams, status: str | None = None) -> dict:
-    stmt = select(Room).order_by(Room.id)
+def list_rooms(
+    db: Session, params: PageParams, status: Literal["active", "inactive"] | None = None
+) -> dict:
+    upcoming_slots = selectinload(
+        Room.time_slots.and_(
+            TimeSlot.status == "available", TimeSlot.starts_at > datetime.now(UTC)
+        )
+    )
+    stmt = select(Room).options(upcoming_slots).order_by(Room.id)
     if status:
         stmt = stmt.where(Room.status == status)
     return paginate(db, stmt, params)
 
 
 def get_room_by_id_or_slug(db: Session, room_id_or_slug: str) -> Room:
-    # isascii() rules out unicode digits ("²".isdigit() is True) and slugs always
-    # contain at least one letter, so a pure number is an ID.
     if room_id_or_slug.isascii() and room_id_or_slug.isdigit():
-        room = db.get(Room, int(room_id_or_slug))
+        room_id = int(room_id_or_slug)
+        room = db.get(Room, room_id) if room_id <= MAX_INT else None
     else:
         room = db.execute(
             select(Room).where(Room.slug == room_id_or_slug)
@@ -239,7 +245,6 @@ def activate_room(db: Session, room_id: int) -> Room:
             code="NOT_FOUND",
             status_code=404,
         )
-    # Idempotent: an already active room is returned unchanged
     if room.status == "active":
         return room
 
@@ -267,7 +272,6 @@ def bulk_generate_time_slots(
             status_code=409,
         )
 
-    # BR-S8: validated here, like BR-R7, so the error keeps the API error shape.
     if payload.date_from > payload.date_to:
         raise AppError(
             message="date_from must not be after date_to",
@@ -297,7 +301,6 @@ def bulk_generate_time_slots(
         payload.date_to + timedelta(days=1), time.min, tzinfo=UTC
     )
 
-    # Load existing slots of the range once instead of querying per slot.
     existing_rows = db.execute(
         select(TimeSlot.starts_at, TimeSlot.ends_at).where(
             TimeSlot.room_id == room_id,
@@ -305,13 +308,11 @@ def bulk_generate_time_slots(
             TimeSlot.ends_at > range_start,
         )
     ).all()
-    existing = [(_as_utc(start), _as_utc(end)) for start, end in existing_rows]
+    existing = [(as_utc(start), as_utc(end)) for start, end in existing_rows]
 
     created_count = 0
     skipped_count = 0
 
-    # Work with full datetimes: stepping with time() alone wraps around midnight
-    # and a slot after 23:59 would never leave the inner loop.
     current_date = payload.date_from
     while current_date <= payload.date_to:
         slot_start_dt = datetime.combine(current_date, payload.first_start, tzinfo=UTC)
@@ -320,13 +321,9 @@ def bulk_generate_time_slots(
         while slot_start_dt <= last_start_dt:
             slot_end_dt = slot_start_dt + timedelta(minutes=duration_minutes)
 
-            if slot_start_dt < now:
-                # BR-S2: a slot cannot start in the past
-                skipped_count += 1
-            elif any(
+            if slot_start_dt < now or any(
                 start < slot_end_dt and end > slot_start_dt for start, end in existing
             ):
-                # BR-S3: slots of the same room cannot overlap
                 skipped_count += 1
             else:
                 db.add(
@@ -344,7 +341,7 @@ def bulk_generate_time_slots(
 
         current_date += timedelta(days=1)
 
-    db.commit()
+    commit_slots(db)
 
     return TimeSlotBulkGenerateResponse(
         created_count=created_count,

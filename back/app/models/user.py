@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, String, text
+from sqlalchemy import Boolean, CheckConstraint, DateTime, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from back.app.database import Base
@@ -36,6 +36,13 @@ class User(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP"),
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "role IN ('client', 'staff', 'admin')",
+            name="ck_users_role",
+        ),
     )
 
     bookings: Mapped[list["Booking"]] = relationship(

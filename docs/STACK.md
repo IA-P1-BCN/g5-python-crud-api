@@ -77,6 +77,7 @@ SUPABASE_URL=            # Sprint 2
 VITE_SUPABASE_URL=       # Frontend; copy to front/.env.local for Vite
 VITE_SUPABASE_PUBLISHABLE_KEY= # Frontend; copy to front/.env.local for Vite
 ADMIN_EMAILS=            # Optional: comma-separated emails granted admin role on first login only
+MAX_ACTIVE_BOOKINGS=     # Optional: active bookings allowed per client (default 5, BR-B9)
 ```
 
 The log level is fixed to `INFO` in `back/app/config/logging.py` (no `LOG_LEVEL` variable for now).
