@@ -1,4 +1,3 @@
-// Booking flow texts. (Spanish). One file per feature: no conflicts.
 export default {
   title: 'Selecciona fecha y hora',
   selectDate: 'Elige un día',
@@ -31,5 +30,22 @@ export default {
     email: 'Email',
     phone: 'Teléfono (opcional)',
     submit: 'Confirmar reserva',
+    submitting: 'Procesando...',
+    unspecified: 'No especificado',
+    errors: {
+      slotTaken: 'El horario seleccionado ya no está disponible. Por favor, vuelve al paso anterior y selecciona otro.',
+      unexpected: 'Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.'
+    }
   },
+  confirmation: {
+    title: '¡Reserva confirmada!',
+    subtitle: 'La transmisión ha sido asegurada. Te hemos enviado un correo con los detalles de acceso.',
+    stamp: 'CONFIRMADO',
+    ticket: {
+      header: 'Pase de Acceso - F-Inmersivo',
+      date: 'Fecha',
+      time: 'Hora'
+    },
+    home: 'Volver al inicio'
+  }
 }

@@ -1,10 +1,26 @@
-// Zustand store: booking in progress (room, day, slot, players). Client state only.
-import { create } from 'zustand'
+import { create } from 'zustand';
+
+const initialState = {
+  slotId: null,
+  clientDetails: {
+    name: '',
+    email: '',
+    phone: '',
+  },
+  currentStep: 1,
+};
 
 export const useBookingDraftStore = create((set) => ({
-  selectedDate: null,
-  selectedSlot: null,
-  setSelectedDate: (date) => set({ selectedDate: date, selectedSlot: null }),
-  setSelectedSlot: (slot) => set({ selectedSlot: slot }),
-  reset: () => set({ selectedDate: null, selectedSlot: null }),
-}))
+  ...initialState,
+  
+  setSlotId: (slotId) => set({ slotId }),
+  
+  setClientDetails: (details) => 
+    set((state) => ({
+      clientDetails: { ...state.clientDetails, ...details },
+    })),
+    
+  setStep: (step) => set({ currentStep: step }),
+  
+  resetDraft: () => set(initialState),
+}));

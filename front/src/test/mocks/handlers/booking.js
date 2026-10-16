@@ -1,23 +1,30 @@
-// MSW handlers for the booking endpoints (see docs/API_CONTRACT.md). One file per feature: no conflicts.
-import { http, HttpResponse } from 'msw'
+import { http, HttpResponse } from 'msw';
 
 export const bookingHandlers = [
-  http.get('/api/v1/time-slots', ({ request }) => {
-    const url = new URL(request.url)
-    const date = url.searchParams.get('date') || '2026-06-01'
+  http.post('/api/bookings', async ({ request }) => {
+    const body = await request.json();
 
-    return HttpResponse.json({
-      items: [
-        { id: 'slot-1', starts_at: `${date}T10:00:00Z`, state: 'past' },
-        { id: 'slot-2', starts_at: `${date}T11:00:00Z`, state: 'blocked' },
-        { id: 'slot-3', starts_at: `${date}T12:00:00Z`, state: 'taken' },
-        { id: 'slot-4', starts_at: `${date}T13:00:00Z`, state: 'free' },
-      ],
-      total: 4,
-      page: 1,
-      size: 20,
-    })
+    // Trigger the SLOT_TAKEN error flow
+    if (body.slotId === 'error-slot-taken') {
+      return HttpResponse.json(
+        {
+          code: 'SLOT_TAKEN',
+          message: 'The selected time slot is no longer available.',
+        },
+        { status: 409 }
+      );
+    }
+
+    // Default success flow
+    return HttpResponse.json(
+      {
+        id: `booking-${Math.random().toString(36).substring(2, 9)}`,
+        slotId: body.slotId,
+        clientName: body.name,
+        status: 'CONFIRMED',
+        createdAt: new Date().toISOString(),
+      },
+      { status: 201 }
+    );
   }),
-]
-
-export default bookingHandlers
+];
