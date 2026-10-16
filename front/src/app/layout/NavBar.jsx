@@ -1,6 +1,7 @@
 // Navigation bar: shows only what the current role can access (uses @/features/auth).
 import { NavLink } from 'react-router-dom'
 import { hasRole, useAuth } from '@/features/auth'
+import Button from '@/shared/ui/Button.jsx'
 import es from '@/i18n/es.js'
 
 const nav = es.common.nav
@@ -33,9 +34,9 @@ export default function NavBar() {
       </ul>
       {/* Wait for the session to be restored, so "Acceder" does not flash for a logged-in user. */}
       {loading ? null : isAuthenticated ? (
-        <button type="button" onClick={logout}>
+        <Button variant="ghost" onClick={logout}>
           {nav.logout}
-        </button>
+        </Button>
       ) : (
         <NavLink to="/login">{nav.login}</NavLink>
       )}

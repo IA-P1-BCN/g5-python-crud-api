@@ -3,6 +3,9 @@
 // Logged in but the role could not be loaded -> error with retry and logout.
 import { Navigate, useLocation } from 'react-router-dom'
 import es from '@/i18n/es.js'
+import Alert from '@/shared/ui/Alert.jsx'
+import Button from '@/shared/ui/Button.jsx'
+import Spinner from '@/shared/ui/Spinner.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import { hasRole } from '../model/roles.js'
 
@@ -11,7 +14,7 @@ export default function RequireRole({ role, children }) {
   const location = useLocation()
 
   if (loading) {
-    return <p role="status">{es.common.loading}</p>
+    return <Spinner label={es.common.loading} />
   }
 
   if (!isAuthenticated) {
@@ -21,31 +24,29 @@ export default function RequireRole({ role, children }) {
   // Without the role we cannot decide: give the user a way out instead of an endless spinner.
   if (roleError) {
     return (
-      <section role="alert" className="mx-auto max-w-xl px-4 py-16 text-center">
-        <p>{es.auth.roleError}</p>
+      <main className="mx-auto max-w-xl px-4 py-16 text-center">
+        <Alert tone="error">{es.auth.roleError}</Alert>
         <div className="mt-4 flex justify-center gap-4">
-          <button type="button" onClick={() => retryRole()}>
-            {es.auth.retry}
-          </button>
-          <button type="button" onClick={logout}>
+          <Button onClick={retryRole}>{es.auth.retry}</Button>
+          <Button variant="secondary" onClick={logout}>
             {es.common.nav.logout}
-          </button>
+          </Button>
         </div>
-      </section>
+      </main>
     )
   }
 
   // Logged in and the role has not arrived yet: do not flash a 403.
   if (userRole === null) {
-    return <p role="status">{es.common.loading}</p>
+    return <Spinner label={es.common.loading} />
   }
 
   if (!hasRole(userRole, role)) {
     return (
-      <section className="mx-auto max-w-xl px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold">{es.auth.forbiddenTitle}</h1>
-        <p className="mt-2">{es.common.errors.FORBIDDEN}</p>
-      </section>
+      <main className="mx-auto max-w-xl px-4 py-16 text-center">
+        <h1 className="heading-title mb-6">{es.auth.forbiddenTitle}</h1>
+        <Alert tone="error">{es.common.errors.FORBIDDEN}</Alert>
+      </main>
     )
   }
 
