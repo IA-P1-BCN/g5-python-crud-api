@@ -1,3 +1,58 @@
+## Jueves 15 de octubre de 2026
+
+### Leandro
+
+- **Hoy:** Ticket 077: implementación del login con Google mediante Supabase en el frontend, integración del proveedor de autenticación y manejo de JWT/errores 401. Configuración de variables de entorno y documentación de Supabase. PR #180 abierta para revisión.
+- **Resultado (tarde):** Cambios subidos a `feature/ticket-077-google-login`; PR #180 abierta contra `develop`. Pendiente la revisión y la verificación manual del flujo OAuth.
+- **Bloqueos:** Pendiente completar la verificación manual de Google OAuth y la revisión del PR.
+
+### Isbel
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Carolay
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Marie-Charlotte
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+---
+
+## Miércoles 14 de octubre de 2026
+
+### Leandro
+
+- **Hoy:** Seguimiento del Ticket 039 y sincronización de la rama `develop` tras la integración del PR #168.
+- **Resultado (tarde):** PR #168 del Ticket 039 integrada. Rama local `develop` actualizada y verificada con el remoto en el commit `779bc27`.
+- **Bloqueos:** Ninguno conocido.
+
+### Isbel
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Carolay
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Marie-Charlotte
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+---
 # Dailies
 
 Cada día, por la mañana cada persona rellena **Hoy**; por la tarde rellena **Resultado**.
@@ -10,9 +65,9 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ### Leandro
 
-- **Hoy:**
-- **Resultado (tarde):**
-- **Bloqueos:**
+- **Hoy:** Revisión del estado del repositorio G5, comprobación de la integridad de Git y sincronización de `develop` con `origin/develop`. Seguimiento de la integración del Ticket 036 (primer inicio de sesión y creación de usuarios, PR #153).
+- **Resultado (tarde):** Entorno Docker y servicios de API, PostgreSQL y frontend verificados. Suite de tests del backend ejecutada correctamente: 162 tests pasados.
+- **Bloqueos:** Ninguno conocido.
 
 ### Isbel
 
