@@ -27,4 +27,10 @@ export default {
     cancelled: 'Canceladas',
     all: 'Todas',
   },
+  page: {
+    title: 'Mis reservas',
+    loading: 'Cargando tus reservas',
+    loadError: 'No hemos podido cargar tus reservas. Inténtalo de nuevo.',
+    empty: 'No hay reservas en esta pestaña.',
+  },
 }
