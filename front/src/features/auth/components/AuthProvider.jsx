@@ -47,7 +47,11 @@ export default function AuthProvider({ children }) {
     }
   }, [])
 
-  const { data: me } = useQuery({
+  const {
+    data: me,
+    isError: roleLookupFailed,
+    refetch: retryRole,
+  } = useQuery({
     queryKey: meQueryKey,
     queryFn: fetchMe,
     enabled: Boolean(session),
@@ -79,12 +83,16 @@ export default function AuthProvider({ children }) {
           }
         : null,
       role: session ? (me?.role ?? null) : null,
+      // Logged in but /users/me failed: the role stays null, so consumers need this to tell it
+      // apart from "still loading" and to offer a retry.
+      roleError: Boolean(session) && roleLookupFailed,
+      retryRole,
       isAuthenticated: Boolean(session),
       loading: initializing,
       login,
       logout,
     }),
-    [session, me, initializing, login, logout],
+    [session, me, roleLookupFailed, retryRole, initializing, login, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
