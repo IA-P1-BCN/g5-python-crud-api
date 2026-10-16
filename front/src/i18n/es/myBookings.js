@@ -9,4 +9,15 @@ export default {
     noResult: 'Resultado pendiente',
     time: 'Tiempo',
   },
+  card: {
+    players: 'Jugadores',
+    total: 'Total',
+    status: {
+      PENDING: 'Pendiente',
+      CONFIRMED: 'Confirmada',
+      IN_PROGRESS: 'En curso',
+      COMPLETED: 'Completada',
+      CANCELLED: 'Cancelada',
+    },
+  },
 }
