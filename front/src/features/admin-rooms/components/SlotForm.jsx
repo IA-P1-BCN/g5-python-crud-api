@@ -54,7 +54,7 @@ export default function SlotForm({ initialData = EMPTY, onSubmit, onCancel }) {
         className="w-full rounded border p-2"
       />
       {errors[name] && (
-        <p id={`${name}-error`} className="text-sm text-red-600">
+        <p id={`${name}-error`} className="text-error text-sm">
           {t.form.errors[errors[name]]}
         </p>
       )}
