@@ -1,8 +1,126 @@
+## Jueves 15 de octubre de 2026
+
+### Leandro
+
+- **Hoy:** Ticket 077: implementación del login con Google mediante Supabase en el frontend, integración del proveedor de autenticación y manejo de JWT/errores 401. Configuración de variables de entorno y documentación de Supabase. PR #180 abierta para revisión.
+- **Resultado (tarde):** Cambios subidos a `feature/ticket-077-google-login`; PR #180 abierta contra `develop`. Pendiente la revisión y la verificación manual del flujo OAuth.
+- **Bloqueos:** Pendiente completar la verificación manual de Google OAuth y la revisión del PR.
+
+### Isbel
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Carolay
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Marie-Charlotte
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+---
+
+## Miércoles 14 de octubre de 2026
+
+### Leandro
+
+- **Hoy:** Seguimiento del Ticket 039 y sincronización de la rama `develop` tras la integración del PR #168.
+- **Resultado (tarde):** PR #168 del Ticket 039 integrada. Rama local `develop` actualizada y verificada con el remoto en el commit `779bc27`.
+- **Bloqueos:** Ninguno conocido.
+
+### Isbel
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Carolay
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Marie-Charlotte
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+---
 # Dailies
 
 Cada día, por la mañana cada persona rellena **Hoy**; por la tarde rellena **Resultado**.
 Si hay algo que bloquea, se anota en **Bloqueos**.
 Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
+
+---
+
+## Martes 13 de octubre de 2026
+
+### Leandro
+
+- **Hoy:** Revisión del estado del repositorio G5, comprobación de la integridad de Git y sincronización de `develop` con `origin/develop`. Seguimiento de la integración del Ticket 036 (primer inicio de sesión y creación de usuarios, PR #153).
+- **Resultado (tarde):** Entorno Docker y servicios de API, PostgreSQL y frontend verificados. Suite de tests del backend ejecutada correctamente: 162 tests pasados.
+- **Bloqueos:** Ninguno conocido.
+
+### Isbel
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Carolay
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Marie-Charlotte
+
+- **Hoy:**
+  - Back de la partida (Sprint 2, rol staff/admin): tickets 041 a 045.
+  - Ticket 060 "Enrich booking responses" (slug de la sala guardado, relaciones cargadas de una vez, rango de fechas invertido rechazado).
+- **Resultado (tarde):**
+- **Bloqueos:** Ninguno.
+
+---
+
+## Viernes 9 de octubre de 2026
+
+### Leandro
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Isbel
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Carolay
+
+- **Hoy:**
+- **Resultado (tarde):**
+- **Bloqueos:**
+
+### Marie-Charlotte
+
+- **Hoy:**
+  - Ticket 066 "Port 3D corridor": portar el pasillo 3D con alternativa sin WebGL.
+  - Ticket 086 "Design system" del front (tokens, componentes compartidos).
+- **Resultado (tarde):**
+  - Ticket 066 hecho ✅ (PR #149 integrada): pasillo 3D dividido en módulos con sus tests, lista accesible de salas, fallback si falla WebGL, `useRooms` con las salas visibles.
+  - Ticket 086 hecho ✅ (PR #151 integrada): tokens de diseño, fuentes autoalojadas, `Button`, `Badge`, `Alert`, `Field`, `Spinner`, `EmptyState`, `Dialog` y `Select` de shadcn/ui, y guía "Start here" para el equipo en `DESIGN.md`.
+  - Correcciones: etiqueta Swagger duplicada de time-slots (PR #152) y cadena de migraciones del `auth_id`.
+- **Bloqueos:** Ninguno.
 
 ---
 
