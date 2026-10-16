@@ -1,59 +1,59 @@
-import { useState, useEffect, useCallback } from "react";
-import { adminRoomsApi } from "../api/adminRoomsApi";
+import { useState, useEffect, useCallback } from 'react'
+import { adminRoomsApi } from '../api/adminRoomsApi'
 
 export function useAdminRooms() {
-  const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [rooms, setRooms] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const refreshRooms = useCallback(async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const data = await adminRoomsApi.getRooms();
-      setRooms(data);
-      setError(null);
+      const data = await adminRoomsApi.getRooms()
+      setRooms(data)
+      setError(null)
     } catch (err) {
-      setError(err.message);
+      setError(err.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
 
     adminRoomsApi
       .getRooms()
       .then((data) => {
-        if (cancelled) return;
-        setRooms(data);
-        setError(null);
+        if (cancelled) return
+        setRooms(data)
+        setError(null)
       })
       .catch((err) => {
-        if (cancelled) return;
-        setError(err.message);
+        if (cancelled) return
+        setError(err.message)
       })
       .finally(() => {
-        if (cancelled) return;
-        setLoading(false);
-      });
+        if (cancelled) return
+        setLoading(false)
+      })
 
     return () => {
-      cancelled = true;
-    };
-  }, []);
+      cancelled = true
+    }
+  }, [])
 
   const saveRoom = async (roomData) => {
-    const newRoom = await adminRoomsApi.createRoom(roomData);
-    setRooms((prev) => [...prev, newRoom]);
-    return newRoom;
-  };
+    const newRoom = await adminRoomsApi.createRoom(roomData)
+    setRooms((prev) => [...prev, newRoom])
+    return newRoom
+  }
 
   const toggleActive = async (id, active) => {
-    const updated = await adminRoomsApi.toggleRoomActive(id, active);
-    setRooms((prev) => prev.map((r) => (r.id === id ? updated : r)));
-    return updated;
-  };
+    const updated = await adminRoomsApi.toggleRoomActive(id, active)
+    setRooms((prev) => prev.map((r) => (r.id === id ? updated : r)))
+    return updated
+  }
 
   return {
     rooms,
@@ -62,7 +62,7 @@ export function useAdminRooms() {
     saveRoom,
     toggleActive,
     refreshRooms,
-  };
+  }
 }
 
-export default useAdminRooms;
+export default useAdminRooms

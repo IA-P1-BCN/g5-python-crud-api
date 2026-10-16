@@ -10,14 +10,14 @@ import { DUPLICATE_SLUG_ERROR } from '../model/errors'
 export function AdminRoomsPage() {
   const { rooms, loading, error, saveRoom, toggleActive } = useAdminRooms()
   const [apiError, setApiError] = useState(null)
-  const [success, setSuccess] = useState(null)
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (values) => {
     setApiError(null)
-    setSuccess(null)
+    setSuccess(false)
     try {
       await saveRoom(values)
-      setSuccess(es.adminRooms.createSuccess)
+      setSuccess(true)
     } catch (err) {
       const code = err?.response?.data?.code
       setApiError(code === DUPLICATE_SLUG_ERROR ? DUPLICATE_SLUG_ERROR : err?.message)
@@ -38,12 +38,22 @@ export function AdminRoomsPage() {
       <h1 className="heading-hero text-text mb-6">{es.adminRooms.title}</h1>
 
       {error && <Alert tone="error">{error}</Alert>}
-      {success && <Alert tone="success">{success}</Alert>}
+
+      {success && (
+        <div
+          role="status"
+          className="bg-surface text-text border-confirmed my-4 rounded-lg border px-[18px] py-3.5"
+        >
+          Sala creada con éxito. Los clientes la verán solo cuando tenga franjas horarias próximas.
+        </div>
+      )}
 
       <RoomForm onSubmit={handleSubmit} apiError={apiError} />
 
       <div className="mt-6">
-        {loading ? <Spinner label="Cargando salas..." /> : (
+        {loading ? (
+          <Spinner label="Cargando salas..." />
+        ) : (
           <RoomsTable rooms={rooms} onToggleActive={handleToggleActive} />
         )}
       </div>
