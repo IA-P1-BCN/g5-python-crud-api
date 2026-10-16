@@ -76,6 +76,8 @@ class GameResultCreate(BaseModel):
     completed: bool
     completion_time: int = Field(ge=0, le=MAX_INT)
 
+    model_config = ConfigDict(extra="forbid")
+
 
 class BookingDetail(BookingRead):
     """Booking with slot, room, user and can_modify (GET /bookings and /{id})."""
@@ -92,6 +94,8 @@ class BookingUpdate(BaseModel):
 
     players: int | None = Field(default=None, ge=1, le=MAX_INT)
     time_slot_id: int | None = Field(default=None, ge=1, le=MAX_INT)
+
+    model_config = ConfigDict(extra="forbid")
 
     @model_validator(mode="after")
     def at_least_one_field(self):

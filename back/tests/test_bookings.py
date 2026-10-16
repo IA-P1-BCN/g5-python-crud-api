@@ -3,11 +3,14 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
+from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from back.app.config.settings import settings
 from back.app.controllers import booking as booking_controller
 from back.app.models import Booking, Room, TimeSlot, User
+from back.app.schemas.booking import BookingUpdate, GameResultCreate
+from back.app.schemas.room import TimeSlotBulkGenerateRequest
 
 
 @pytest.fixture
@@ -842,3 +845,26 @@ def test_create_booking_rejects_unknown_and_huge_values(client):
     assert client.post(URL, json={**body, "total_price": 0}).status_code == 422
     assert client.post(URL, json={**body, "players": 10**12}).status_code == 422
     assert client.post(URL, json={**body, "time_slot_id": 10**12}).status_code == 422
+
+
+@pytest.mark.parametrize(
+    ("schema", "body"),
+    [
+        (GameResultCreate, {"completed": True, "completion_time": 10}),
+        (BookingUpdate, {"players": 2}),
+        (
+            TimeSlotBulkGenerateRequest,
+            {
+                "date_from": "2030-01-01",
+                "date_to": "2030-01-02",
+                "first_start": "10:00",
+                "last_start": "12:00",
+            },
+        ),
+    ],
+)
+def test_write_schemas_reject_unknown_fields(schema, body):
+    schema(**body)
+
+    with pytest.raises(ValidationError):
+        schema(**body, surprise=1)

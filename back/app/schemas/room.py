@@ -90,6 +90,8 @@ class TimeSlotBulkGenerateRequest(BaseModel):
     first_start: time
     last_start: time
 
+    model_config = ConfigDict(extra="forbid")
+
 
 class TimeSlotBulkGenerateResponse(BaseModel):
     created_count: int
