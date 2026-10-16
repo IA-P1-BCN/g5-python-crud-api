@@ -74,7 +74,7 @@ POSTGRES_DB=             # same
 POSTGRES_HOST=           # not read by the API
 POSTGRES_PORT=           # not read by the API
 SUPABASE_URL=            # Sprint 2
-ADMIN_EMAILS=            # Optional: comma-separated emails granted admin role on first Google login only
+ADMIN_EMAILS=            # Optional: comma-separated emails granted admin role on first login only
 MAX_ACTIVE_BOOKINGS=     # Optional: active bookings allowed per client (default 5, BR-B9)
 ```
 

@@ -223,19 +223,27 @@ def test_get_current_user_duplicate_email_with_other_identity_does_not_link(
     assert existing_user.auth_id == "first-google-user"
 
 
-def test_get_current_user_untrusted_provider_cannot_create_account(
-    make_token, db, monkeypatch
-):
+def test_get_current_user_email_provider_creates_account(make_token, db, monkeypatch):
+    monkeypatch.setattr(settings, "admin_emails", "admin@example.com")
+    token = make_token(
+        subject="email-signup", email="someone@example.com", provider="email"
+    )
+
+    user = get_current_user(credentials=make_credentials(token), db=db)
+
+    assert user.auth_id == "email-signup"
+    assert user.role == "client"
+
+
+def test_get_current_user_email_provider_gets_admin_role(make_token, db, monkeypatch):
     monkeypatch.setattr(settings, "admin_emails", "admin@example.com")
     token = make_token(
         subject="email-signup", email="admin@example.com", provider="email"
     )
 
-    with pytest.raises(HTTPException) as exc_info:
-        get_current_user(credentials=make_credentials(token), db=db)
+    user = get_current_user(credentials=make_credentials(token), db=db)
 
-    assert exc_info.value.status_code == 401
-    assert db.query(User).count() == 0
+    assert user.role == "admin"
 
 
 def test_get_current_user_inactive_user_is_not_linked(make_token, db):

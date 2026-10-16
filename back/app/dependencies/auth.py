@@ -116,10 +116,7 @@ def _first_login(db: Session, payload: dict, auth_id: str) -> User:
         existing.auth_id = auth_id
         user = existing
     else:
-        if not trusted:
-            logger.warning("account creation refused | untrusted provider")
-            raise unauthorized("Sign in with Google")
-        role = "admin" if trusted and email in _admin_emails() else "client"
+        role = "admin" if email in _admin_emails() else "client"
         user = User(auth_id=auth_id, name=name, email=email, role=role)
         db.add(user)
 

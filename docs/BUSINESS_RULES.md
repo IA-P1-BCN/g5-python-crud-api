@@ -66,7 +66,7 @@ Items marked **(to validate)** are proposals the team has not confirmed yet.
 | ID | Rule |
 |----|------|
 | BR-A1 | Login via Supabase Auth (Google). The API validates the Supabase JWT |
-| BR-A2 | First login creates a `users` row and stores `auth_id` (Supabase user id). The default role is `client`; if the email matches an address configured in `ADMIN_EMAILS` and the login is Google (`app_metadata.provider`), the new user receives `role=admin` on first login only. Existing users' roles are not changed by this configuration. A pre-existing user with the same email and no `auth_id` is linked on its first Google login. |
+| BR-A2 | First login creates a `users` row and stores `auth_id` (Supabase user id). The default role is `client`; if the email matches an address configured in `ADMIN_EMAILS`, the new user receives `role=admin` on first login only, whatever the login method. Existing users' roles are not changed by this configuration. A pre-existing user with the same email and no `auth_id` is linked on its first Google login (any other method gets 409 `DUPLICATE`). |
 | BR-A3 | Role lives in OUR `users` table, not in Supabase **(to validate)** |
 | BR-A4 | Only `admin` can change a user's role |
 | BR-A5 | The last active admin cannot lose the role or be deactivated (409 `LAST_ADMIN`) |
