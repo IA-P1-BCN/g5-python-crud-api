@@ -10,13 +10,9 @@ export default {
   nav: {
     label: 'Navegación principal',
     rooms: 'Salas',
-    myBookings: 'Mis reservas',
     history: 'Historial',
-    profile: 'Perfil',
     staff: 'Planning de hoy',
     adminRooms: 'Gestión de salas',
-    adminUsers: 'Usuarios',
-    adminStats: 'Estadísticas',
     login: 'Acceder',
     logout: 'Cerrar sesión',
   },

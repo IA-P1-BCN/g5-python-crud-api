@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -28,6 +29,16 @@ const session = {
 function signInAs(role) {
   mocks.auth.getSession.mockResolvedValue({ data: { session } })
   server.use(http.get('/api/v1/users/me', () => HttpResponse.json(meDto({ role }))))
+}
+
+// Logged in, but the API cannot tell us the role.
+function signInWithRoleLookupFailing() {
+  mocks.auth.getSession.mockResolvedValue({ data: { session } })
+  server.use(
+    http.get('/api/v1/users/me', () =>
+      HttpResponse.json({ code: 'INTERNAL_ERROR' }, { status: 500 }),
+    ),
+  )
 }
 
 function renderGuardedStaffPage() {
@@ -91,5 +102,28 @@ describe('RequireRole role="staff"', () => {
 
     expect(await screen.findByText('Pantalla de login')).toBeInTheDocument()
     expect(screen.queryByText('Zona staff')).not.toBeInTheDocument()
+  })
+
+  it('role lookup fails: shows an error and retrying recovers', async () => {
+    signInWithRoleLookupFailing()
+    renderGuardedStaffPage()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(es.auth.roleError)
+    expect(screen.queryByText('Zona staff')).not.toBeInTheDocument()
+
+    server.use(http.get('/api/v1/users/me', () => HttpResponse.json(meDto({ role: 'staff' }))))
+    await userEvent.click(screen.getByRole('button', { name: es.auth.retry }))
+
+    expect(await screen.findByText('Zona staff')).toBeInTheDocument()
+  })
+
+  it('role lookup fails: the user can log out', async () => {
+    signInWithRoleLookupFailing()
+    renderGuardedStaffPage()
+
+    await userEvent.click(await screen.findByRole('button', { name: es.common.nav.logout }))
+
+    expect(mocks.auth.signOut).toHaveBeenCalled()
+    expect(await screen.findByText('Pantalla de login')).toBeInTheDocument()
   })
 })

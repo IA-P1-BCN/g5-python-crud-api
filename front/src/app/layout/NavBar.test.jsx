@@ -59,14 +59,10 @@ describe('NavBar', () => {
     signInAs('client')
     renderNavBar()
 
-    expect(await screen.findByRole('link', { name: nav.myBookings })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: nav.history })).toBeInTheDocument()
     expect(link(nav.rooms)).toBeInTheDocument()
-    expect(link(nav.history)).toBeInTheDocument()
-    expect(link(nav.profile)).toBeInTheDocument()
     expect(link(nav.staff)).not.toBeInTheDocument()
     expect(link(nav.adminRooms)).not.toBeInTheDocument()
-    expect(link(nav.adminUsers)).not.toBeInTheDocument()
-    expect(link(nav.adminStats)).not.toBeInTheDocument()
   })
 
   it('staff: adds the staff planning but no admin links', async () => {
@@ -74,10 +70,9 @@ describe('NavBar', () => {
     renderNavBar()
 
     expect(await screen.findByRole('link', { name: nav.staff })).toBeInTheDocument()
-    expect(link(nav.myBookings)).toBeInTheDocument()
+    expect(link(nav.history)).toBeInTheDocument()
+    expect(link(nav.rooms)).toBeInTheDocument()
     expect(link(nav.adminRooms)).not.toBeInTheDocument()
-    expect(link(nav.adminUsers)).not.toBeInTheDocument()
-    expect(link(nav.adminStats)).not.toBeInTheDocument()
   })
 
   it('admin: shows every link', async () => {
@@ -85,10 +80,8 @@ describe('NavBar', () => {
     renderNavBar()
 
     expect(await screen.findByRole('link', { name: nav.adminRooms })).toBeInTheDocument()
-    expect(link(nav.adminUsers)).toBeInTheDocument()
-    expect(link(nav.adminStats)).toBeInTheDocument()
     expect(link(nav.staff)).toBeInTheDocument()
-    expect(link(nav.myBookings)).toBeInTheDocument()
+    expect(link(nav.history)).toBeInTheDocument()
     expect(link(nav.rooms)).toBeInTheDocument()
   })
 
@@ -97,7 +90,7 @@ describe('NavBar', () => {
 
     expect(await screen.findByRole('link', { name: nav.login })).toBeInTheDocument()
     expect(link(nav.rooms)).toBeInTheDocument()
-    expect(link(nav.myBookings)).not.toBeInTheDocument()
+    expect(link(nav.history)).not.toBeInTheDocument()
     expect(link(nav.staff)).not.toBeInTheDocument()
     expect(link(nav.adminRooms)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: nav.logout })).not.toBeInTheDocument()
