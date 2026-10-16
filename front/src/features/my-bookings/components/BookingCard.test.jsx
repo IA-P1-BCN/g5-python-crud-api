@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import es from '@/i18n/es.js'
 import { bookingDto } from '@/test/mocks/handlers/myBookings.js'
 import BookingCard from './BookingCard.jsx'
@@ -27,5 +28,44 @@ describe('BookingCard', () => {
     render(<BookingCard booking={bookingDto({ status })} />)
 
     expect(screen.getByText(label)).toBeInTheDocument()
+  })
+})
+
+describe('BookingCard actions', () => {
+  const slot = (startsAt) => ({ ...bookingDto().time_slot, starts_at: startsAt })
+  const FUTURE = bookingDto({ time_slot: slot('2026-10-30T16:00:00Z') })
+  const SOON = bookingDto({ time_slot: slot('2026-10-17T10:00:00Z') })
+
+  // Only Date is faked, so "now" is fixed for the 24h rule.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-16T12:00:00Z'))
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('calls onModify / onCancel from the enabled buttons', async () => {
+    const onModify = vi.fn()
+    const onCancel = vi.fn()
+    render(<BookingCard booking={FUTURE} onModify={onModify} onCancel={onCancel} />)
+
+    await userEvent.click(screen.getByRole('button', { name: es.myBookings.actions.modify }))
+    await userEvent.click(screen.getByRole('button', { name: es.myBookings.actions.cancel }))
+
+    expect(onModify).toHaveBeenCalledWith(FUTURE)
+    expect(onCancel).toHaveBeenCalledWith(FUTURE)
+  })
+
+  it('disables both buttons and explains why under 24h', () => {
+    render(<BookingCard booking={SOON} onModify={vi.fn()} onCancel={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: es.myBookings.actions.modify })).toBeDisabled()
+    expect(screen.getByRole('button', { name: es.myBookings.actions.cancel })).toBeDisabled()
+    expect(screen.getByText(es.myBookings.actions.tooLate)).toBeInTheDocument()
+  })
+
+  it('shows no actions for a cancelled booking', () => {
+    render(<BookingCard booking={{ ...FUTURE, status: 'CANCELLED' }} />)
+
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 })
