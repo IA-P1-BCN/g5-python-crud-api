@@ -7,6 +7,7 @@ import Spinner from '@/shared/ui/Spinner.jsx'
 import BookingCard from '../components/BookingCard.jsx'
 import BookingTabs from '../components/BookingTabs.jsx'
 import CancelDialog from '../components/CancelDialog.jsx'
+import ChangeSlotDialog from '../components/ChangeSlotDialog.jsx'
 import ModifyPlayersDialog from '../components/ModifyPlayersDialog.jsx'
 import { useMyBookings } from '../hooks/useMyBookings.js'
 import { filterBookings } from '../model/bookingFilters.js'
@@ -15,7 +16,7 @@ const t = es.myBookings.page
 
 export default function MyBookingsPage() {
   const [tab, setTab] = useState('upcoming')
-  // Which dialog is open, and for which booking: { type: 'modify' | 'cancel', booking } or null.
+  // Which dialog is open, and for which booking: { type: 'modify' | 'changeSlot' | 'cancel', booking } or null.
   const [action, setAction] = useState(null)
   const { data, isPending, isError } = useMyBookings()
   const bookings = data ? filterBookings(data, tab) : []
@@ -35,6 +36,7 @@ export default function MyBookingsPage() {
                 <BookingCard
                   booking={booking}
                   onModify={(b) => setAction({ type: 'modify', booking: b })}
+                  onChangeSlot={(b) => setAction({ type: 'changeSlot', booking: b })}
                   onCancel={(b) => setAction({ type: 'cancel', booking: b })}
                 />
               </li>
@@ -44,6 +46,9 @@ export default function MyBookingsPage() {
       </div>
       {action?.type === 'modify' && (
         <ModifyPlayersDialog booking={action.booking} open onOpenChange={() => setAction(null)} />
+      )}
+      {action?.type === 'changeSlot' && (
+        <ChangeSlotDialog booking={action.booking} open onOpenChange={() => setAction(null)} />
       )}
       {action?.type === 'cancel' && (
         <CancelDialog booking={action.booking} open onOpenChange={() => setAction(null)} />
