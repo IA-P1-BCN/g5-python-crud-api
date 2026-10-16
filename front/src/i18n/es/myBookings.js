@@ -20,4 +20,11 @@ export default {
       CANCELLED: 'Cancelada',
     },
   },
+  tabs: {
+    label: 'Filtrar reservas',
+    upcoming: 'Próximas',
+    past: 'Pasadas',
+    cancelled: 'Canceladas',
+    all: 'Todas',
+  },
 }
