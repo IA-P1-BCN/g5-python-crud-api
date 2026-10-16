@@ -98,6 +98,23 @@ describe('MyBookingsPage', () => {
     expect(screen.getByText(t.page.empty)).toBeInTheDocument()
   })
 
+  it('opens the change-slot dialog for the chosen booking', async () => {
+    respondWith([upcoming])
+    server.use(
+      http.get('/api/v1/time-slots', () =>
+        HttpResponse.json({ items: [], total: 0, page: 1, size: 100 }),
+      ),
+    )
+    renderPage()
+    await screen.findByText('Sala Futura')
+
+    await userEvent.click(screen.getByRole('button', { name: t.actions.changeSlot }))
+
+    expect(await screen.findByRole('dialog')).toHaveTextContent(
+      t.changeSlotDialog.description.replace('{room}', 'Sala Futura'),
+    )
+  })
+
   it('shows an error message when the API fails', async () => {
     server.use(
       http.get('/api/v1/bookings', () =>

@@ -20,7 +20,7 @@ const STATUS_TONE = {
 const DATE_FORMAT = { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }
 const TIME_FORMAT = { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }
 
-export default function BookingCard({ booking, onModify, onCancel }) {
+export default function BookingCard({ booking, onModify, onChangeSlot, onCancel }) {
   const start = new Date(booking.time_slot.starts_at)
   const showActions = EDITABLE_STATUSES.includes(booking.status)
   const allowed = canModify(booking)
@@ -50,6 +50,9 @@ export default function BookingCard({ booking, onModify, onCancel }) {
           <div className="flex flex-wrap gap-3">
             <Button variant="secondary" disabled={!allowed} onClick={() => onModify(booking)}>
               {es.myBookings.actions.modify}
+            </Button>
+            <Button variant="secondary" disabled={!allowed} onClick={() => onChangeSlot(booking)}>
+              {es.myBookings.actions.changeSlot}
             </Button>
             <Button variant="ghost" disabled={!allowed} onClick={() => onCancel(booking)}>
               {es.myBookings.actions.cancel}
