@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'reac
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { setAuthTokenGetter, setUnauthorizedHandler } from '@/shared/api/client.js'
-import { fetchMe, meQueryKey } from '../api/authApi.js'
+import { fetchMe, meQueryKey, signInWithPassword } from '../api/authApi.js'
 import { AuthContext } from '../hooks/useAuth.js'
 import { supabase } from '../model/supabaseClient.js'
 
@@ -67,6 +67,14 @@ export default function AuthProvider({ children }) {
     [],
   )
 
+  // Email + password. Supabase persists the session; we also keep it in state right away so the
+  // caller sees isAuthenticated without waiting for the auth-state event. Throws the Supabase error.
+  const loginWithPassword = useCallback(async ({ email, password }) => {
+    const { data, error } = await signInWithPassword({ email, password })
+    if (error) throw error
+    setSession(data.session)
+  }, [])
+
   const logout = useCallback(async () => {
     await supabase.auth.signOut()
     setSession(null)
@@ -90,9 +98,10 @@ export default function AuthProvider({ children }) {
       isAuthenticated: Boolean(session),
       loading: initializing,
       login,
+      loginWithPassword,
       logout,
     }),
-    [session, me, roleLookupFailed, retryRole, initializing, login, logout],
+    [session, me, roleLookupFailed, retryRole, initializing, login, loginWithPassword, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

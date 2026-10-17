@@ -9,6 +9,7 @@ it('has one namespace per feature plus common', () => {
       'auth',
       'booking',
       'common',
+      'dashboard',
       'myBookings',
       'profile',
       'rooms',

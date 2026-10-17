@@ -1,5 +1,6 @@
 // Axios calls for auth/session. No React.
 import { api } from '@/shared/api/client.js'
+import { supabase } from '../model/supabaseClient.js'
 
 export const meQueryKey = ['auth', 'me']
 
@@ -7,4 +8,9 @@ export const meQueryKey = ['auth', 'me']
 export async function fetchMe() {
   const { data } = await api.get('/users/me')
   return data
+}
+
+// Email + password sign-in against Supabase. Resolves { data, error }, like the Supabase client.
+export function signInWithPassword({ email, password }) {
+  return supabase.auth.signInWithPassword({ email, password })
 }
