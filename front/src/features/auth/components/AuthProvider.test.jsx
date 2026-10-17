@@ -66,9 +66,10 @@ describe('AuthProvider', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: es.auth.google }))
 
-    expect(mocks.auth.signInWithOAuth).toHaveBeenCalledWith(
-      expect.objectContaining({ provider: 'google' }),
-    )
+    expect(mocks.auth.signInWithOAuth).toHaveBeenCalledWith({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/dashboard` },
+    })
   })
 
   it('logged in: exposes the session and the Axios interceptor sends the JWT', async () => {
