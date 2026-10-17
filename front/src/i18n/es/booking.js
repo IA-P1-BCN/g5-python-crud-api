@@ -33,19 +33,24 @@ export default {
     submitting: 'Procesando...',
     unspecified: 'No especificado',
     errors: {
-      slotTaken: 'El horario seleccionado ya no está disponible. Por favor, vuelve al paso anterior y selecciona otro.',
-      unexpected: 'Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.'
-    }
+      slotTaken:
+        'El horario seleccionado ya no está disponible. Por favor, vuelve al paso anterior y selecciona otro.',
+      unexpected: 'Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.',
+    },
   },
   confirmation: {
     title: '¡Reserva confirmada!',
-    subtitle: 'La transmisión ha sido asegurada. Te hemos enviado un correo con los detalles de acceso.',
+    subtitle:
+      'La transmisión ha sido asegurada. Te hemos enviado un correo con los detalles de acceso.',
     stamp: 'CONFIRMADO',
     ticket: {
       header: 'Pase de Acceso - F-Inmersivo',
       date: 'Fecha',
-      time: 'Hora'
+      time: 'Hora',
+      bookingId: 'ID de reserva',
+      holder: 'Titular',
+      pending: 'PENDIENTE',
     },
-    home: 'Volver al inicio'
-  }
+    home: 'Volver al inicio',
+  },
 }

@@ -1,56 +1,66 @@
-import { useNavigate } from 'react-router-dom';
-import { useCreateBooking } from '../hooks/useCreateBooking';
-import { useBookingDraftStore } from '../model/bookingDraft.store';
-import texts from '@/i18n/es/booking'; // External directory, uses absolute alias
+import { useNavigate } from 'react-router-dom'
+import Button from '@/shared/ui/Button.jsx'
+import texts from '@/i18n/es/booking'
+import { useCreateBooking } from '../hooks/useCreateBooking'
+import { useBookingDraftStore } from '../model/bookingDraft.store'
 
-export default function CheckoutPage() {
-  const navigate = useNavigate();
-  const { submitBooking, isSubmitting, error } = useCreateBooking();
-  const { clientDetails, slotId } = useBookingDraftStore();
-  
-  const t = texts.checkout;
+const CONFIRMATION_PATH = '/booking/confirmation'
+
+export function CheckoutPage() {
+  const navigate = useNavigate()
+  const { submitBooking, isSubmitting, error } = useCreateBooking()
+  const { clientDetails, slotId } = useBookingDraftStore()
+
+  const t = texts.checkout
+  const errorText = { SLOT_TAKEN: t.errors.slotTaken, UNEXPECTED_ERROR: t.errors.unexpected }[error]
 
   const handleConfirm = async () => {
-    if (!slotId) return;
+    if (!slotId) return
 
-    const result = await submitBooking();
-    
+    const result = await submitBooking()
+
     if (result.success) {
-      navigate('/booking/confirmation', { state: { booking: result.data } });
+      navigate(CONFIRMATION_PATH, {
+        state: {
+          booking: { ...result.data, slotId, clientName: clientDetails.name },
+        },
+      })
     }
-  };
+  }
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6">{t.title}</h2>
-      
-      <div className="mb-6 space-y-2">
-        <p><span className="font-semibold">{t.name}:</span> {clientDetails.name || t.unspecified}</p>
-        <p><span className="font-semibold">{t.email}:</span> {clientDetails.email || t.unspecified}</p>
-        <p><span className="font-semibold">{t.phone}:</span> {clientDetails.phone || t.unspecified}</p>
+    <div className="bg-surface-2 border-line mx-auto max-w-md rounded-lg border p-6">
+      <h2 className="text-text mb-6 text-2xl font-bold">{t.title}</h2>
+
+      <div className="text-text mb-6 space-y-2">
+        <p>
+          <span className="font-semibold">{t.name}:</span> {clientDetails.name || t.unspecified}
+        </p>
+        <p>
+          <span className="font-semibold">{t.email}:</span> {clientDetails.email || t.unspecified}
+        </p>
+        <p>
+          <span className="font-semibold">{t.phone}:</span> {clientDetails.phone || t.unspecified}
+        </p>
       </div>
 
       <div className="flex flex-col gap-4">
-        {error === 'SLOT_TAKEN' && (
-          <div className="p-3 text-sm text-red-700 bg-red-100 rounded-md border border-red-200" role="alert">
-            {t.errors.slotTaken}
-          </div>
-        )}
-        
-        {error === 'UNEXPECTED_ERROR' && (
-          <div className="p-3 text-sm text-red-700 bg-red-100 rounded-md border border-red-200" role="alert">
-            {t.errors.unexpected}
+        {errorText && (
+          <div className="border-line text-error rounded-md border p-3 text-sm" role="alert">
+            {errorText}
           </div>
         )}
 
-        <button
+        <Button
+          type="button"
+          variant="primary"
           onClick={handleConfirm}
           disabled={isSubmitting || !slotId}
-          className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
           {isSubmitting ? t.submitting : t.submit}
-        </button>
+        </Button>
       </div>
     </div>
-  );
+  )
 }
+export default CheckoutPage

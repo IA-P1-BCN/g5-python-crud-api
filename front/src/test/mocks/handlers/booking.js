@@ -1,30 +1,27 @@
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse } from 'msw'
 
 export const bookingHandlers = [
-  http.post('/api/bookings', async ({ request }) => {
-    const body = await request.json();
+  http.post('*/bookings', async ({ request }) => {
+    const body = await request.clone().json()
 
-    // Trigger the SLOT_TAKEN error flow
-    if (body.slotId === 'error-slot-taken') {
+    // Trigger the SLOT_TAKEN error flow (API_CONTRACT.md: 409 + code)
+    if (body.time_slot_id === 'error-slot-taken') {
       return HttpResponse.json(
-        {
-          code: 'SLOT_TAKEN',
-          message: 'The selected time slot is no longer available.',
-        },
-        { status: 409 }
-      );
+        { detail: 'The selected time slot is no longer available.', code: 'SLOT_TAKEN' },
+        { status: 409 },
+      )
     }
 
-    // Default success flow
     return HttpResponse.json(
       {
-        id: `booking-${Math.random().toString(36).substring(2, 9)}`,
-        slotId: body.slotId,
-        clientName: body.name,
-        status: 'CONFIRMED',
-        createdAt: new Date().toISOString(),
+        id: 'booking-1',
+        time_slot_id: body.time_slot_id,
+        players: body.players,
+        status: 'PENDING',
       },
-      { status: 201 }
-    );
+      { status: 201 },
+    )
   }),
-];
+]
+
+export default bookingHandlers
