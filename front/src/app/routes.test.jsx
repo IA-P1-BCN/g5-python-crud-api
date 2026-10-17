@@ -9,6 +9,7 @@ import { adminStatsRoutes } from '@/features/admin-stats'
 import { adminUsersRoutes } from '@/features/admin-users'
 import { authRoutes } from '@/features/auth'
 import { bookingRoutes } from '@/features/booking'
+import { dashboardRoutes } from '@/features/dashboard'
 import { myBookingsRoutes } from '@/features/my-bookings'
 import { profileRoutes } from '@/features/profile'
 import { roomsRoutes } from '@/features/rooms'
@@ -19,6 +20,7 @@ describe('each feature owns its routes', () => {
   it.each([
     ['rooms', roomsRoutes],
     ['booking', bookingRoutes],
+    ['dashboard', dashboardRoutes],
     ['my-bookings', myBookingsRoutes],
     ['auth', authRoutes],
     ['profile', profileRoutes],
