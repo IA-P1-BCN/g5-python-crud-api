@@ -2,6 +2,7 @@ export default {
   title: 'Selecciona fecha y hora',
   selectDate: 'Elige un día',
   selectTime: 'Horarios',
+  continue: 'Continuar',
   loadingSlots: 'Cargando horarios...',
   noSlotsAvailable: 'No hay horarios disponibles para esta fecha.',
   states: {

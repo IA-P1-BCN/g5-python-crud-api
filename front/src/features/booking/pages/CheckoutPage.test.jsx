@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -15,7 +16,12 @@ vi.mock('react-router-dom', async (importOriginal) => {
 })
 
 const renderWithRouter = (ui) => {
-  return render(<BrowserRouter>{ui}</BrowserRouter>)
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={client}>
+      <BrowserRouter>{ui}</BrowserRouter>
+    </QueryClientProvider>,
+  )
 }
 
 describe('CheckoutPage Acceptance Tests', () => {

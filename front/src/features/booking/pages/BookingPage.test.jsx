@@ -29,6 +29,7 @@ function renderPage() {
       <MemoryRouter initialEntries={['/reservar/faro']}>
         <Routes>
           <Route path="/reservar/:slug" element={<BookingPage />} />
+          <Route path="/booking/checkout" element={<div>checkout-page</div>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -93,6 +94,24 @@ describe('BookingPage', () => {
     await userEvent.click(within(grid).getAllByRole('button')[0])
 
     expect(useBookingDraftStore.getState().selectedSlot.id).toBe(1)
+  })
+
+  it('goes to checkout after choosing a free slot', async () => {
+    server.use(
+      http.get('/api/v1/time-slots', () =>
+        HttpResponse.json(slotsPage([slotDto(1, '10', 'free')])),
+      ),
+    )
+    renderPage()
+
+    const grid = await screen.findByRole('group', { name: es.booking.selectTime })
+    const continueButton = screen.getByRole('button', { name: es.booking.continue })
+    expect(continueButton).toBeDisabled()
+
+    await userEvent.click(within(grid).getAllByRole('button')[0])
+    await userEvent.click(continueButton)
+
+    expect(screen.getByText('checkout-page')).toBeInTheDocument()
   })
 
   it('shows an error when the API fails', async () => {

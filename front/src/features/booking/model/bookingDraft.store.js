@@ -2,6 +2,7 @@
 import { create } from 'zustand'
 
 const initialState = {
+  roomSlug: null,
   selectedDate: null,
   selectedSlot: null,
   players: 1,
@@ -17,6 +18,7 @@ export const useBookingDraftStore = create((set) => ({
   setSelectedDate: (date) => set({ selectedDate: date, selectedSlot: null, slotId: null }),
   setSelectedSlot: (slot) => set({ selectedSlot: slot, slotId: slot?.id ?? null }),
   setPlayers: (players) => set({ players }),
+  setRoomSlug: (roomSlug) => set({ roomSlug }),
 
   // Flujo de checkout
   setSlotId: (slotId) => set({ slotId }),
