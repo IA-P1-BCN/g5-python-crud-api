@@ -73,4 +73,22 @@ describe('ModifyPlayersDialog', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(t.errors.tooLateToModify)
     expect(onOpenChange).not.toHaveBeenCalledWith(false)
   })
+
+  it('shows the invalid-players message and stays open when the API refuses (BR-B2)', async () => {
+    server.use(
+      http.put('/api/v1/bookings/1', () =>
+        HttpResponse.json(
+          { detail: 'Players out of range', code: 'INVALID_PLAYERS' },
+          { status: 422 },
+        ),
+      ),
+    )
+    const onOpenChange = renderDialog()
+
+    await userEvent.click(screen.getByRole('button', { name: '5' }))
+    await userEvent.click(screen.getByRole('button', { name: t.modifyDialog.save }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(t.errors.invalidPlayers)
+    expect(onOpenChange).not.toHaveBeenCalledWith(false)
+  })
 })
