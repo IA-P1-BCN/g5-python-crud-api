@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import es from '@/i18n/es.js'
 import { bookingDto } from '@/test/mocks/handlers/myBookings.js'
+import { roomDto, roomsPage } from '@/test/mocks/handlers/rooms.js'
 import { server } from '@/test/mocks/server.js'
 import ChangeSlotDialog from './ChangeSlotDialog.jsx'
 
@@ -18,35 +19,45 @@ const label = (iso) =>
 
 const SOON_AT = new Date(Date.now() + 60 * 60 * 1000).toISOString() // free, but under 24h away
 
-const slotDto = (id, startsAt, state) => ({
+const OTHER_AT = '2026-10-23T16:00:00Z'
+
+const slotDto = (id, startsAt, state, roomId = 1) => ({
   id,
-  room_id: 1,
+  room_id: roomId,
   starts_at: startsAt,
   ends_at: startsAt,
   status: 'available',
   state,
 })
 
-// GET /time-slots answers the same slots for every day: enough for the dialog.
-function mockSlots() {
+// bookingDto: 4 players in room 1 (Faro 1923). Room 3 is too small for them, so it is not offered.
+const ROOMS = [
+  roomDto({ id: 1, name: 'Faro 1923', capacity: 6 }),
+  roomDto({ id: 2, name: 'Sala Bosque', capacity: 5 }),
+  roomDto({ id: 3, name: 'Sala Mini', capacity: 2 }),
+]
+
+// GET /time-slots answers the same slots for every day of a room: enough for the dialog.
+function mockApi() {
   server.use(
-    http.get('/api/v1/time-slots', () =>
-      HttpResponse.json({
-        items: [
-          slotDto(20, FREE_AT, 'free'),
-          slotDto(21, TAKEN_AT, 'taken'),
-          slotDto(22, SOON_AT, 'free'),
-        ],
-        total: 3,
-        page: 1,
-        size: 100,
-      }),
-    ),
+    http.get('/api/v1/rooms', () => HttpResponse.json(roomsPage(ROOMS))),
+    http.get('/api/v1/time-slots', ({ request }) => {
+      const roomId = new URL(request.url).searchParams.get('room_id')
+      const items =
+        roomId === '2'
+          ? [slotDto(30, OTHER_AT, 'free', 2)]
+          : [
+              slotDto(20, FREE_AT, 'free'),
+              slotDto(21, TAKEN_AT, 'taken'),
+              slotDto(22, SOON_AT, 'free'),
+            ]
+      return HttpResponse.json({ items, total: items.length, page: 1, size: 100 })
+    }),
   )
 }
 
 function renderDialog(onOpenChange = vi.fn()) {
-  mockSlots()
+  mockApi()
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
@@ -76,6 +87,38 @@ describe('ChangeSlotDialog', () => {
 
     expect(await screen.findByRole('button', { name: label(FREE_AT) })).toBeEnabled()
     expect(screen.queryByRole('button', { name: label(SOON_AT) })).not.toBeInTheDocument()
+  })
+
+  it('offers the other rooms where the players fit, the current one selected', async () => {
+    renderDialog()
+
+    expect(await screen.findByRole('button', { name: 'Faro 1923' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Sala Bosque' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Sala Mini' })).not.toBeInTheDocument()
+  })
+
+  it('moves the booking to a slot of another room and clears the old choice', async () => {
+    let body
+    server.use(
+      http.put('/api/v1/bookings/1', async ({ request }) => {
+        body = await request.json()
+        return HttpResponse.json(bookingDto({ time_slot_id: 30 }))
+      }),
+    )
+    const onOpenChange = renderDialog()
+
+    await userEvent.click(await screen.findByRole('button', { name: label(FREE_AT) }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sala Bosque' }))
+    expect(save()).toBeDisabled() // the slot of the first room is no longer selected
+
+    await userEvent.click(await screen.findByRole('button', { name: label(OTHER_AT) }))
+    await userEvent.click(save())
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
+    expect(body).toEqual({ time_slot_id: 30 })
   })
 
   it('sends the new time_slot_id and closes', async () => {

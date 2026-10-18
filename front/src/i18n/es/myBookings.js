@@ -61,7 +61,8 @@ export default {
   },
   changeSlotDialog: {
     title: 'Cambiar horario',
-    description: 'Elige otro día y horario para {room}.',
+    description: 'Elige otro día y horario para {room}, o cambia de sala.',
+    room: 'Sala',
     save: 'Cambiar horario',
   },
 }
