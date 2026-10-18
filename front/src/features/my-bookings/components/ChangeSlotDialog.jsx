@@ -14,11 +14,12 @@ import {
   DialogTitle,
 } from '@/shared/ui/dialog.jsx'
 import { useChangeSlot } from '../hooks/useChangeSlot.js'
+import { isAtLeast24hAway } from '../model/canModify.js'
 import { MY_BOOKINGS_ERRORS } from '../model/errors.js'
 
 const t = es.myBookings.changeSlotDialog
 
-// The new slot must be 24h or more away (BR-L5), so offer a week, not just 3 days.
+// The new slot must be 24h or more away (BR-L5): offer a week, and hide slots that are too close.
 const DAYS_OFFERED = 7
 
 export default function ChangeSlotDialog({ booking, open, onOpenChange }) {
@@ -63,7 +64,11 @@ export default function ChangeSlotDialog({ booking, open, onOpenChange }) {
           {isPending && <p className="text-muted">{es.booking.loadingSlots}</p>}
           {isError && <p className="text-error">{es.booking.errors.loadFailed}</p>}
           {!isPending && !isError && (
-            <SlotGrid slots={slots} selectedSlot={slot} onSelectSlot={setSlot} />
+            <SlotGrid
+              slots={slots.filter((s) => isAtLeast24hAway(s.startsAt))}
+              selectedSlot={slot}
+              onSelectSlot={setSlot}
+            />
           )}
         </section>
         {error && <Alert tone="error">{mapApiError(error, MY_BOOKINGS_ERRORS).message}</Alert>}

@@ -16,6 +16,8 @@ const TAKEN_AT = '2026-10-22T12:00:00Z'
 const label = (iso) =>
   new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
 
+const SOON_AT = new Date(Date.now() + 60 * 60 * 1000).toISOString() // free, but under 24h away
+
 const slotDto = (id, startsAt, state) => ({
   id,
   room_id: 1,
@@ -30,8 +32,12 @@ function mockSlots() {
   server.use(
     http.get('/api/v1/time-slots', () =>
       HttpResponse.json({
-        items: [slotDto(20, FREE_AT, 'free'), slotDto(21, TAKEN_AT, 'taken')],
-        total: 2,
+        items: [
+          slotDto(20, FREE_AT, 'free'),
+          slotDto(21, TAKEN_AT, 'taken'),
+          slotDto(22, SOON_AT, 'free'),
+        ],
+        total: 3,
         page: 1,
         size: 100,
       }),
@@ -63,6 +69,13 @@ describe('ChangeSlotDialog', () => {
 
     await userEvent.click(screen.getByRole('button', { name: label(FREE_AT) }))
     expect(save()).toBeEnabled()
+  })
+
+  it('hides a free slot that starts in less than 24h (BR-L5)', async () => {
+    renderDialog()
+
+    expect(await screen.findByRole('button', { name: label(FREE_AT) })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: label(SOON_AT) })).not.toBeInTheDocument()
   })
 
   it('sends the new time_slot_id and closes', async () => {
