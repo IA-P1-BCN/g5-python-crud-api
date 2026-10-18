@@ -2,14 +2,16 @@
 import es from '@/i18n/es.js'
 import Badge from '@/shared/ui/Badge.jsx'
 import Button from '@/shared/ui/Button.jsx'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/ui/select.jsx'
 
 const t = es.adminUsers
 const ROLES = ['client', 'staff', 'admin']
-
-const selectStyles =
-  'border-line bg-surface text-text min-h-11 rounded-sm border px-3 text-sm ' +
-  'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-room ' +
-  'disabled:cursor-not-allowed disabled:opacity-50'
 
 // `pendingId`: user with a request in flight (its controls are blocked to avoid double submits).
 export default function UsersTable({ users, pendingId = null, onChangeRole, onDeactivate }) {
@@ -42,19 +44,22 @@ export default function UsersTable({ users, pendingId = null, onChangeRole, onDe
               <td className="px-4 py-3">{user.name}</td>
               <td className="px-4 py-3">{user.email}</td>
               <td className="px-4 py-3">
-                <select
-                  aria-label={t.roleLabel(user.name)}
-                  className={selectStyles}
+                <Select
                   value={user.role}
                   disabled={busy || !user.is_active}
-                  onChange={(event) => onChangeRole(user, event.target.value)}
+                  onValueChange={(role) => onChangeRole(user, role)}
                 >
-                  {ROLES.map((role) => (
-                    <option key={role} value={role}>
-                      {t.roles[role]}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger aria-label={t.roleLabel(user.name)}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLES.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {t.roles[role]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </td>
               <td className="px-4 py-3">
                 <Badge tone={user.is_active ? 'confirmed' : 'cancelled'}>

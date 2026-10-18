@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from '@/features/auth'
 import es from '@/i18n/es.js'
 import { resetMockUsers } from '@/test/mocks/handlers/adminUsers.js'
@@ -53,6 +53,21 @@ function renderPage() {
 }
 
 const rowOf = (name) => screen.getByRole('row', { name: new RegExp(name) })
+const roleSelect = (name) => within(rowOf(name)).getByRole('combobox', { name: t.roleLabel(name) })
+
+// Opens the role selector of a user and picks an option (Radix renders the list in a portal).
+async function pickRole(user, name, role) {
+  await user.click(roleSelect(name))
+  await user.click(await screen.findByRole('option', { name: t.roles[role] }))
+}
+
+// jsdom lacks these browser APIs, which Radix Select calls when it opens.
+beforeAll(() => {
+  Element.prototype.hasPointerCapture ??= () => false
+  Element.prototype.setPointerCapture ??= () => {}
+  Element.prototype.releasePointerCapture ??= () => {}
+  Element.prototype.scrollIntoView ??= () => {}
+})
 
 beforeEach(() => {
   resetMockUsers()
@@ -73,14 +88,14 @@ describe('AdminUsersPage', () => {
 
     const bruno = within(rowOf('Bruno Cliente'))
     expect(bruno.getByText('bruno@example.com')).toBeInTheDocument()
-    expect(bruno.getByLabelText(t.roleLabel('Bruno Cliente'))).toHaveValue('client')
+    expect(roleSelect('Bruno Cliente')).toHaveTextContent(t.roles.client)
     expect(bruno.getByRole('button', { name: t.deactivate })).toBeInTheDocument()
 
     // A deactivated user shows its state and offers no actions.
     const dani = within(rowOf('Dani Inactivo'))
     expect(dani.getByText(t.status.inactive)).toBeInTheDocument()
     expect(dani.queryByRole('button', { name: t.deactivate })).not.toBeInTheDocument()
-    expect(dani.getByLabelText(t.roleLabel('Dani Inactivo'))).toBeDisabled()
+    expect(roleSelect('Dani Inactivo')).toBeDisabled()
   })
 
   it('deactivates a user and the table shows it as inactive', async () => {
@@ -103,16 +118,9 @@ describe('AdminUsersPage', () => {
     renderPage()
     await screen.findByRole('table')
 
-    await user.selectOptions(
-      within(rowOf('Bruno Cliente')).getByLabelText(t.roleLabel('Bruno Cliente')),
-      'staff',
-    )
+    await pickRole(user, 'Bruno Cliente', 'staff')
 
-    await waitFor(() =>
-      expect(
-        within(rowOf('Bruno Cliente')).getByLabelText(t.roleLabel('Bruno Cliente')),
-      ).toHaveValue('staff'),
-    )
+    await waitFor(() => expect(roleSelect('Bruno Cliente')).toHaveTextContent(t.roles.staff))
   })
 
   it('forbidden: a client does not see the page and the users are never requested', async () => {
@@ -163,5 +171,25 @@ describe('AdminUsersPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(t.errors.LAST_ADMIN)
     expect(within(rowOf('Ana Admin')).getByText(t.status.active)).toBeInTheDocument()
+  })
+
+  it('shows LAST_ADMIN when demoting the last admin and keeps the role', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.put('/api/v1/users/:id/role', () =>
+        HttpResponse.json(
+          { detail: 'Cannot remove the last active admin', code: 'LAST_ADMIN' },
+          { status: 409 },
+        ),
+      ),
+    )
+    asRole('admin')
+    renderPage()
+    await screen.findByRole('table')
+
+    await pickRole(user, 'Ana Admin', 'client')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(t.errors.LAST_ADMIN)
+    expect(roleSelect('Ana Admin')).toHaveTextContent(t.roles.admin)
   })
 })
