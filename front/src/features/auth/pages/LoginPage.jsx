@@ -2,7 +2,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import es from '@/i18n/es.js'
 import Alert from '@/shared/ui/Alert.jsx'
 import Button from '@/shared/ui/Button.jsx'
@@ -80,6 +80,13 @@ export default function LoginPage() {
         {es.auth.google}
       </Button>
       {googleFailed && <p role="alert">{es.auth.error}</p>}
+
+      <p>
+        {es.auth.noAccount}{' '}
+        <Link to="/register" className="underline">
+          {es.auth.registerLink}
+        </Link>
+      </p>
     </main>
   )
 }
