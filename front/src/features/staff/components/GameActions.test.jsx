@@ -8,6 +8,14 @@ import { todayBookingDto } from '@/test/mocks/handlers/staff.js'
 import { server } from '@/test/mocks/server.js'
 import GameActions from './GameActions.jsx'
 
+// A slot starting now: the same UTC day as the API checks for starting a game (BR-G3).
+const slotNow = () => ({
+  id: 10,
+  starts_at: new Date().toISOString(),
+  ends_at: new Date(Date.now() + 3600_000).toISOString(),
+  status: 'available',
+})
+
 function renderActions(booking) {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
   return render(
@@ -47,7 +55,7 @@ describe('GameActions', () => {
         return HttpResponse.json(todayBookingDto({ id: 5 }))
       }),
     )
-    renderActions(todayBookingDto({ id: 5, status }))
+    renderActions(todayBookingDto({ id: 5, status, time_slot: slotNow() }))
 
     await userEvent.click(screen.getByRole('button', { name: label }))
 
@@ -78,10 +86,32 @@ describe('GameActions', () => {
         ),
       ),
     )
-    renderActions(todayBookingDto({ status: 'CONFIRMED' }))
+    renderActions(todayBookingDto({ status: 'CONFIRMED', time_slot: slotNow() }))
 
     await userEvent.click(screen.getByRole('button', { name: es.staff.actions.start }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(es.staff.errors.INVALID_TRANSITION)
+  })
+
+  it('refuses to start a game of another day, with a clear message and no API call', async () => {
+    let called = false
+    server.use(
+      http.put('*/bookings/:id/start', () => {
+        called = true
+        return HttpResponse.json(todayBookingDto())
+      }),
+    )
+    const tomorrow = new Date(Date.now() + 24 * 3600_000).toISOString()
+    renderActions(
+      todayBookingDto({
+        status: 'CONFIRMED',
+        time_slot: { ...slotNow(), starts_at: tomorrow },
+      }),
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: es.staff.actions.start }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent(es.staff.errors.NOT_GAME_DAY)
+    expect(called).toBe(false)
   })
 })

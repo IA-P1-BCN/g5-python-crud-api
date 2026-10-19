@@ -35,6 +35,7 @@ export default {
     save: 'Guardar resultado',
   },
   errors: {
+    NOT_GAME_DAY: 'Solo puedes iniciar la partida el día de la partida.',
     INVALID_TRANSITION: 'Esta partida ya cambió de estado. Recarga la lista.',
     DUPLICATE: 'Esta partida ya tiene un resultado.',
   },
