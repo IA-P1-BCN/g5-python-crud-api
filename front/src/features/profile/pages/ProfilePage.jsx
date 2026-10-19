@@ -18,7 +18,8 @@ export default function ProfilePage() {
       {isError && <Alert tone="error">{t.loadError}</Alert>}
       {/* The form mounts only once the data is here: defaultValues are then the real values. */}
       {data && <ProfileForm profile={data} />}
-      <ScoreBoard />
+      {/* Staff and admin do not play: to book they use a separate client account. */}
+      {data?.role === 'client' && <ScoreBoard />}
     </main>
   )
 }

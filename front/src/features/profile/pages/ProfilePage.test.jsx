@@ -138,3 +138,24 @@ describe('ProfilePage - score', () => {
     expect(statValue(t.escaped).textContent).toBe('0')
   })
 })
+
+describe('ProfilePage - score board by role', () => {
+  it.each(['staff', 'admin'])(
+    '%s: no score board (they play with a client account)',
+    async (role) => {
+      server.use(http.get('/api/v1/users/me', () => HttpResponse.json({ ...me, role })))
+      renderPage()
+      await screen.findByLabelText(t.name)
+
+      expect(screen.queryByText(t.scoreTitle)).not.toBeInTheDocument()
+    },
+  )
+
+  it('client: shows the score board', async () => {
+    mockMe()
+    server.use(http.get('/api/v1/users/me/history', () => HttpResponse.json([])))
+    renderPage()
+
+    expect(await screen.findByText(t.scoreTitle)).toBeInTheDocument()
+  })
+})
