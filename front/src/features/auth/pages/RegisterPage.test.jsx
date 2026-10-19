@@ -30,8 +30,8 @@ const session = {
   user: { id: 'u1', email: 'ana@example.com', user_metadata: { full_name: 'Ana' } },
 }
 
-// Stands in for /dashboard: it proves the session reached the context.
-function Dashboard() {
+// Stands in for /salas: it proves the session reached the context.
+function Salas() {
   const { user } = useAuth()
   return <p>{`Panel de ${user?.email}`}</p>
 }
@@ -40,7 +40,7 @@ function Dashboard() {
 function AppRoutes() {
   return useRoutes([
     ...authRoutes,
-    { element: <RequireAuth />, children: [{ path: '/dashboard', element: <Dashboard /> }] },
+    { element: <RequireAuth />, children: [{ path: '/salas', element: <Salas /> }] },
   ])
 }
 
@@ -119,7 +119,7 @@ describe('RegisterPage', () => {
     expect(mocks.auth.signUp).not.toHaveBeenCalled()
   })
 
-  it('successful sign-up creates the account and redirects to /dashboard', async () => {
+  it('successful sign-up creates the account and redirects to /salas', async () => {
     const user = userEvent.setup()
     mocks.auth.signUp.mockImplementation(async () => {
       // From now on the Axios interceptor finds the token, like with the real client.
@@ -200,7 +200,7 @@ describe('RegisterPage', () => {
     expect(screen.queryByRole('heading', { name: es.auth.title })).not.toBeInTheDocument()
   })
 
-  it('a user who is already logged in is redirected to /dashboard', async () => {
+  it('a user who is already logged in is redirected to /salas', async () => {
     mocks.auth.getSession.mockResolvedValue({ data: { session } })
     renderAt('/register')
 
