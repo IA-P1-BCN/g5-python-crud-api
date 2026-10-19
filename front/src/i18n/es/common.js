@@ -11,6 +11,7 @@ export default {
     label: 'Navegación principal',
     rooms: 'Salas',
     history: 'Historial',
+    profile: 'Perfil',
     staff: 'Planning de hoy',
     adminRooms: 'Gestión de salas',
     login: 'Acceder',

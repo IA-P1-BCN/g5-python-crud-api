@@ -85,6 +85,23 @@ describe('NavBar', () => {
     expect(link(nav.rooms)).toBeInTheDocument()
   })
 
+  it.each(['client', 'staff', 'admin'])('%s: has the Perfil link to /perfil', async (role) => {
+    signInAs(role)
+    renderNavBar()
+
+    expect(await screen.findByRole('link', { name: nav.profile })).toHaveAttribute(
+      'href',
+      '/perfil',
+    )
+  })
+
+  it('logged out: no Perfil link', async () => {
+    renderNavBar()
+
+    await screen.findByRole('link', { name: nav.login })
+    expect(link(nav.profile)).not.toBeInTheDocument()
+  })
+
   it('logged out: only the public links and the login link', async () => {
     renderNavBar()
 
