@@ -52,6 +52,11 @@ export const resetMockSlots = () => {
   mockSlots = initialSlots()
 }
 
+// Lets a test load more slots than one page holds.
+export const seedMockSlots = (slots) => {
+  mockSlots = slots.map(withState)
+}
+
 // --- Handlers ------------------------------------------------------------
 
 export const adminRoomsHandlers = [
@@ -88,9 +93,13 @@ export const adminRoomsHandlers = [
     return HttpResponse.json(mockRooms.find((r) => r.id === id))
   }),
 
-  http.get('/api/v1/time-slots', () => {
-    const items = [...mockSlots].sort((a, b) => a.starts_at.localeCompare(b.starts_at))
-    return HttpResponse.json({ items, total: items.length, page: 1, size: 100 })
+  http.get('/api/v1/time-slots', ({ request }) => {
+    const params = new URL(request.url).searchParams
+    const page = Number(params.get('page') ?? 1)
+    const size = Number(params.get('size') ?? 20)
+    const all = [...mockSlots].sort((a, b) => a.starts_at.localeCompare(b.starts_at))
+    const items = all.slice((page - 1) * size, page * size)
+    return HttpResponse.json({ items, total: all.length, page, size })
   }),
 
   http.post('/api/v1/time-slots', async ({ request }) => {
@@ -126,12 +135,13 @@ export const adminRoomsHandlers = [
       d.setUTCDate(d.getUTCDate() + 1)
     ) {
       const day = d.toISOString().slice(0, 10)
+      const start = Date.parse(`${day}T${body.first_start}:00Z`)
       created.push(
         withState({
           id: Date.now() + created.length,
           room_id: Number(params.roomId),
-          starts_at: `${day}T${body.first_start}:00Z`,
-          ends_at: `${day}T${body.first_start}:00Z`,
+          starts_at: new Date(start).toISOString(),
+          ends_at: new Date(start + 60 * 60 * 1000).toISOString(),
           status: 'available',
         }),
       )

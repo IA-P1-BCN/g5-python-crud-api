@@ -44,4 +44,21 @@ describe('roomSchema', () => {
       'El mínimo de jugadores no puede superar la capacidad',
     )
   })
+
+  it('rejects a base price with more than 8 integer digits or 2 decimals', () => {
+    const msg = 'El precio admite hasta 8 enteros y 2 decimales'
+    expect(messages({ ...valid, base_price: '123456789' })).toContain(msg)
+    expect(messages({ ...valid, base_price: '10.999' })).toContain(msg)
+    expect(roomSchema.safeParse({ ...valid, base_price: '12345678.99' }).success).toBe(true)
+  })
+
+  it('rejects genre and audience over 100 characters', () => {
+    const long = 'a'.repeat(101)
+    expect(messages({ ...valid, genre: long })).toContain(
+      'El género admite 100 caracteres como máximo',
+    )
+    expect(messages({ ...valid, audience: long })).toContain(
+      'El público admite 100 caracteres como máximo',
+    )
+  })
 })

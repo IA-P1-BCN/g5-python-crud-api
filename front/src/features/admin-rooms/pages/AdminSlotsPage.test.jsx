@@ -3,7 +3,7 @@ import { render, screen, within, waitFor, fireEvent } from '@testing-library/rea
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { http, HttpResponse } from 'msw'
-import { adminRoomsHandlers, resetMockSlots } from '@/test/mocks/handlers/adminRooms'
+import { adminRoomsHandlers, resetMockSlots, seedMockSlots } from '@/test/mocks/handlers/adminRooms'
 import { server } from '@/test/mocks/server'
 import AdminSlotsPage from './AdminSlotsPage'
 
@@ -284,5 +284,21 @@ describe('AdminSlotsPage', () => {
 
       expect(await screen.findAllByText('Este campo es obligatorio.')).toHaveLength(4)
     })
+  })
+
+  it('carga todas las páginas cuando hay más de 100 franjas', async () => {
+    const start = Date.UTC(2030, 0, 1)
+    seedMockSlots(
+      Array.from({ length: 130 }, (_, i) => ({
+        id: i + 1,
+        room_id: 1,
+        starts_at: new Date(start + i * 2 * 3600000).toISOString(),
+        ends_at: new Date(start + (i * 2 + 1) * 3600000).toISOString(),
+        status: 'available',
+      })),
+    )
+    renderPage()
+
+    await waitFor(() => expect(rows()).toHaveLength(131)) // 130 franjas + cabecera
   })
 })
