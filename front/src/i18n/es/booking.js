@@ -14,11 +14,11 @@ export default {
   },
   errors: {
     loadRoomFailed: 'No se pudo cargar la sala.',
-    loadFailed: 'No se pudieron cargar los horarios disponibles.',
     nameRequired: 'Escribe tu nombre.',
     nameTooLong: 'El nombre no puede superar los 100 caracteres.',
     emailInvalid: 'Escribe un email válido.',
     phoneInvalid: 'El teléfono solo puede tener números, espacios y + - ( ).',
+    loadFailed: 'No se pudieron cargar los horarios disponibles.',
   },
   selectedSlot: 'Horario seleccionado',
   ticket: {
@@ -29,16 +29,18 @@ export default {
   checkout: {
     title: 'Tu reserva',
     players: 'Número de jugadores',
-    name: 'Nombre',
-    email: 'Email',
-    phone: 'Teléfono (opcional)',
     submit: 'Confirmar reserva',
     submitting: 'Procesando...',
     unspecified: 'No especificado',
     errors: {
       slotTaken:
         'El horario seleccionado ya no está disponible. Por favor, vuelve al paso anterior y selecciona otro.',
-      unexpected: 'Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.',
+      invalidPlayers: 'El número de jugadores no es válido para esta sala.',
+      roomInactive: 'Esta sala ya no está disponible para reservas.',
+      userInactive: 'Tu cuenta está desactivada y no puede hacer reservas.',
+      bookingLimit:
+        'Has alcanzado el límite de reservas activas. Cancela alguna para reservar otra.',
+      unauthorized: 'Tu sesión ha caducado. Vuelve a iniciar sesión.',
     },
   },
   confirmation: {

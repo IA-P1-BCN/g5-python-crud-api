@@ -1,38 +1,51 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createBooking } from '../api/bookingApi'
-import { useBookingDraftStore } from '../model/bookingDraft.store'
+import { http, HttpResponse } from 'msw'
+import { createElement } from 'react'
+import { describe, expect, it } from 'vitest'
+import { server } from '@/test/mocks/server.js'
 import { useCreateBooking } from './useCreateBooking'
 
-vi.mock('../api/bookingApi', () => ({ createBooking: vi.fn() }))
-
-beforeEach(() => {
-  vi.clearAllMocks()
-  createBooking.mockResolvedValue({ id: 99 })
-  useBookingDraftStore.getState().resetDraft()
-})
+function setup() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const wrapper = ({ children }) => createElement(QueryClientProvider, { client }, children)
+  return renderHook(() => useCreateBooking(), { wrapper })
+}
 
 describe('useCreateBooking', () => {
-  it('sends the explicit slotId and players, not the stale draft values', async () => {
-    useBookingDraftStore.getState().setPlayers(1)
-    const { result } = renderHook(() => useCreateBooking())
+  it('reads our user id once from /users/me and sends the explicit slot and players', async () => {
+    let body
+    server.use(
+      http.get('*/users/me', () => HttpResponse.json({ id: 7 })),
+      http.post('*/bookings', async ({ request }) => {
+        body = await request.json()
+        return HttpResponse.json({ id: 99 }, { status: 201 })
+      }),
+    )
+    const { result } = setup()
 
+    let outcome
     await act(async () => {
-      await result.current.submitBooking({ slotId: 5, players: 4 })
+      outcome = await result.current.submitBooking({ slotId: 5, players: 4 })
     })
 
-    expect(createBooking).toHaveBeenCalledWith({ slotId: 5, players: 4 })
+    expect(body).toEqual({ user_id: 7, time_slot_id: 5, players: 4 })
+    expect(outcome).toEqual({ success: true, data: { id: 99 } })
   })
 
-  it('falls back to the current draft when called without arguments', async () => {
-    useBookingDraftStore.getState().setSlotId(8)
-    useBookingDraftStore.getState().setPlayers(3)
-    const { result } = renderHook(() => useCreateBooking())
+  it('exposes the Spanish message of the backend error code', async () => {
+    server.use(
+      http.get('*/users/me', () => HttpResponse.json({ id: 7 })),
+      http.post('*/bookings', () =>
+        HttpResponse.json({ detail: 'x', code: 'BOOKING_LIMIT_REACHED' }, { status: 409 }),
+      ),
+    )
+    const { result } = setup()
 
     await act(async () => {
-      await result.current.submitBooking()
+      await result.current.submitBooking({ slotId: 5, players: 1 })
     })
 
-    expect(createBooking).toHaveBeenCalledWith({ slotId: 8, players: 3 })
+    expect(result.current.error).toMatch(/límite/i)
   })
 })

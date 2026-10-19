@@ -1,14 +1,23 @@
-import { useLocation, Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import ConfirmationTicket from '../components/ConfirmationTicket'
 import Stamp from '../components/Stamp'
 import texts from '@/i18n/es/booking'
+import { useBookingDraftStore } from '../model/bookingDraft.store'
 
 export function ConfirmationPage() {
   const location = useLocation()
+  const resetDraft = useBookingDraftStore((state) => state.resetDraft)
   const t = texts.confirmation
+  const bookingData = location.state?.booking
 
-  // Datos de la reserva pasados por el router, con fallback si el usuario recarga la página
-  const bookingData = location.state?.booking || {}
+  // The booking is done: the draft is no longer needed.
+  useEffect(() => {
+    resetDraft()
+  }, [resetDraft])
+
+  // After a reload the router state is gone: do not pretend a booking was just made.
+  if (!bookingData) return <Navigate to="/mis-reservas" replace />
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center p-6 text-center">

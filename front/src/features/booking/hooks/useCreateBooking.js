@@ -1,43 +1,38 @@
-import { useState } from 'react'
-import { createBooking } from '../api/bookingApi'
-import { useBookingDraftStore } from '../model/bookingDraft.store'
-import { SlotTakenError } from '../model/errors'
+// Mutation: create a booking for the logged-in user. No JSX.
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { meQueryKey } from '@/features/auth'
+import { mapApiError } from '@/shared/api/errors.js'
+import { createBooking, fetchCurrentUser } from '../api/bookingApi.js'
+import { bookingErrors } from '../model/errors.js'
 
 export function useCreateBooking() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState(null)
+  const queryClient = useQueryClient()
 
-  const resetDraft = useBookingDraftStore((state) => state.resetDraft)
+  const mutation = useMutation({
+    mutationFn: async ({ slotId, players }) => {
+      // AuthProvider already cached the user: no extra GET /users/me on each submit.
+      const me = await queryClient.ensureQueryData({
+        queryKey: meQueryKey,
+        queryFn: fetchCurrentUser,
+      })
+      return createBooking({ userId: me.id, slotId, players })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['slots'] })
+      queryClient.invalidateQueries({ queryKey: ['bookings', 'me'] })
+    },
+  })
 
-  // Los valores explícitos mandan; el store solo es respaldo.
-  // getState() lee el valor actual, no el capturado en el último render.
-  const submitBooking = async (overrides = {}) => {
-    const draft = useBookingDraftStore.getState()
-    const slotId = overrides.slotId ?? draft.slotId
-    const players = overrides.players ?? draft.players
-
-    setIsSubmitting(true)
-    setError(null)
-
-    try {
-      const result = await createBooking({ slotId, players })
-
-      resetDraft()
-
-      return { success: true, data: result }
-    } catch (err) {
-      // El borrador NO se reinicia: el usuario no pierde sus datos
-      setError(err instanceof SlotTakenError ? 'SLOT_TAKEN' : 'UNEXPECTED_ERROR')
-      return { success: false, error: err }
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  // Resolves { success, data } and never throws: the page only decides where to go.
+  const submitBooking = (values) =>
+    mutation.mutateAsync(values).then(
+      (data) => ({ success: true, data }),
+      () => ({ success: false }),
+    )
 
   return {
     submitBooking,
-    isSubmitting,
-    error,
-    resetError: () => setError(null),
+    isSubmitting: mutation.isPending,
+    error: mutation.error ? mapApiError(mutation.error, bookingErrors).message : null,
   }
 }

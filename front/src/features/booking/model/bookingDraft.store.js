@@ -7,7 +7,6 @@ const initialState = {
   selectedSlot: null,
   players: 1,
   slotId: null,
-  clientDetails: { name: '', email: '', phone: '' },
   currentStep: 1,
 }
 
@@ -26,8 +25,6 @@ export const useBookingDraftStore = create((set, get) => ({
 
   // Flujo de checkout
   setSlotId: (slotId) => set({ slotId }),
-  setClientDetails: (details) =>
-    set((state) => ({ clientDetails: { ...state.clientDetails, ...details } })),
   setStep: (step) => set({ currentStep: step }),
 
   reset: () => set(initialState),

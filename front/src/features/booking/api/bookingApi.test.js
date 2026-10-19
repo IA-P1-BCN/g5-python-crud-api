@@ -5,13 +5,13 @@ import { createBooking } from './bookingApi'
 vi.mock('@/shared/api/client.js', () => ({ api: { get: vi.fn(), post: vi.fn() } }))
 
 describe('createBooking', () => {
-  it('sends user_id (our users.id from /users/me) with the slot and players', async () => {
-    api.get.mockResolvedValue({ data: { id: 7 } })
+  it('posts user_id, time_slot_id and players without calling /users/me', async () => {
     api.post.mockResolvedValue({ data: { id: 1, status: 'PENDING' } })
 
-    await createBooking({ slotId: 12, players: 3 })
+    const result = await createBooking({ userId: 7, slotId: 12, players: 3 })
 
-    expect(api.get).toHaveBeenCalledWith('/users/me')
+    expect(api.get).not.toHaveBeenCalled()
     expect(api.post).toHaveBeenCalledWith('/bookings', { user_id: 7, time_slot_id: 12, players: 3 })
+    expect(result).toEqual({ id: 1, status: 'PENDING' })
   })
 })
