@@ -13,7 +13,6 @@ function createWrapper() {
   }
 }
 
-// A list is sent as the paginated envelope; anything else (an error body) as is.
 const respondWith = (body, status = 200) =>
   server.use(
     http.get('/api/v1/rooms', () =>

@@ -1,4 +1,3 @@
-// Presentational: the tab buttons (upcoming / past / cancelled / all). Controlled by the page.
 import es from '@/i18n/es.js'
 import Chip from '@/shared/ui/Chip.jsx'
 import { TABS } from '../model/bookingFilters.js'

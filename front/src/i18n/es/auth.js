@@ -1,5 +1,3 @@
-// Login texts. (Spanish). One file per feature: no conflicts.
-
 export default {
   title: 'Accede a tu cuenta',
   subtitle: 'Inicia sesión para reservar y gestionar tus partidas.',

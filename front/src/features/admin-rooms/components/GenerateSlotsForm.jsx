@@ -9,13 +9,11 @@ const t = adminRooms.slots.generate
 
 const EMPTY = { date_from: '', date_to: '', first_start: '', last_start: '' }
 
-// onGenerate(payload) resolves to { success, data: { created_count, skipped_count } } or
-// { success: false, error: code }.
 export default function GenerateSlotsForm({ onGenerate }) {
   const [values, setValues] = useState(EMPTY)
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
-  const [result, setResult] = useState(null) // { ok, text }
+  const [result, setResult] = useState(null)
 
   const handleChange = (e) => setValues((v) => ({ ...v, [e.target.name]: e.target.value }))
 

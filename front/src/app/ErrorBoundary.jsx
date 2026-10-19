@@ -3,8 +3,6 @@ import Button from '@/shared/ui/Button.jsx'
 import EmptyState from '@/shared/ui/EmptyState.jsx'
 import es from '@/i18n/es.js'
 
-// Catches a crash in any page and shows a message instead of a blank screen.
-// Must be a class: React has no hook for error boundaries.
 export default class ErrorBoundary extends Component {
   state = { failed: false }
 

@@ -1,4 +1,3 @@
-// Supabase sign-in error -> Spanish text. Anything unknown gets the generic message.
 import es from '@/i18n/es.js'
 
 export function loginErrorMessage(error) {
@@ -9,7 +8,6 @@ export function loginErrorMessage(error) {
   return es.auth.loginError
 }
 
-// Supabase sign-up error (or an API DUPLICATE) -> Spanish text. Anything unknown gets the generic message.
 export function registerErrorMessage(error) {
   const code = error?.response?.data?.code ?? error?.code
   if (

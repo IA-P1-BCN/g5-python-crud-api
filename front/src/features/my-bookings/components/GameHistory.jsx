@@ -1,10 +1,8 @@
-// Presentational: list of past games with their result. Props only.
 import es from '@/i18n/es.js'
 import Badge from '@/shared/ui/Badge.jsx'
 
 const t = es.myBookings.history
 
-// 2710 s -> "45:10"
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60)
   const s = String(seconds % 60).padStart(2, '0')

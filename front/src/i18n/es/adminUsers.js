@@ -1,5 +1,3 @@
-// Admin users texts. (Spanish). One file per feature: no conflicts.
-
 export default {
   title: 'Gestión de usuarios',
   empty: 'Todavía no hay usuarios.',

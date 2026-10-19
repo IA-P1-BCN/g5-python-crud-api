@@ -1,9 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { ROOM_THEMES, DEFAULT_THEME } from '../features/rooms/model/roomThemes.js'
 
-// Returns the declarations inside the first CSS block whose selector matches.
 const block = (selector) => css.match(new RegExp(`${selector}\\s*\\{([^}]*)\\}`, 'i'))?.[1] ?? ''
-// Vitest runs from front/, and the CSS import is emptied by Vitest, so read the file from disk.
 const css = readFileSync('src/index.css', 'utf8')
 
 describe('room theme CSS', () => {

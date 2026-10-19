@@ -1,12 +1,10 @@
 import { readFileSync } from 'node:fs'
 
-// Vitest empties CSS imports, so read the file from disk (same trick as theme.test.js).
 const css = readFileSync('src/index.css', 'utf8')
 const theme = css.match(/@theme\s*\{([^}]*)\}/)?.[1] ?? ''
 
 const colour = (name) => theme.match(new RegExp(`--color-${name}:\\s*(#[0-9a-f]{6})\\b`, 'i'))?.[1]
 
-// WCAG 2.x relative luminance and contrast ratio.
 const channel = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
 const luminance = (hex) => {
   const [r, g, b] = [1, 3, 5].map((i) => channel(parseInt(hex.slice(i, i + 2), 16) / 255))
@@ -17,7 +15,6 @@ const ratio = (a, b) => {
   return (hi + 0.05) / (lo + 0.05)
 }
 
-// [text colour, background colour]: every pair the UI actually uses (WCAG AA = 4.5).
 const PAIRS = [
   ['text', 'bg'],
   ['text', 'surface'],
@@ -43,7 +40,6 @@ describe('colour contrast (WCAG AA)', () => {
   })
 })
 
-// Pairs that are not plain text-on-background in @theme.
 const hexOf = (value) => value.match(/#[0-9a-f]{6}/i)?.[0]
 const mix = (fg, bg, amount) =>
   '#' +
@@ -62,7 +58,6 @@ describe('colour contrast of derived pairs (WCAG AA)', () => {
     expect(ratio(colour('muted'), colour('surface-2'))).toBeGreaterThanOrEqual(4.5)
   })
 
-  // Badge: text-<tone> on bg-<tone>/15 over the surface.
   it.each(['pending', 'confirmed', 'in-progress', 'done', 'cancelled', 'error'])(
     'Badge %s text on its 15% tint',
     (tone) => {
@@ -71,7 +66,6 @@ describe('colour contrast of derived pairs (WCAG AA)', () => {
     },
   )
 
-  // Every room theme (the default one in :root and each [data-room]): --rc accent, --rd dark.
   const rooms = [
     ['default', css.match(/:root\s*\{\s*--rc:\s*(#\w+);\s*--rd:\s*(#\w+);/)],
     ...[...css.matchAll(/\[data-room='(\w+)'\]\s*\{\s*--rc:\s*(#\w+);\s*--rd:\s*(#\w+);/g)].map(

@@ -13,11 +13,10 @@ const t = es.myBookings
 
 const FREE_AT = '2026-10-22T10:00:00Z'
 const TAKEN_AT = '2026-10-22T12:00:00Z'
-// Same formatting as slotMapper, so the test does not depend on the computer's timezone.
 const label = (iso) =>
   new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
 
-const SOON_AT = new Date(Date.now() + 60 * 60 * 1000).toISOString() // free, but under 24h away
+const SOON_AT = new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
 const OTHER_AT = '2026-10-23T16:00:00Z'
 
@@ -30,14 +29,12 @@ const slotDto = (id, startsAt, state, roomId = 1) => ({
   state,
 })
 
-// bookingDto: 4 players in room 1 (Faro 1923). Room 3 is too small for them, so it is not offered.
 const ROOMS = [
   roomDto({ id: 1, name: 'Faro 1923', capacity: 6 }),
   roomDto({ id: 2, name: 'Sala Bosque', capacity: 5 }),
   roomDto({ id: 3, name: 'Sala Mini', capacity: 2 }),
 ]
 
-// GET /time-slots answers the same slots for every day of a room: enough for the dialog.
 function mockApi() {
   server.use(
     http.get('/api/v1/rooms', () => HttpResponse.json(roomsPage(ROOMS))),
@@ -112,7 +109,7 @@ describe('ChangeSlotDialog', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: label(FREE_AT) }))
     await userEvent.click(screen.getByRole('button', { name: 'Sala Bosque' }))
-    expect(save()).toBeDisabled() // the slot of the first room is no longer selected
+    expect(save()).toBeDisabled()
 
     await userEvent.click(await screen.findByRole('button', { name: label(OTHER_AT) }))
     await userEvent.click(save())

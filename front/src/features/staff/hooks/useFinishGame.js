@@ -1,4 +1,3 @@
-// TanStack mutation: finish game, then invalidate today's bookings.
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { finishGame } from '../api/staffApi.js'
 

@@ -26,12 +26,9 @@ export const resetMockRooms = () => {
   mockRooms = initialRooms()
 }
 
-// Lets a test load many rooms to check pagination.
 export const seedMockRooms = (rooms) => {
   mockRooms = rooms
 }
-
-// --- Slots ---------------------------------------------------------------
 
 const at = (day, hour) => new Date(2030, 10, day, hour, 0).toISOString()
 
@@ -52,15 +49,11 @@ export const resetMockSlots = () => {
   mockSlots = initialSlots()
 }
 
-// Lets a test load more slots than one page holds.
 export const seedMockSlots = (slots) => {
   mockSlots = slots.map(withState)
 }
 
-// --- Handlers ------------------------------------------------------------
-
 export const adminRoomsHandlers = [
-  // Same shape as the real API: { items, total, page, size }.
   http.get('/api/v1/rooms', ({ request }) => {
     const url = new URL(request.url)
     const page = Number(url.searchParams.get('page') ?? 1)
@@ -82,7 +75,6 @@ export const adminRoomsHandlers = [
     return HttpResponse.json(newRoom, { status: 201 })
   }),
 
-  // The real API uses PUT /rooms/{id}/activate and /deactivate (API_CONTRACT.md).
   http.put('/api/v1/rooms/:roomId/:action', ({ params }) => {
     const active = params.action === 'activate'
     if (!active && params.action !== 'deactivate') return new HttpResponse(null, { status: 404 })
@@ -124,8 +116,6 @@ export const adminRoomsHandlers = [
     return HttpResponse.json(updated)
   }),
 
-  // POST /rooms/{id}/time-slots/generate -> { created_count, skipped_count } (API_CONTRACT.md).
-  // The mock creates one slot per day of the range at first_start.
   http.post('/api/v1/rooms/:roomId/time-slots/generate', async ({ params, request }) => {
     const body = await request.clone().json()
     const created = []

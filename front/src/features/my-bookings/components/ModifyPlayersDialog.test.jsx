@@ -10,7 +10,6 @@ import ModifyPlayersDialog from './ModifyPlayersDialog.jsx'
 
 const t = es.myBookings
 
-// bookingDto: 4 players, room capacity 6.
 function renderDialog(onOpenChange = vi.fn()) {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
   render(

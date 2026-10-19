@@ -1,6 +1,5 @@
 import { Link, Navigate, useRoutes } from 'react-router-dom'
 import { adminRoomsRoutes } from '@/features/admin-rooms'
-import { adminStatsRoutes } from '@/features/admin-stats'
 import { adminUsersRoutes } from '@/features/admin-users'
 import { authRoutes, RequireAuth } from '@/features/auth'
 import { bookingRoutes } from '@/features/booking'
@@ -25,8 +24,6 @@ function NotFoundPage() {
   )
 }
 
-// Only composes the routes owned by each feature. Add routes in features/<name>/routes.js, not here.
-// Public: the auth routes (/login, and /register when it exists). Everything else needs a session.
 export default function AppRoutes() {
   return useRoutes([
     ...authRoutes,
@@ -42,7 +39,6 @@ export default function AppRoutes() {
         ...staffRoutes,
         ...adminRoomsRoutes,
         ...adminUsersRoutes,
-        ...adminStatsRoutes,
         { path: '*', Component: NotFoundPage },
       ],
     },

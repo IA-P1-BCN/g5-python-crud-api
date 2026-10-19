@@ -9,7 +9,7 @@ describe('Atmosphere', () => {
     ['faro', 'beam'],
     ['atraco', 'lasers'],
     ['lab', 'scan'],
-    ['nueva-sala', 'none'], // unknown room: default theme, nothing breaks
+    ['nueva-sala', 'none'],
   ])('room %s gets the %s ambiance', (slug, ambiance) => {
     render(<Atmosphere slug={slug} />)
 

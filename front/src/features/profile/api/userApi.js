@@ -1,4 +1,3 @@
-// Axios calls: GET and PUT /users/me. No React, no mapping.
 import { api } from '@/shared/api/client.js'
 
 export async function fetchProfile() {
@@ -6,9 +5,7 @@ export async function fetchProfile() {
   return data
 }
 
-// The API rejects unknown fields (422): send name and phone ONLY.
 export async function updateProfile({ name, phone }) {
-  // Empty input = no phone: send null, not "".
   const { data } = await api.put('/users/me', { name, phone: phone || null })
   return data
 }

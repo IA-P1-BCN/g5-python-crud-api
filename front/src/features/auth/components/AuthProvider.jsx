@@ -1,4 +1,3 @@
-// Context: logged-in user and role. Plugs the Supabase JWT into the Axios client and handles 401.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
@@ -13,16 +12,10 @@ export default function AuthProvider({ children }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  // The local session is dropped even if Supabase cannot be reached.
   const signOutSafely = useCallback(async () => {
-    try {
-      await supabase.auth.signOut()
-    } catch {
-      // nothing to do: the caller clears the local state anyway
-    }
+    await supabase.auth.signOut().catch(() => {})
   }, [])
 
-  // Layout effect: runs before the children's effects, so their first request already has the token.
   useLayoutEffect(() => {
     const removeToken = setAuthTokenGetter(async () => {
       const { data } = await supabase.auth.getSession()
@@ -47,9 +40,7 @@ export default function AuthProvider({ children }) {
       .then(({ data }) => {
         if (active) setSession(data.session)
       })
-      .catch(() => {
-        // no readable session: treat the visitor as logged out
-      })
+      .catch(() => {})
       .finally(() => {
         if (active) setInitializing(false)
       })
@@ -85,20 +76,15 @@ export default function AuthProvider({ children }) {
     [],
   )
 
-  // Email + password. Supabase persists the session; we also keep it in state right away so the
-  // caller sees isAuthenticated without waiting for the auth-state event. Throws the Supabase error.
   const loginWithPassword = useCallback(async ({ email, password }) => {
     const { data, error } = await signInWithPassword({ email, password })
     if (error) throw error
     setSession(data.session)
   }, [])
 
-  // Sign-up with email + password. With "confirm email" off Supabase returns a session and the user is
-  // in at once; with it on there is no session yet. Resolves { needsConfirmation }, throws the error.
   const registerWithPassword = useCallback(async (values) => {
     const { data, error } = await signUpWithPassword(values)
     if (error) throw error
-    // An already registered email: Supabase hides it (no error) and returns a user without identities.
     if (data.user?.identities?.length === 0) {
       throw Object.assign(new Error('User already registered'), { code: 'user_already_exists' })
     }
@@ -122,8 +108,6 @@ export default function AuthProvider({ children }) {
           }
         : null,
       role: session ? (me?.role ?? null) : null,
-      // Logged in but /users/me failed: the role stays null, so consumers need this to tell it
-      // apart from "still loading" and to offer a retry.
       roleError: Boolean(session) && roleLookupFailed,
       retryRole,
       isAuthenticated: Boolean(session),

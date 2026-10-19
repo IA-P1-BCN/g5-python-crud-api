@@ -1,4 +1,3 @@
-// Poster grid shown without WebGL / small screen / reduced motion. Accessible path.
 import es from '@/i18n/es.js'
 import Button from '@/shared/ui/Button.jsx'
 

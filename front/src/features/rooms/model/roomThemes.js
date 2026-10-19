@@ -1,4 +1,3 @@
-// Registry slug -> theme (colors, ambiance, entrance). New room = new entry, never an if (room === 'x'). A room without an entry gets a generated theme (see the room themes ticket).
 export const ROOM_THEMES = {
   relojero: { accent: '#e0a243', dark: '#2a1b0d', ambiance: 'clock', entrance: 'gears' },
   biblioteca: { accent: '#4fc48f', dark: '#0c2a20', ambiance: 'dust', entrance: 'book' },

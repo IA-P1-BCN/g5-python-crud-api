@@ -1,14 +1,10 @@
-// Custom room ambiances (clock, beam, dust, lasers, scan). Nested SCSS.
-// Use var(--rc), no Sass color variables. No @apply, no @theme.
-// The layer fills its parent: the parent needs `relative isolate`.
 .atmosphere {
   position: absolute;
   inset: 0;
-  z-index: -1; // behind the text; the parent needs `isolate` to keep it inside
+  z-index: -1;
   overflow: hidden;
   pointer-events: none;
 
-  // clock (relojero): a big dial whose second hand ticks
   &[data-ambiance='clock'] {
     &::before {
       content: '';
@@ -38,7 +34,6 @@
     }
   }
 
-  // dust (biblioteca): dots floating up
   &[data-ambiance='dust'] {
     opacity: 0.8;
     background-image:
@@ -56,7 +51,6 @@
     animation: atmosphere-dust 28s linear infinite;
   }
 
-  // beam (faro): a lighthouse beam sweeping
   &[data-ambiance='beam']::before {
     content: '';
     position: absolute;
@@ -74,7 +68,6 @@
     animation: atmosphere-spin 7s linear infinite;
   }
 
-  // lasers (atraco): a laser grid that flickers
   &[data-ambiance='lasers'] {
     background:
       repeating-linear-gradient(
@@ -90,7 +83,6 @@
     animation: atmosphere-flick 3s steps(2) infinite;
   }
 
-  // lasers and scan (lab): a scan line going down
   &[data-ambiance='lasers']::after,
   &[data-ambiance='scan']::after {
     content: '';
@@ -106,8 +98,6 @@
     );
     animation: atmosphere-scan 4s linear infinite;
   }
-
-  // 'none' (default theme): an empty layer
 
   @media (prefers-reduced-motion: reduce) {
     &,

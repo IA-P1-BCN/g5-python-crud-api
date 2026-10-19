@@ -1,4 +1,3 @@
-// PlayersDial: only the numbers between min and max can be chosen (room min_players..capacity).
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { PlayersDial } from './PlayersDial'

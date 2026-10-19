@@ -1,4 +1,3 @@
-// Pure: player score computed from GET /users/me/history (no stats endpoint exists).
 const NO_TIME = '-'
 
 function formatTime(seconds) {
@@ -15,7 +14,6 @@ export function computePlayerStats(history) {
   return {
     played: history.length,
     escaped: escapedTimes.length,
-    // Math.min() of an empty list is Infinity: guard it.
     bestTime: escapedTimes.length ? formatTime(Math.min(...escapedTimes)) : NO_TIME,
   }
 }

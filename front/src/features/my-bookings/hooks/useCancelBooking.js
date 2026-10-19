@@ -1,4 +1,3 @@
-// TanStack mutation: cancel booking, then invalidate my bookings.
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { cancelBooking } from '../api/myBookingsApi.js'
 

@@ -9,7 +9,6 @@ import RequireAuth from '../components/RequireAuth.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import { authRoutes } from '../routes.js'
 
-// Supabase is mocked (its keys do not exist in tests). /users/me goes through the MSW handler.
 const mocks = vi.hoisted(() => ({
   auth: {
     getSession: vi.fn(),
@@ -30,13 +29,11 @@ const session = {
   user: { id: 'u1', email: 'ana@example.com', user_metadata: { full_name: 'Ana' } },
 }
 
-// Stands in for /salas: it proves the session reached the context.
 function Salas() {
   const { user } = useAuth()
   return <p>{`Panel de ${user?.email}`}</p>
 }
 
-// Same shape as app/routes.jsx: the auth routes are public, everything else is behind RequireAuth.
 function AppRoutes() {
   return useRoutes([
     ...authRoutes,
@@ -92,14 +89,12 @@ describe('RegisterPage', () => {
     const user = userEvent.setup()
     renderAt()
 
-    // Empty form: every field asks for its value.
     await user.click(await screen.findByRole('button', { name: t.submit }))
     expect(await screen.findByText(v.nameRequired)).toBeInTheDocument()
     expect(screen.getByText(es.auth.validation.emailRequired)).toBeInTheDocument()
     expect(screen.getByText(es.auth.validation.passwordRequired)).toBeInTheDocument()
     expect(screen.getByText(v.confirmRequired)).toBeInTheDocument()
 
-    // Bad email and short password.
     await user.type(field.name(), 'Ana')
     await user.type(field.email(), 'no-es-un-correo')
     await user.type(field.password(), 'corta')
@@ -108,7 +103,6 @@ describe('RegisterPage', () => {
     expect(await screen.findByText(es.auth.validation.emailInvalid)).toBeInTheDocument()
     expect(screen.getByText(v.passwordMin)).toBeInTheDocument()
 
-    // Valid email and password, but the confirmation differs.
     await user.clear(field.email())
     await user.type(field.email(), 'ana@example.com')
     await user.clear(field.password())
@@ -122,7 +116,6 @@ describe('RegisterPage', () => {
   it('successful sign-up creates the account and redirects to /salas', async () => {
     const user = userEvent.setup()
     mocks.auth.signUp.mockImplementation(async () => {
-      // From now on the Axios interceptor finds the token, like with the real client.
       mocks.auth.getSession.mockResolvedValue({ data: { session } })
       return { data: { session, user: session.user }, error: null }
     })
@@ -131,7 +124,6 @@ describe('RegisterPage', () => {
     await fillAndSubmit(user)
 
     expect(await screen.findByText('Panel de ana@example.com')).toBeInTheDocument()
-    // The name travels as metadata; the confirmation field is never sent.
     expect(mocks.auth.signUp).toHaveBeenCalledWith({
       email: 'ana@example.com',
       password: 'secreto123',

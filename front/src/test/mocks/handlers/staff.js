@@ -1,4 +1,3 @@
-// MSW handlers for the staff endpoints (see docs/API_CONTRACT.md). One file per feature: no conflicts.
 import { http, HttpResponse } from 'msw'
 
 export const todayBookingDto = (overrides = {}) => ({
@@ -22,8 +21,6 @@ export const todayBookingDto = (overrides = {}) => ({
   ...overrides,
 })
 
-// GET /bookings/today is a plain array, not paginated (API_CONTRACT.md).
-// The status changes answer with the booking in its new status.
 export default [
   http.get('*/bookings/today', () => HttpResponse.json([todayBookingDto()])),
   http.put('*/bookings/:id/confirm', () =>

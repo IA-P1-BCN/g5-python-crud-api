@@ -11,12 +11,10 @@ import { addMesh } from './addMesh.js'
 import { createLabel } from './labelTexture.js'
 
 const DOOR_SIZE = [1.5, 2.5, 0.12]
-const BORDER_PADDING = 0.2 // the frame is the door plus this on width and height
+const BORDER_PADDING = 0.2
 export const IDLE_EMISSIVE = 0.25
 export const IDLE_LIGHT = 1.1
 
-// One door per room, in the same order as `rooms`. Each door keeps what the animation needs
-// in userData: { room, side, z, material, light }.
 export function buildDoors(scene, rooms) {
   return rooms.map((room, index) => {
     const { side, x, z, ry } = getDoorPlacement(index)

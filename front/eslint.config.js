@@ -24,8 +24,6 @@ export default defineConfig([
     files: ['**/*.test.{js,jsx}', 'src/test/**/*.{js,jsx}'],
     languageOptions: { globals: { ...globals.vitest } },
   },
-  // Architecture boundaries: app -> features -> shared (see README.md).
-  // Cross-folder imports use the "@" alias; inside a feature use relative paths.
   {
     files: ['src/shared/**/*.{js,jsx}'],
     rules: {
@@ -65,7 +63,6 @@ export default defineConfig([
     },
   },
   {
-    // files at the root of a feature (e.g. corridor/Corridor.jsx): ../ already leaves the feature
     files: ['src/features/*/*.{js,jsx}'],
     rules: {
       'no-restricted-imports': [

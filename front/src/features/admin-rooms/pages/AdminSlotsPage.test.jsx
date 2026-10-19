@@ -7,9 +7,6 @@ import { adminRoomsHandlers, resetMockSlots, seedMockSlots } from '@/test/mocks/
 import { server } from '@/test/mocks/server'
 import AdminSlotsPage from './AdminSlotsPage'
 
-// Use the global MSW server (test/setup.js). A second server here made every POST run twice
-// (the new slot appeared twice). server.use() puts the admin handlers before booking's
-// GET /time-slots, and setup.js resets it after each test.
 beforeEach(() => {
   resetMockSlots()
   server.use(...adminRoomsHandlers)
@@ -25,7 +22,6 @@ function renderPage() {
   )
 }
 
-// rows()[0] es la cabecera; [1] = franja 10:00-11:00 (disponible); [2] = 12:00-13:00 (bloqueada)
 const rows = () => screen.getAllByRole('row')
 
 function fillForm({ date, start, end }) {
@@ -210,7 +206,7 @@ describe('AdminSlotsPage', () => {
       fillGenerate({ from: '2030-12-01', to: '2030-12-02', first: '09:00', last: '20:00' })
       await generate(user)
 
-      await waitFor(() => expect(rows()).toHaveLength(5)) // header + 2 old + 2 new
+      await waitFor(() => expect(rows()).toHaveLength(5))
     })
 
     it('muestra ROOM_INACTIVE', async () => {
@@ -299,6 +295,6 @@ describe('AdminSlotsPage', () => {
     )
     renderPage()
 
-    await waitFor(() => expect(rows()).toHaveLength(131)) // 130 franjas + cabecera
+    await waitFor(() => expect(rows()).toHaveLength(131))
   })
 })

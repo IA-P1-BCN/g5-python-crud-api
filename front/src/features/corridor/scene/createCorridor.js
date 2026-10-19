@@ -8,12 +8,10 @@ import { lerp } from './math.js'
 import { createPointerInput } from './pointerInput.js'
 
 const MAX_PIXEL_RATIO = 2
-const GLOW = { idle: [IDLE_EMISSIVE, IDLE_LIGHT], active: [1.6, 2.6] } // [door emissive, door light]
+const GLOW = { idle: [IDLE_EMISSIVE, IDLE_LIGHT], active: [1.6, 2.6] }
 
-const GLOW_EASE = 0.12 // fraction of the way to the target glow, per frame
+const GLOW_EASE = 0.12
 
-// createCorridor(container, { rooms, onEnter }) -> { dispose }
-// rooms: [{ id, slug, name, accent }]. Calls onEnter(room) once the camera faces the chosen door.
 export function createCorridor(container, { rooms, onEnter }) {
   const renderer = new WebGLRenderer({ antialias: true })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO))
@@ -33,7 +31,6 @@ export function createCorridor(container, { rooms, onEnter }) {
   const doors = buildDoors(scene, rooms)
   const rig = createCameraRig(camera)
 
-  // The door machine decides what is hovered / selected / entered.
   let state = initialState
   const dispatch = (event) => {
     state = transition(state, event)

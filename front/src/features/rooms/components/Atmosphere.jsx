@@ -1,4 +1,3 @@
-// Presentational: room ambiance layer (styles/atmosphere.scss). Props only.
 import { getRoomTheme } from '../model/roomThemes.js'
 import '@/styles/atmosphere.scss'
 

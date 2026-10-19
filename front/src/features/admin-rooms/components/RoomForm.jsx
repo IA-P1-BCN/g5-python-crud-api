@@ -21,7 +21,6 @@ const EMPTY = {
   audience: '',
 }
 
-// Field has no multi-line version yet, so hook and story use this small local one.
 function TextArea({ label, error, ...props }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -43,7 +42,6 @@ function TextArea({ label, error, ...props }) {
   )
 }
 
-// onSubmit must return true when the room was saved: then the form is cleared.
 export function RoomForm({ onSubmit }) {
   const {
     register,

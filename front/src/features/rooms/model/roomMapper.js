@@ -1,4 +1,3 @@
-// Maps the room DTO from the API to the view model, so the UI never depends on backend field names.
 export function toRoom(dto) {
   return {
     id: dto.id,

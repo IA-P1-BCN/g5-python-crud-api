@@ -9,7 +9,6 @@ import { roomDto, roomsPage } from '@/test/mocks/handlers/rooms.js'
 import { DEFAULT_THEME, ROOM_THEMES } from '../model/roomThemes.js'
 import RoomsCorridor from './RoomsCorridor.jsx'
 
-// The corridor itself is tested elsewhere: here a stub is enough.
 vi.mock('@/features/corridor', async () => {
   const { createElement } = await import('react')
   return {
@@ -29,7 +28,6 @@ vi.mock('@/features/corridor', async () => {
 
 const seenRooms = new Set()
 
-// A list is sent as the paginated envelope; anything else (an error body) as is.
 const respondWith = (body, status = 200) =>
   server.use(
     http.get('/api/v1/rooms', () =>

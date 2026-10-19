@@ -1,5 +1,3 @@
-// Pure: filter bookings by tab (all / upcoming / past / cancelled). Same rules as the API tabs
-// in API_CONTRACT.md: upcoming = date_from today, past = date_to yesterday (UTC days).
 export const TABS = ['upcoming', 'past', 'cancelled', 'all']
 
 export function filterBookings(bookings, tab, now = new Date()) {

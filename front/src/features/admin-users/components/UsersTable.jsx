@@ -1,4 +1,3 @@
-// Presentational: users table. Props only.
 import es from '@/i18n/es.js'
 import Badge from '@/shared/ui/Badge.jsx'
 import Button from '@/shared/ui/Button.jsx'
@@ -13,7 +12,6 @@ import {
 const t = es.adminUsers
 const ROLES = ['client', 'staff', 'admin']
 
-// `pendingId`: user with a request in flight (its controls are blocked to avoid double submits).
 export default function UsersTable({ users, pendingId = null, onChangeRole, onDeactivate }) {
   return (
     <table aria-label={t.table.label} className="border-line w-full border-t text-left text-sm">

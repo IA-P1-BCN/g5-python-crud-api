@@ -8,8 +8,6 @@ import BookingCard from './BookingCard.jsx'
 
 const t = es.myBookings.card
 
-// Dates are shown in the local zone: pin it so the tests give the same result on every computer.
-// Node reads TZ at each date operation, so setting it here is enough.
 const previousTz = process.env.TZ
 beforeAll(() => {
   process.env.TZ = 'Europe/Madrid'
@@ -57,7 +55,6 @@ describe('BookingCard actions', () => {
   const FUTURE = bookingDto({ time_slot: slot('2026-10-30T16:00:00Z') })
   const SOON = bookingDto({ time_slot: slot('2026-10-17T10:00:00Z') })
 
-  // Only Date is faked, so "now" is fixed for the 24h rule.
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-10-16T12:00:00Z'))

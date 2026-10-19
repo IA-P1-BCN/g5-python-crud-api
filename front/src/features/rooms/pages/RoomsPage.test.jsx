@@ -10,7 +10,6 @@ import { server } from '@/test/mocks/server.js'
 import { useGateStore } from '../model/gate.store.js'
 import RoomsPage from './RoomsPage.jsx'
 
-// The 3D corridor is tested in its own feature: a stub that enters the first room is enough.
 vi.mock('@/features/corridor', async () => {
   const { createElement } = await import('react')
   return {

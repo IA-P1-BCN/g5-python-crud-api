@@ -1,4 +1,3 @@
-// TanStack Query hook: game history. No JSX.
 import { useQuery } from '@tanstack/react-query'
 import { fetchGameHistory } from '../api/myBookingsApi.js'
 

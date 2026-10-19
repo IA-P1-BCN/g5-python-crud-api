@@ -47,7 +47,6 @@ describe('useMyBookings', () => {
       meHandler({ id: 42, role: 'staff' }),
       http.get('/api/v1/bookings', ({ request }) => {
         const userId = new URL(request.url).searchParams.get('user_id')
-        // Like the API for staff/admin: without user_id everybody's bookings come back.
         const all = [bookingDto({ id: 1, user_id: 42 }), bookingDto({ id: 2, user_id: 99 })]
         const items = userId ? all.filter((b) => String(b.user_id) === userId) : all
         return HttpResponse.json(bookingsPage(items))

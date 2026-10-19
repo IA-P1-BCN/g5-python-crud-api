@@ -10,7 +10,7 @@ describe('GameHistory', () => {
 
     expect(screen.getByText('Faro 1923')).toBeInTheDocument()
     expect(screen.getByText(es.myBookings.history.escaped)).toBeInTheDocument()
-    expect(screen.getByText('45:10')).toBeInTheDocument() // 2710 s
+    expect(screen.getByText('45:10')).toBeInTheDocument()
   })
 
   it('shows "result pending" when the game has no result yet', () => {

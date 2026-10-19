@@ -1,4 +1,3 @@
-// Personal score block: games played, games escaped, best time. Data: usePlayerStats.
 import { useId } from 'react'
 import es from '@/i18n/es.js'
 import Alert from '@/shared/ui/Alert.jsx'

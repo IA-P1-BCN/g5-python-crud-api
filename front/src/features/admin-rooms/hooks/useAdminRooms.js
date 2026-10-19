@@ -2,8 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { mapApiError } from '@/shared/api/errors.js'
 import { adminRoomsApi } from '../api/adminRoomsApi'
 
-// One page of rooms. `loading` is derived (the stored result belongs to another page/reload),
-// so no state is set synchronously inside the effect.
 export function useAdminRooms() {
   const [page, setPage] = useState(1)
   const [reloadKey, setReloadKey] = useState(0)

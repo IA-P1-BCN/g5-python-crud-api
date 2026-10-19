@@ -1,5 +1,3 @@
-// MSW handlers for the rooms endpoints (see docs/API_CONTRACT.md). One file per feature: no conflicts.
-
 export const roomDto = (overrides = {}) => ({
   id: 1,
   name: 'Faro 1923',
@@ -18,7 +16,6 @@ export const roomDto = (overrides = {}) => ({
   ...overrides,
 })
 
-// GET /rooms is paginated: { items, total, page, size } (API_CONTRACT.md, Pagination).
 export const roomsPage = (items, overrides = {}) => ({
   items,
   total: items.length,

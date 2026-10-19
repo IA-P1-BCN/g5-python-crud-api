@@ -1,5 +1,3 @@
-// The booking steps of a room: 1 day, 2 time, 3 players and the summary with "Reservar".
-// Gets the room as a prop (the page loads it), keeps the choices in the booking draft store.
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import es from '@/i18n/es.js'
@@ -37,7 +35,6 @@ export function Booker({ room }) {
   const { selectedDate, selectedSlot, players, setSelectedDate, setSelectedSlot, setPlayers } =
     useBookingDraftStore()
 
-  // A draft made in another room must not leak into this one; players stay inside the room range.
   useEffect(() => {
     const draft = useBookingDraftStore.getState()
     draft.startRoom(room.slug)
@@ -49,7 +46,6 @@ export function Booker({ room }) {
   const activeDate = selectedDate || dates[0].dateString
   const { data: slots = [], isLoading, isError } = useSlots(room.id, activeDate)
 
-  // Only a slot that is on screen can be booked.
   const canContinue = slots.some((slot) => slot.id === selectedSlot?.id)
   const shownPlayers = Math.min(room.maxPlayers, Math.max(room.minPlayers, players))
   const total = computeTotalPrice({ pricePerPlayer: room.pricePerPlayer, players: shownPlayers })

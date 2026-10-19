@@ -2,7 +2,6 @@ import { act, renderHook } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useMediaQuery } from './useMediaQuery.js'
 
-// jsdom has no matchMedia: build a controllable fake.
 function mockMatchMedia(initial) {
   let matches = initial
   const listeners = new Set()

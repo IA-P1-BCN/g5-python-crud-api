@@ -1,10 +1,8 @@
-// Ticket: shows the total price = price per player x players (BR-B4).
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
 import { formatPrice } from '@/shared/lib/format.js'
 import { Ticket } from './Ticket'
 
-// formatPrice uses a non-breaking space before the euro sign; Testing Library turns it into a normal one.
 const price = (amount) => formatPrice(amount).replace(/\s/g, ' ')
 
 describe('Ticket', () => {

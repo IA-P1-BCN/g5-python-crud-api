@@ -5,7 +5,6 @@ const HEIGHT = 128
 const FONT_SIZE = 72
 const MAX_TEXT_WIDTH = 470
 
-// Sign texture: the text is drawn on a 2D canvas, then used as a texture.
 export function createLabel(text, color) {
   const canvas = document.createElement('canvas')
   canvas.width = WIDTH

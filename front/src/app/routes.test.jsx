@@ -8,7 +8,6 @@ import { server } from '@/test/mocks/server.js'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { adminRoomsRoutes } from '@/features/admin-rooms'
-import { adminStatsRoutes } from '@/features/admin-stats'
 import { adminUsersRoutes } from '@/features/admin-users'
 import { authRoutes } from '@/features/auth'
 import { bookingRoutes } from '@/features/booking'
@@ -30,7 +29,6 @@ describe('each feature owns its routes', () => {
     ['staff', staffRoutes],
     ['admin-rooms', adminRoomsRoutes],
     ['admin-users', adminUsersRoutes],
-    ['admin-stats', adminStatsRoutes],
   ])('%s exports a routes array', (_name, routes) => {
     expect(Array.isArray(routes)).toBe(true)
   })
@@ -40,7 +38,6 @@ describe('each feature owns its routes', () => {
   })
 })
 
-// Supabase is mocked (its keys do not exist in tests). /users/me goes through the MSW handler.
 const mocks = vi.hoisted(() => ({
   auth: { getSession: vi.fn(), onAuthStateChange: vi.fn(), signOut: vi.fn() },
 }))

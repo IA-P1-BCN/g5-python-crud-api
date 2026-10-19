@@ -6,7 +6,6 @@ import CorridorFallback from './CorridorFallback.jsx'
 import { getCorridorMode } from '../model/corridorMode.js'
 import { useWebGLSupport } from '../hooks/useWebGLSupport.js'
 
-// Below Tailwind's `md` breakpoint (768px).
 const SMALL_SCREEN_QUERY = '(max-width: 767px)'
 
 export default function CorridorView({ rooms, onEnter, listBelow = false }) {
@@ -18,10 +17,8 @@ export default function CorridorView({ rooms, onEnter, listBelow = false }) {
 
   const mode = getCorridorMode({ hasWebGL: hasWebGL && !sceneFailed, reducedMotion, smallScreen })
 
-  // listBelow: the page already shows the room list under the corridor, so do not repeat it.
   if (mode !== '3d') return listBelow ? null : <CorridorFallback rooms={rooms} onEnter={onEnter} />
 
-  // The canvas is not operable by keyboard or screen reader: the poster grid stays next to it, hidden.
   return (
     <>
       <Corridor rooms={rooms} onEnter={onEnter} onError={() => setSceneFailed(true)} />

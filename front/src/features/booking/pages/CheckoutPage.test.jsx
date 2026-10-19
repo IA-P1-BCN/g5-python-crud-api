@@ -82,7 +82,6 @@ describe('CheckoutPage', () => {
 
     await screen.findByRole('heading', { name: 'Faro 1923' })
 
-    // 2 players x 20,00 EUR
     expect(screen.getByText(/40,00/)).toBeInTheDocument()
   })
 
@@ -93,7 +92,6 @@ describe('CheckoutPage', () => {
 
     await screen.findByRole('heading', { name: 'Faro 1923' })
 
-    // 3 players x 20,00 EUR
     expect(screen.getByText(/60,00/)).toBeInTheDocument()
     expect(screen.getByText(formatDateTime(slot.startsAt))).toBeInTheDocument()
   })

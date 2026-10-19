@@ -1,4 +1,3 @@
-// TanStack mutation: confirm a booking, then invalidate today's bookings.
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { confirmBooking } from '../api/staffApi.js'
 

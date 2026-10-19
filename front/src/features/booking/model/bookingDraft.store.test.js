@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { useBookingDraftStore } from './bookingDraft.store'
 
 describe('bookingDraft.store', () => {
-  // Clear the store before each test to ensure test isolation
   beforeEach(() => {
     useBookingDraftStore.getState().resetDraft()
   })
@@ -14,13 +13,10 @@ describe('bookingDraft.store', () => {
   })
 
   it('survives step changes while retaining draft data (Acceptance Criterion)', () => {
-    // Step 1: Select a slot
     useBookingDraftStore.getState().setSlotId('slot-abc-123')
 
-    // Move to Step 2
     useBookingDraftStore.getState().setStep(2)
 
-    // Verify data survived the step change
     const state = useBookingDraftStore.getState()
     expect(state.currentStep).toBe(2)
     expect(state.slotId).toBe('slot-abc-123')

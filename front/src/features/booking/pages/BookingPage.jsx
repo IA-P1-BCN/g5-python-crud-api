@@ -1,4 +1,3 @@
-// Route page: choose day, slot and players. Uses useSlots + draft store.
 import { useParams } from 'react-router-dom'
 import { useRoom } from '@/features/rooms'
 import es from '@/i18n/es.js'

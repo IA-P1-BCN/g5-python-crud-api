@@ -1,4 +1,3 @@
-// Route page: client bookings with tabs (view, modify, cancel, change slot).
 import { useState } from 'react'
 import es from '@/i18n/es.js'
 import Alert from '@/shared/ui/Alert.jsx'
@@ -16,7 +15,6 @@ const t = es.myBookings.page
 
 export default function MyBookingsPage() {
   const [tab, setTab] = useState('upcoming')
-  // Which dialog is open, and for which booking: { type: 'modify' | 'changeSlot' | 'cancel', booking } or null.
   const [action, setAction] = useState(null)
   const { data, isPending, isError } = useMyBookings()
   const bookings = data ? filterBookings(data, tab) : []

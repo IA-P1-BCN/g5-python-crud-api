@@ -1,4 +1,3 @@
-// Dialog to change the number of players. Reuses PlayersDial from @/features/booking.
 import { useState } from 'react'
 import { PlayersDial } from '@/features/booking'
 import es from '@/i18n/es.js'
@@ -24,8 +23,8 @@ export default function ModifyPlayersDialog({ booking, open, onOpenChange }) {
 
   function handleOpenChange(next) {
     if (!next) {
-      reset() // forget an old error
-      setPlayers(booking.players) // and an unsaved choice
+      reset()
+      setPlayers(booking.players)
     }
     onOpenChange(next)
   }

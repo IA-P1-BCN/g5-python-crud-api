@@ -1,4 +1,3 @@
-// Route page: users table with deactivate and role selector (admin only; the guard is in routes.js).
 import { useState } from 'react'
 import es from '@/i18n/es.js'
 import Alert from '@/shared/ui/Alert.jsx'

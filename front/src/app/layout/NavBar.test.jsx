@@ -25,7 +25,6 @@ const session = {
 }
 const nav = es.common.nav
 
-// Logged in with the given role: the session exists and /users/me answers with that role.
 function signInAs(role) {
   mocks.auth.getSession.mockResolvedValue({ data: { session } })
   server.use(http.get('/api/v1/users/me', () => HttpResponse.json(meDto({ role }))))

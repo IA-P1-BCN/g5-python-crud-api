@@ -1,4 +1,3 @@
-// Route page: login with email and password (Supabase) or with Google.
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -28,10 +27,8 @@ export default function LoginPage() {
     defaultValues: { email: '', password: '' },
   })
 
-  // Wait for the stored session, so a logged-in user never sees the form flash.
   if (loading) return <Spinner label={es.common.loading} />
   if (isAuthenticated) {
-    // The role arrives after the session: wait for it (or for its failure) before choosing the page.
     if (role === null && !roleError) return <Spinner label={es.common.loading} />
     return <Navigate to={homeFor(role)} replace />
   }
@@ -40,7 +37,6 @@ export default function LoginPage() {
     setGoogleSubmitting(true)
     setGoogleFailed(false)
     const { error } = await login()
-    // On success the browser leaves for Google, so only the error case comes back here.
     if (error) {
       setGoogleFailed(true)
       setGoogleSubmitting(false)
@@ -52,7 +48,6 @@ export default function LoginPage() {
       <h1 className="heading-title">{es.auth.title}</h1>
       <p>{es.auth.subtitle}</p>
 
-      {/* noValidate: the browser would block the submit before our inline Zod messages show. */}
       <form
         noValidate
         onSubmit={handleSubmit((values) => passwordLogin.mutate(values))}

@@ -1,4 +1,3 @@
-// All user-facing texts (Spanish), one namespace per feature in i18n/es/. Usage: es.rooms.title
 import common from './es/common.js'
 import rooms from './es/rooms.js'
 import booking from './es/booking.js'
@@ -8,7 +7,6 @@ import auth from './es/auth.js'
 import profile from './es/profile.js'
 import adminRooms from './es/adminRooms.js'
 import adminUsers from './es/adminUsers.js'
-import adminStats from './es/adminStats.js'
 import dashboard from './es/dashboard.js'
 
 export default {
@@ -21,6 +19,5 @@ export default {
   profile,
   adminRooms,
   adminUsers,
-  adminStats,
   dashboard,
 }

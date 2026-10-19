@@ -3,7 +3,6 @@ import es from '@/i18n/es.js'
 
 const t = es.adminRooms.form.errors
 
-// Inputs give strings. Check "empty" first: z.coerce.number() would turn '' into 0.
 const int = (required, range, min, max) =>
   z
     .string()
@@ -13,7 +12,6 @@ const int = (required, range, min, max) =>
 
 const text = (required, tooLong) => z.string().trim().min(1, required).max(100, tooLong)
 
-// Limits mirror back/app/schemas/room.py (RoomBase).
 export const roomSchema = z
   .object({
     slug: z
@@ -28,7 +26,6 @@ export const roomSchema = z
       .string()
       .trim()
       .min(1, t.priceRequired)
-      // max_digits=10, decimal_places=2 in the API: up to 8 integer digits and 2 decimals.
       .regex(/^-?\d{0,8}(\.\d{0,2})?$/, t.priceFormat)
       .pipe(z.coerce.number().min(0, t.priceMin)),
     capacity: int(t.capacityRequired, t.capacityRange, 1, 50),

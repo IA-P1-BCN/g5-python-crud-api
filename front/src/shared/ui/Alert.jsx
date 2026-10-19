@@ -12,8 +12,6 @@ const alertStyles = cva('my-4 rounded-lg border bg-surface px-[18px] py-3.5 text
   defaultVariants: { tone: 'info' },
 })
 
-// Inline message box. Errors use role="alert" (announced at once); the rest use role="status"
-// (announced when the screen reader is idle).
 export default function Alert({ tone, className, ...props }) {
   return (
     <div

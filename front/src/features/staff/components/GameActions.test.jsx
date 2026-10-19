@@ -8,7 +8,6 @@ import { todayBookingDto } from '@/test/mocks/handlers/staff.js'
 import { server } from '@/test/mocks/server.js'
 import GameActions from './GameActions.jsx'
 
-// A slot starting now: the same UTC day as the API checks for starting a game (BR-G3).
 const slotNow = () => ({
   id: 10,
   starts_at: new Date().toISOString(),

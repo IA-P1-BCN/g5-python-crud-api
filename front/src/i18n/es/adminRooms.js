@@ -4,7 +4,6 @@ export default {
   createTitle: 'Nueva sala',
   createSuccess:
     'Sala creada con éxito. Los clientes la verán solo cuando tenga franjas horarias próximas asignadas (BR-R6).',
-  // Messages for backend codes that only make sense on this screen.
   errors: {
     DUPLICATE: 'Este slug ya existe. Elige otro.',
   },

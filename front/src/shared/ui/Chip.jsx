@@ -1,6 +1,5 @@
 import { cn } from '../lib/cn.js'
 
-// Generic toggle chip (filters, tabs). No business logic.
 export default function Chip({ selected = false, className, type = 'button', ...props }) {
   return (
     <button

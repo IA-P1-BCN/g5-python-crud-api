@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs'
 
-// Vitest empties CSS imports, so read the file from disk (same trick as theme.test.js).
 const css = readFileSync('src/index.css', 'utf8')
 const block = (selector) => css.match(new RegExp(`${selector}\\s*\\{([^}]*)\\}`))?.[1] ?? ''
 

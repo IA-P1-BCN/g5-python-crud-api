@@ -4,12 +4,10 @@ import { clamp } from './math.js'
 const MAX_YAW = 1.25
 const MAX_PITCH = 0.3
 const DRAG_THRESHOLD = 6
-const NEAR_X = 0.35 // how far (in screen units, -1..1) the pointer may drift from a hovered door
+const NEAR_X = 0.35
 const NEAR_Y = 0.8
-const NO_POINTER = 9 // out of the screen
+const NO_POINTER = 9
 
-// Pointer events on the canvas: hover/click on doors and drag to look around.
-// `input` is a live object the camera rig reads every frame.
 export function createPointerInput(canvas, { camera, doors, dispatch, isChoosing }) {
   const raycaster = new Raycaster()
   const mouse = new Vector2(NO_POINTER, NO_POINTER)
@@ -29,7 +27,6 @@ export function createPointerInput(canvas, { camera, doors, dispatch, isChoosing
     raycaster.setFromCamera(mouse, camera)
     return raycaster.intersectObjects(doors)[0]?.object ?? null
   }
-  // Keeps a hovered door while the pointer stays near it on screen (no flicker when the camera leans).
   const isNearDoor = (door) => {
     door.getWorldPosition(doorScreen)
     doorScreen.y = 1.3
@@ -50,7 +47,7 @@ export function createPointerInput(canvas, { camera, doors, dispatch, isChoosing
     canvas.setPointerCapture(e.pointerId)
   })
   on('pointerup', endDrag)
-  on('pointercancel', endDrag) // a touch scroll cancels the pointer
+  on('pointercancel', endDrag)
   on('pointermove', (e) => {
     setPointer(e)
     input.mouseX = mouse.x

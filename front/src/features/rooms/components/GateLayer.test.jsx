@@ -41,7 +41,6 @@ describe('GateLayer', () => {
 
     fireAnimationEnd(screen.getByTestId('gate'))
 
-    // same gate element stays on screen while the new page is already there
     expect(screen.getByText('room detail')).toBeInTheDocument()
     expect(screen.getByTestId('gate')).toHaveAttribute('data-phase', 'uncover')
 

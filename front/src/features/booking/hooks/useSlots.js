@@ -1,4 +1,3 @@
-// TanStack Query hook: slots of a room/day. No JSX.
 import { useQuery } from '@tanstack/react-query'
 import { fetchSlots } from '../api/bookingApi.js'
 import { toSlot } from '../model/slotMapper.js'

@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import es from '@/i18n/es.js'
 import CorridorView from './CorridorView.jsx'
 
-// The real 3D component needs WebGL (not available in jsdom): replace it with a stub.
 vi.mock('./Corridor.jsx', async () => {
   const { createElement } = await import('react')
   return {

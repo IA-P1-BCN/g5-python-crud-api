@@ -11,10 +11,10 @@ export const slotSchema = z
     startTime: time,
     endTime: time,
   })
-  .refine((s) => s.endTime > s.startTime, { path: ['endTime'], message: 'endBeforeStart' }) // BR-S1
+  .refine((s) => s.endTime > s.startTime, { path: ['endTime'], message: 'endBeforeStart' })
   .refine((s) => new Date(`${s.date}T${s.startTime}`) > new Date(), {
     path: ['startTime'],
-    message: 'startInPast', // BR-S2
+    message: 'startInPast',
   })
 
 export const toIsoUtc = (date, time) => new Date(`${date}T${time}`).toISOString()
@@ -40,6 +40,6 @@ export function toSlotView(apiSlot) {
     startTime: start.time,
     endTime: end.time,
     isBlocked: apiSlot.status === 'blocked',
-    state: apiSlot.state, // free | taken | blocked | past
+    state: apiSlot.state,
   }
 }

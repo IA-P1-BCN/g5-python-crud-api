@@ -1,4 +1,3 @@
-// MSW handlers for the myBookings endpoints (see docs/API_CONTRACT.md). One file per feature: no conflicts.
 import { http, HttpResponse } from 'msw'
 
 export const historyItemDto = (overrides = {}) => ({
@@ -37,11 +36,8 @@ export const bookingDto = (overrides = {}) => ({
   ...overrides,
 })
 
-// GET /bookings is the paginated envelope (API_CONTRACT.md).
 export const bookingsPage = (items) => ({ items, total: items.length, page: 1, size: 100 })
 
-// GET /users/me as the API returns it: the numeric DB id (bookings.user_id), not the Supabase id.
-// Use with server.use(...) in tests that need the logged-in user (the default one in auth.js needs a token).
 export const meHandler = (overrides = {}) =>
   http.get('*/users/me', () =>
     HttpResponse.json({
@@ -53,7 +49,6 @@ export const meHandler = (overrides = {}) =>
     }),
   )
 
-// GET /users/me/history is a plain array, not paginated (API_CONTRACT.md).
 export default [
   http.get('*/users/me/history', () => HttpResponse.json([historyItemDto()])),
   http.get('*/bookings', () => HttpResponse.json(bookingsPage([bookingDto()]))),

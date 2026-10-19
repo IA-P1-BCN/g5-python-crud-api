@@ -12,7 +12,6 @@ const t = es.profile
 
 const me = { id: 'u1', email: 'ana@example.com', name: 'Ana', phone: '600123456', role: 'client' }
 
-// GET /users/me, counting the calls (to prove the cached user is refreshed after a save).
 function mockMe() {
   const calls = { get: 0 }
   server.use(
@@ -64,7 +63,7 @@ describe('ProfilePage - form', () => {
 
     expect(await screen.findByText(t.saved)).toBeInTheDocument()
     expect(body).toEqual({ name: 'Ana María', phone: '600123456' })
-    await waitFor(() => expect(calls.get).toBe(2)) // refetched after the save
+    await waitFor(() => expect(calls.get).toBe(2))
   })
 
   it('shows the Zod message (not the browser bubble) and does not call the API', async () => {
@@ -108,7 +107,6 @@ const game = (completed, completion_time) =>
 const mockHistory = (items) =>
   server.use(http.get('/api/v1/users/me/history', () => HttpResponse.json(items)))
 
-// The <dd> number that goes with a label ("partidas", "escapadas"...).
 const statValue = (label) => {
   const region = screen.getByRole('region', { name: t.scoreTitle })
   return within(region).getByText(label).closest('div').querySelector('dd')
@@ -117,7 +115,6 @@ const statValue = (label) => {
 describe('ProfilePage - score', () => {
   it('shows games played, games escaped and best time from the history', async () => {
     mockMe()
-    // Best time = fastest ESCAPED game: the lost 600 s one must not count.
     mockHistory([game(true, 2710), game(true, 1805), game(false, 600)])
     renderPage()
 

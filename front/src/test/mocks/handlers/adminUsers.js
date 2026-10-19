@@ -1,4 +1,3 @@
-// MSW handlers for the adminUsers endpoints (see docs/API_CONTRACT.md). One file per feature: no conflicts.
 import { http, HttpResponse } from 'msw'
 
 export const userDto = (overrides = {}) => ({
@@ -12,7 +11,6 @@ export const userDto = (overrides = {}) => ({
   ...overrides,
 })
 
-// GET /users is paginated: { items, total, page, size } (API_CONTRACT.md, Pagination).
 export const usersPage = (items, overrides = {}) => ({
   items,
   total: items.length,
@@ -34,7 +32,6 @@ const initialUsers = () => [
   }),
 ]
 
-// Stateful on purpose: a change made through PUT shows up in the next GET, like with the real API.
 let users = initialUsers()
 
 export function resetMockUsers() {
