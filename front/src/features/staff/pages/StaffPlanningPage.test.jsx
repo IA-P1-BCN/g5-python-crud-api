@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
@@ -127,5 +127,36 @@ describe('StaffPlanningPage', () => {
     )
 
     expect(screen.getByText(es.staff.emptyFilter)).toBeInTheDocument()
+  })
+
+  it('lets staff pick another day: GET /bookings for that day, cancelled left out', async () => {
+    respondWith([todayBookingDto({ id: 1, user: { name: 'Lucía Pérez' } })])
+    let query
+    server.use(
+      http.get('/api/v1/bookings', ({ request }) => {
+        query = new URL(request.url).searchParams
+        return HttpResponse.json({
+          items: [
+            todayBookingDto({ id: 2, status: 'PENDING', user: { name: 'Marc Soler' } }),
+            todayBookingDto({ id: 3, status: 'CANCELLED', user: { name: 'Ana Roca' } }),
+          ],
+          total: 2,
+          page: 1,
+          size: 100,
+        })
+      }),
+    )
+    renderPage()
+    await screen.findByText('Lucía Pérez')
+
+    fireEvent.change(screen.getByLabelText(es.staff.day), { target: { value: '2030-11-05' } })
+
+    expect(await screen.findByText('Marc Soler')).toBeInTheDocument()
+    expect(screen.queryByText('Ana Roca')).not.toBeInTheDocument()
+    expect(query.get('date_from')).toBe('2030-11-05')
+    expect(query.get('date_to')).toBe('2030-11-05')
+
+    await userEvent.click(screen.getByRole('button', { name: es.staff.today }))
+    expect(await screen.findByText('Lucía Pérez')).toBeInTheDocument()
   })
 })

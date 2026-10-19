@@ -1,10 +1,20 @@
 // Axios calls: today's bookings, confirm, start, finish, register result. No React, no mapping.
 import { api } from '@/shared/api/client.js'
 
-export async function fetchTodayBookings() {
-  // Plain array (not paginated), already ordered by slot start, cancelled excluded.
-  const { data } = await api.get('/bookings/today')
-  return data
+// `day` (YYYY-MM-DD, UTC day) is empty for today. Always a plain array ordered by slot start,
+// cancelled excluded.
+export async function fetchTodayBookings(day) {
+  if (!day) {
+    const { data } = await api.get('/bookings/today')
+    return data
+  }
+  // Another day: the paginated list filtered on that day (staff and admin see everyone's).
+  const { data } = await api.get('/bookings', {
+    params: { date_from: day, date_to: day, size: 100 },
+  })
+  return data.items
+    .filter((b) => b.status !== 'CANCELLED')
+    .sort((a, b) => a.time_slot.starts_at.localeCompare(b.time_slot.starts_at))
 }
 
 // PENDING -> CONFIRMED
