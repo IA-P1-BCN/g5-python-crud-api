@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import es from '@/i18n/es.js'
-import { bookingDto, bookingsPage } from '@/test/mocks/handlers/myBookings.js'
+import { bookingDto, bookingsPage, meHandler } from '@/test/mocks/handlers/myBookings.js'
 import { server } from '@/test/mocks/server.js'
 import MyBookingsPage from './MyBookingsPage.jsx'
 
@@ -39,7 +39,10 @@ const cancelled = bookingDto({
 })
 
 const respondWith = (items) =>
-  server.use(http.get('/api/v1/bookings', () => HttpResponse.json(bookingsPage(items))))
+  server.use(
+    meHandler(),
+    http.get('/api/v1/bookings', () => HttpResponse.json(bookingsPage(items))),
+  )
 
 function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })

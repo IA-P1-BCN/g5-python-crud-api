@@ -40,6 +40,19 @@ export const bookingDto = (overrides = {}) => ({
 // GET /bookings is the paginated envelope (API_CONTRACT.md).
 export const bookingsPage = (items) => ({ items, total: items.length, page: 1, size: 100 })
 
+// GET /users/me as the API returns it: the numeric DB id (bookings.user_id), not the Supabase id.
+// Use with server.use(...) in tests that need the logged-in user (the default one in auth.js needs a token).
+export const meHandler = (overrides = {}) =>
+  http.get('*/users/me', () =>
+    HttpResponse.json({
+      id: 7,
+      email: 'ana@example.com',
+      name: 'Ana',
+      role: 'client',
+      ...overrides,
+    }),
+  )
+
 // GET /users/me/history is a plain array, not paginated (API_CONTRACT.md).
 export default [
   http.get('*/users/me/history', () => HttpResponse.json([historyItemDto()])),

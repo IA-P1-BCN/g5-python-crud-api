@@ -1,11 +1,23 @@
+/* global process -- Node API, only used to pin the time zone of this test */
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import es from '@/i18n/es.js'
 import { bookingDto } from '@/test/mocks/handlers/myBookings.js'
 import BookingCard from './BookingCard.jsx'
 
 const t = es.myBookings.card
+
+// Dates are shown in the local zone: pin it so the tests give the same result on every computer.
+// Node reads TZ at each date operation, so setting it here is enough.
+const previousTz = process.env.TZ
+beforeAll(() => {
+  process.env.TZ = 'Europe/Madrid'
+})
+afterAll(() => {
+  if (previousTz === undefined) delete process.env.TZ
+  else process.env.TZ = previousTz
+})
 
 describe('BookingCard', () => {
   it('shows room, date, time, players and total price', () => {
@@ -13,7 +25,7 @@ describe('BookingCard', () => {
 
     expect(screen.getByText('Faro 1923')).toBeInTheDocument()
     expect(screen.getByText(/20 de octubre de 2026/)).toBeInTheDocument()
-    expect(screen.getByText(/16:00/)).toBeInTheDocument()
+    expect(screen.getByText(/18:00/)).toBeInTheDocument()
     expect(screen.getByText('4')).toBeInTheDocument()
     expect(screen.getByText(/80,00/)).toBeInTheDocument()
   })
@@ -28,6 +40,15 @@ describe('BookingCard', () => {
     render(<BookingCard booking={bookingDto({ status })} />)
 
     expect(screen.getByText(label)).toBeInTheDocument()
+  })
+})
+
+describe('BookingCard time zone', () => {
+  it('shows the local time: 10:00Z is 12:00 in Madrid (CEST)', () => {
+    const slot = { ...bookingDto().time_slot, starts_at: '2026-10-20T10:00:00Z' }
+    render(<BookingCard booking={bookingDto({ time_slot: slot })} />)
+
+    expect(screen.getByText(/12:00/)).toBeInTheDocument()
   })
 })
 

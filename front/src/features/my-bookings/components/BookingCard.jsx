@@ -16,9 +16,10 @@ const STATUS_TONE = {
   CANCELLED: 'cancelled',
 }
 
-// Slots are stored in UTC (BR-X5): we show UTC so the text is the same on every computer.
-const DATE_FORMAT = { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }
-const TIME_FORMAT = { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }
+// Slots are stored in UTC (BR-X5) and shown in the user's local time, like the slot grid, ticket and
+// staff table. The 24h rule and the back stay in UTC.
+const DATE_FORMAT = { day: 'numeric', month: 'long', year: 'numeric' }
+const TIME_FORMAT = { hour: '2-digit', minute: '2-digit' }
 
 export default function BookingCard({ booking, onModify, onChangeSlot, onCancel }) {
   const start = new Date(booking.time_slot.starts_at)
