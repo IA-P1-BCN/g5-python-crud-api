@@ -81,6 +81,20 @@ docker compose run --rm front-tools
 
 > 📝 **Note:** `front-tools` runs `prettier --write` on the whole `front/`. After it, `git status` and restore the files that are not yours.
 
+### Test coverage
+
+```bash
+# Backend (rebuild once so pytest-cov is installed: docker compose up -d --build)
+docker compose exec api pytest --cov --cov-report=term
+open back/htmlcov/index.html
+
+# Frontend (after pulling: docker compose restart front, or npm install in front/)
+docker compose exec front npm run coverage
+open front/coverage/index.html
+```
+
+The terminal prints the total. The HTML page lists every folder and file with its percentage, and clicking a file shows the covered and uncovered lines. Reports are generated files: `back/htmlcov/` and `front/coverage/` are in `.gitignore`, never commit them.
+
 **Migrations:** `alembic current` · new one: `alembic revision --autogenerate -m "describe the change"` (review it before applying).
 
 ## ⏱️ How a booking works
