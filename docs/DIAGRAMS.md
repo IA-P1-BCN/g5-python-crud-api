@@ -2,9 +2,9 @@
 
 All diagrams are Mermaid: GitHub renders them directly.
 
-## 1. ER diagram - MVP (Sprint 1)
+## 1. ER diagram (implemented)
 
-Changes vs the team's full ER: `users` gets `role` + `is_active` (+ `auth_id` in Sprint 2); `time_slots.status` is only `available`/`blocked` (booked is computed, see BR-S5). Sprint 2 adds the `game_results` table and the booking statuses `IN_PROGRESS` / `COMPLETED`.
+Only tables that exist in the code: it matches the models and Alembic migrations on `develop`. Changes vs the team's full ER: `users` gets `role` + `is_active` + `auth_id` (Supabase id, nullable until first login); `rooms` gets the catalog fields (`slug`, `genre`, `min_players`, `difficulty`, `hook`, `story`, `audience`, ticket 056); `time_slots.status` is only `available`/`blocked` (booked is computed, see BR-S5). Sprint 2 adds the `game_results` table and the booking statuses `IN_PROGRESS` / `COMPLETED`.
 
 ```mermaid
 erDiagram
@@ -20,7 +20,7 @@ erDiagram
         string phone
         string role "client | staff | admin"
         bool is_active
-        uuid auth_id UK "Sprint 2 (Supabase)"
+        string auth_id UK "nullable, Supabase user id"
         datetime created_at
     }
     ROOMS {
@@ -30,6 +30,13 @@ erDiagram
         int duration "minutes"
         decimal base_price "per player"
         string status "active | inactive"
+        string slug UK "immutable, URL id"
+        string genre
+        int min_players "1..capacity"
+        int difficulty "1..5"
+        text hook
+        text story
+        string audience
     }
     TIME_SLOTS {
         int id PK
@@ -56,63 +63,13 @@ erDiagram
     }
 ```
 
-## 2. ER diagram - full vision (Phase 2/3)
+Constraints and indexes the diagram cannot show:
+- `bookings`: partial unique index on `time_slot_id` where status is `PENDING`, `CONFIRMED` or `IN_PROGRESS` (BR-B8); indexes on `user_id` and `time_slot_id`; `players >= 1`.
+- `time_slots`: PostgreSQL exclusion constraint `ex_time_slots_no_overlap` (same room, overlapping time range, BR-S3); `ends_at > starts_at`; index on (`room_id`, `starts_at`).
+- `rooms`: checks `capacity >= 1`, `duration > 0`, `base_price >= 0`, `min_players` between 1 and `capacity`, `difficulty` between 1 and 5.
+- `users`: check `role IN ('client', 'staff', 'admin')`.
 
-The team's complete model. Tables with a Sprint tag are in scope, the rest are not committed.
-
-```mermaid
-erDiagram
-    USERS ||--o{ BOOKINGS : makes
-    ROOMS ||--o{ TIME_SLOTS : has
-    TIME_SLOTS ||--o{ BOOKINGS : "is booked in"
-    BOOKINGS ||--o| GAME_RESULTS : "ends with (implemented, Sprint 2)"
-    BOOKINGS ||--o{ PAYMENTS : "paid by"
-    BOOKINGS ||--o{ BOOKING_PLAYERS : includes
-    USERS ||--o{ BOOKING_PLAYERS : "plays as"
-    BOOKINGS ||--o{ BOOKING_DISCOUNTS : applies
-    DISCOUNTS ||--o{ BOOKING_DISCOUNTS : "used in"
-    USERS ||--o{ LOYALTY_TRANSACTIONS : earns
-    BOOKINGS ||--o{ LOYALTY_TRANSACTIONS : generates
-
-    GAME_RESULTS {
-        int id PK
-        int booking_id FK "UK"
-        bool completed
-        int completion_time "seconds"
-        datetime created_at
-    }
-    PAYMENTS {
-        int id PK
-        int booking_id FK
-        decimal amount
-        string status
-    }
-    BOOKING_PLAYERS {
-        int id PK
-        int booking_id FK
-        int user_id FK
-    }
-    DISCOUNTS {
-        int id PK
-        string name
-        decimal value
-        string type
-    }
-    BOOKING_DISCOUNTS {
-        int id PK
-        int booking_id FK
-        int discount_id FK
-    }
-    LOYALTY_TRANSACTIONS {
-        int id PK
-        int user_id FK
-        int booking_id FK
-        int points
-        string type
-    }
-```
-
-## 3. Booking state machine
+## 2. Booking state machine
 
 ```mermaid
 stateDiagram-v2
@@ -126,7 +83,7 @@ stateDiagram-v2
     CANCELLED --> [*]
 ```
 
-## 4. User flow - client booking
+## 3. User flow - client booking
 
 ```mermaid
 flowchart TD
@@ -146,7 +103,7 @@ flowchart TD
     J -- no --> M[Plays the game]
 ```
 
-## 5. User flow - staff on game day (Sprint 2)
+## 4. User flow - staff on game day (Sprint 2)
 
 ```mermaid
 flowchart LR
@@ -157,7 +114,7 @@ flowchart LR
     E --> F[Register result: completed + time]
 ```
 
-## 6. Booking creation sequence
+## 5. Booking creation sequence
 
 ```mermaid
 sequenceDiagram
@@ -181,7 +138,7 @@ sequenceDiagram
     end
 ```
 
-## 7. Auth flow (Sprint 2)
+## 6. Auth flow (Sprint 2)
 
 ```mermaid
 sequenceDiagram
