@@ -4,7 +4,7 @@ All diagrams are Mermaid: GitHub renders them directly.
 
 ## 1. ER diagram - MVP (Sprint 1)
 
-Changes vs the team's full ER: `users` gets `role` + `is_active` (+ `auth_id` in Sprint 2); `time_slots.status` is only `available`/`blocked` (booked is computed, see BR-S5). Sprint 2 adds the `game_results` table and the booking statuses `IN_PROGRESS` / `COMPLETED`.
+Matches the models and Alembic migrations on `develop`. Changes vs the team's full ER: `users` gets `role` + `is_active` + `auth_id` (Supabase id, nullable until first login); `rooms` gets the catalog fields (`slug`, `genre`, `min_players`, `difficulty`, `hook`, `story`, `audience`, ticket 056); `time_slots.status` is only `available`/`blocked` (booked is computed, see BR-S5). Sprint 2 adds the `game_results` table and the booking statuses `IN_PROGRESS` / `COMPLETED`.
 
 ```mermaid
 erDiagram
@@ -20,7 +20,7 @@ erDiagram
         string phone
         string role "client | staff | admin"
         bool is_active
-        uuid auth_id UK "Sprint 2 (Supabase)"
+        string auth_id UK "nullable, Supabase user id"
         datetime created_at
     }
     ROOMS {
@@ -30,6 +30,13 @@ erDiagram
         int duration "minutes"
         decimal base_price "per player"
         string status "active | inactive"
+        string slug UK "immutable, URL id"
+        string genre
+        int min_players "1..capacity"
+        int difficulty "1..5"
+        text hook
+        text story
+        string audience
     }
     TIME_SLOTS {
         int id PK
@@ -55,6 +62,12 @@ erDiagram
         datetime created_at
     }
 ```
+
+Constraints and indexes the diagram cannot show:
+- `bookings`: partial unique index on `time_slot_id` where status is `PENDING`, `CONFIRMED` or `IN_PROGRESS` (BR-B8); indexes on `user_id` and `time_slot_id`; `players >= 1`.
+- `time_slots`: PostgreSQL exclusion constraint `ex_time_slots_no_overlap` (same room, overlapping time range, BR-S3); `ends_at > starts_at`; index on (`room_id`, `starts_at`).
+- `rooms`: checks `capacity >= 1`, `duration > 0`, `base_price >= 0`, `min_players` between 1 and `capacity`, `difficulty` between 1 and 5.
+- `users`: check `role IN ('client', 'staff', 'admin')`.
 
 ## 2. ER diagram - full vision (Phase 2/3)
 
