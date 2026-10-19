@@ -1,8 +1,8 @@
 import { http, HttpResponse } from 'msw'
 
-let mockRooms = [
+const initialRooms = () => [
   {
-    id: '1',
+    id: 1,
     slug: 'sala-prueba',
     name: 'Sala de Prueba',
     genre: 'Misterio',
@@ -14,9 +14,22 @@ let mockRooms = [
     hook: 'Hook de prueba',
     story: 'Historia de prueba',
     audience: 'General',
+    status: 'active',
     is_active: true,
+    has_upcoming_slots: true,
   },
 ]
+
+let mockRooms = initialRooms()
+
+export const resetMockRooms = () => {
+  mockRooms = initialRooms()
+}
+
+// Lets a test load many rooms to check pagination.
+export const seedMockRooms = (rooms) => {
+  mockRooms = rooms
+}
 
 // --- Slots ---------------------------------------------------------------
 
@@ -39,11 +52,21 @@ export const resetMockSlots = () => {
   mockSlots = initialSlots()
 }
 
+// Lets a test load more slots than one page holds.
+export const seedMockSlots = (slots) => {
+  mockSlots = slots.map(withState)
+}
+
 // --- Handlers ------------------------------------------------------------
 
 export const adminRoomsHandlers = [
-  http.get('/api/v1/rooms', () => {
-    return HttpResponse.json(mockRooms)
+  // Same shape as the real API: { items, total, page, size }.
+  http.get('/api/v1/rooms', ({ request }) => {
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') ?? 1)
+    const size = Number(url.searchParams.get('size') ?? 20)
+    const items = mockRooms.slice((page - 1) * size, page * size)
+    return HttpResponse.json({ items, total: mockRooms.length, page, size })
   }),
 
   http.post('/api/v1/rooms', async ({ request }) => {
@@ -54,22 +77,29 @@ export const adminRoomsHandlers = [
         { status: 409 },
       )
     }
-    const newRoom = { id: String(Date.now()), is_active: true, ...body }
+    const newRoom = { id: Date.now(), status: 'active', is_active: true, ...body }
     mockRooms.push(newRoom)
     return HttpResponse.json(newRoom, { status: 201 })
   }),
 
-  http.patch('/api/v1/rooms/:roomId', async ({ params, request }) => {
-    const { roomId } = params
-    const body = await request.clone().json()
-    mockRooms = mockRooms.map((r) => (r.id === roomId ? { ...r, ...body } : r))
-    const updated = mockRooms.find((r) => r.id === roomId)
-    return HttpResponse.json(updated)
+  // The real API uses PUT /rooms/{id}/activate and /deactivate (API_CONTRACT.md).
+  http.put('/api/v1/rooms/:roomId/:action', ({ params }) => {
+    const active = params.action === 'activate'
+    if (!active && params.action !== 'deactivate') return new HttpResponse(null, { status: 404 })
+    const id = Number(params.roomId)
+    mockRooms = mockRooms.map((r) =>
+      r.id === id ? { ...r, is_active: active, status: active ? 'active' : 'inactive' } : r,
+    )
+    return HttpResponse.json(mockRooms.find((r) => r.id === id))
   }),
 
-  http.get('/api/v1/time-slots', () => {
-    const items = [...mockSlots].sort((a, b) => a.starts_at.localeCompare(b.starts_at))
-    return HttpResponse.json({ items, total: items.length, page: 1, size: 100 })
+  http.get('/api/v1/time-slots', ({ request }) => {
+    const params = new URL(request.url).searchParams
+    const page = Number(params.get('page') ?? 1)
+    const size = Number(params.get('size') ?? 20)
+    const all = [...mockSlots].sort((a, b) => a.starts_at.localeCompare(b.starts_at))
+    const items = all.slice((page - 1) * size, page * size)
+    return HttpResponse.json({ items, total: all.length, page, size })
   }),
 
   http.post('/api/v1/time-slots', async ({ request }) => {
@@ -85,13 +115,39 @@ export const adminRoomsHandlers = [
     const current = mockSlots.find((s) => s.id === id)
     if (!current) {
       return HttpResponse.json(
-        { detail: 'Time slot not found', code: 'SLOT_NOT_FOUND' },
+        { detail: 'Time slot not found', code: 'NOT_FOUND' },
         { status: 404 },
       )
     }
     const updated = withState({ ...current, ...body })
     mockSlots = mockSlots.map((s) => (s.id === id ? updated : s))
     return HttpResponse.json(updated)
+  }),
+
+  // POST /rooms/{id}/time-slots/generate -> { created_count, skipped_count } (API_CONTRACT.md).
+  // The mock creates one slot per day of the range at first_start.
+  http.post('/api/v1/rooms/:roomId/time-slots/generate', async ({ params, request }) => {
+    const body = await request.clone().json()
+    const created = []
+    for (
+      let d = new Date(body.date_from);
+      d <= new Date(body.date_to);
+      d.setUTCDate(d.getUTCDate() + 1)
+    ) {
+      const day = d.toISOString().slice(0, 10)
+      const start = Date.parse(`${day}T${body.first_start}:00Z`)
+      created.push(
+        withState({
+          id: Date.now() + created.length,
+          room_id: Number(params.roomId),
+          starts_at: new Date(start).toISOString(),
+          ends_at: new Date(start + 60 * 60 * 1000).toISOString(),
+          status: 'available',
+        }),
+      )
+    }
+    mockSlots = [...mockSlots, ...created]
+    return HttpResponse.json({ created_count: created.length, skipped_count: 0 })
   }),
 
   http.delete('/api/v1/time-slots/:slotId', ({ params }) => {

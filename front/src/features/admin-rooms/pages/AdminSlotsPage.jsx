@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
+import Alert from '@/shared/ui/Alert.jsx'
+import Button from '@/shared/ui/Button.jsx'
+import Spinner from '@/shared/ui/Spinner.jsx'
 import adminRooms from '@/i18n/es/adminRooms'
 import { useAdminSlots } from '../hooks/useAdminSlots'
 import SlotsTable from '../components/SlotsTable'
+import GenerateSlotsForm from '../components/GenerateSlotsForm'
 import SlotForm from '../components/SlotForm'
 
 const t = adminRooms.slots
@@ -10,8 +14,16 @@ const errorMessage = (code) => t.errors[code] ?? t.errors.UNKNOWN
 
 export default function AdminSlotsPage() {
   const { id: roomId } = useParams()
-  const { slots, loading, loadError, createSlot, updateSlot, setBlocked, deleteSlot } =
-    useAdminSlots(roomId)
+  const {
+    slots,
+    loading,
+    loadError,
+    createSlot,
+    updateSlot,
+    setBlocked,
+    deleteSlot,
+    generateSlots,
+  } = useAdminSlots(roomId)
   const [editingSlot, setEditingSlot] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [actionError, setActionError] = useState(null)
@@ -37,24 +49,20 @@ export default function AdminSlotsPage() {
   const handleDelete = async (slot) => report(await deleteSlot(slot.id))
   const handleToggleBlock = async (slot) => report(await setBlocked(slot.id, !slot.isBlocked))
 
-  if (loading) return <p role="status">{t.loading}</p>
+  if (loading) return <Spinner label={t.loading} />
 
   const message = actionError ?? (loadError ? errorMessage(loadError) : null)
 
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t.title}</h1>
-        <button onClick={() => openForm()} className="rounded border px-4 py-2">
-          {t.createSlot}
-        </button>
+        <h1 className="heading-title">{t.title}</h1>
+        <Button onClick={() => openForm()}>{t.createSlot}</Button>
       </div>
 
-      {message && (
-        <div role="alert" className="rounded border p-3">
-          {message}
-        </div>
-      )}
+      {message && <Alert tone="error">{message}</Alert>}
+
+      <GenerateSlotsForm onGenerate={generateSlots} />
 
       {showForm && (
         <SlotForm

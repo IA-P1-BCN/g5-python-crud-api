@@ -1,60 +1,61 @@
 import { useState } from 'react'
 import es from '@/i18n/es.js'
+import { mapApiError } from '@/shared/api/errors.js'
 import Alert from '@/shared/ui/Alert.jsx'
+import Pagination from '@/shared/ui/Pagination.jsx'
 import Spinner from '@/shared/ui/Spinner.jsx'
 import { RoomForm } from '../components/RoomForm'
 import { RoomsTable } from '../components/RoomsTable'
 import { useAdminRooms } from '../hooks/useAdminRooms'
-import { DUPLICATE_SLUG_ERROR } from '../model/errors'
+
+const t = es.adminRooms
 
 export function AdminRoomsPage() {
-  const { rooms, loading, error, saveRoom, toggleActive } = useAdminRooms()
-  const [apiError, setApiError] = useState(null)
+  const { rooms, loading, error, page, size, total, setPage, saveRoom, toggleActive } =
+    useAdminRooms()
+  const [actionError, setActionError] = useState(null)
   const [success, setSuccess] = useState(false)
 
-  const handleSubmit = async (values) => {
-    setApiError(null)
+  // Runs an API call and shows its error in Spanish; returns true when it worked.
+  const run = async (action) => {
+    setActionError(null)
     setSuccess(false)
     try {
-      await saveRoom(values)
-      setSuccess(true)
+      await action()
+      return true
     } catch (err) {
-      const code = err?.response?.data?.code
-      setApiError(code === DUPLICATE_SLUG_ERROR ? DUPLICATE_SLUG_ERROR : err?.message)
+      setActionError(mapApiError(err, t.errors).message)
+      return false
     }
   }
 
-  const handleToggleActive = async (id, active) => {
-    setApiError(null)
-    try {
-      await toggleActive(id, active)
-    } catch (err) {
-      setApiError(err?.message)
-    }
+  const handleSubmit = async (values) => {
+    const ok = await run(() => saveRoom(values))
+    setSuccess(ok)
+    return ok
   }
+
+  const handleToggleActive = (id, active) => run(() => toggleActive(id, active))
+
+  const message = actionError ?? error
 
   return (
     <main className="mx-auto max-w-5xl p-6">
-      <h1 className="heading-hero text-text mb-6">{es.adminRooms.title}</h1>
+      <h1 className="heading-hero text-text mb-6">{t.title}</h1>
 
-      {error && <Alert tone="error">{error}</Alert>}
+      {message && <Alert tone="error">{message}</Alert>}
+      {success && <Alert tone="success">{t.createSuccess}</Alert>}
 
-      {success && (
-        <div
-          role="status"
-          className="bg-surface text-text border-confirmed my-4 rounded-lg border px-[18px] py-3.5"
-        >
-          Sala creada con éxito. Los clientes la verán solo cuando tenga franjas horarias próximas.
-        </div>
-      )}
-
-      <RoomForm onSubmit={handleSubmit} apiError={apiError} />
+      <RoomForm onSubmit={handleSubmit} />
 
       <div className="mt-6">
         {loading ? (
-          <Spinner label="Cargando salas..." />
+          <Spinner label={t.loading} />
         ) : (
-          <RoomsTable rooms={rooms} onToggleActive={handleToggleActive} />
+          <>
+            <RoomsTable rooms={rooms} onToggleActive={handleToggleActive} />
+            <Pagination page={page} size={size} total={total} onPageChange={setPage} />
+          </>
         )}
       </div>
     </main>

@@ -27,9 +27,9 @@ export function useAdminSlots(roomId) {
   const run = useCallback(
     async (action) => {
       try {
-        await action()
+        const data = await action()
         await refresh()
-        return { success: true }
+        return { success: true, data }
       } catch (err) {
         return { success: false, error: getErrorCode(err) }
       }
@@ -47,6 +47,7 @@ export function useAdminSlots(roomId) {
     updateSlot: (id, form) => run(() => slotsApi.updateSlot(id, form)),
     setBlocked: (id, blocked) =>
       run(() => slotsApi.setSlotStatus(id, blocked ? 'blocked' : 'available')),
+    generateSlots: (payload) => run(() => slotsApi.generateSlots(roomId, payload)),
     deleteSlot: (id) => run(() => slotsApi.deleteSlot(id)),
   }
 }

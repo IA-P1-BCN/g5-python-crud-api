@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import Button from '@/shared/ui/Button.jsx'
+import Field from '@/shared/ui/Field.jsx'
 import adminRooms from '@/i18n/es/adminRooms'
 import { slotSchema } from '../model/slotSchema'
 
@@ -39,41 +41,29 @@ export default function SlotForm({ initialData = EMPTY, onSubmit, onCancel }) {
   }
 
   const field = (name, type) => (
-    <div>
-      <label htmlFor={name} className="block text-sm font-medium">
-        {t.form[name]}
-      </label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={values[name]}
-        onChange={handleChange}
-        aria-invalid={Boolean(errors[name])}
-        aria-describedby={errors[name] ? `${name}-error` : undefined}
-        className="w-full rounded border p-2"
-      />
-      {errors[name] && (
-        <p id={`${name}-error`} className="text-error text-sm">
-          {t.form.errors[errors[name]]}
-        </p>
-      )}
-    </div>
+    <Field
+      label={t.form[name]}
+      name={name}
+      type={type}
+      value={values[name]}
+      onChange={handleChange}
+      error={errors[name] && t.form.errors[errors[name]]}
+    />
   )
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4 p-4">
+    <form onSubmit={handleSubmit} noValidate className="space-y-4 py-4">
       {field('date', 'date')}
       {field('startTime', 'time')}
       {field('endTime', 'time')}
-      <div className="flex space-x-2">
-        <button type="submit" disabled={submitting} className="rounded border px-4 py-2">
+      <div className="flex gap-2">
+        <Button type="submit" loading={submitting}>
           {submitting ? t.form.saving : t.form.save}
-        </button>
+        </Button>
         {onCancel && (
-          <button type="button" onClick={onCancel} className="rounded border px-4 py-2">
+          <Button variant="secondary" onClick={onCancel}>
             {t.form.cancel}
-          </button>
+          </Button>
         )}
       </div>
     </form>

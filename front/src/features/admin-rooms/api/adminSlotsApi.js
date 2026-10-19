@@ -1,9 +1,19 @@
 import { api } from '@/shared/api/client'
 import { toSlotPayload, toSlotView } from '../model/slotSchema'
 
+const PAGE_SIZE = 100 // the API maximum (BR-L1)
+
+// Bulk generation can create more than one page of slots: read every page.
 export async function fetchSlots(roomId) {
-  const { data } = await api.get('/time-slots', { params: { room_id: roomId, size: 100 } })
-  return data.items.map(toSlotView)
+  const slots = []
+  for (let page = 1; ; page++) {
+    const { data } = await api.get('/time-slots', {
+      params: { room_id: roomId, page, size: PAGE_SIZE },
+    })
+    slots.push(...data.items)
+    if (slots.length >= data.total || data.items.length === 0) break
+  }
+  return slots.map(toSlotView)
 }
 
 export async function createSlot(roomId, form) {
@@ -23,4 +33,10 @@ export async function setSlotStatus(slotId, status) {
 
 export async function deleteSlot(slotId) {
   await api.delete(`/time-slots/${slotId}`) // 204
+}
+
+// Admin only. Times are UTC, like the API. Returns { created_count, skipped_count }.
+export async function generateSlots(roomId, payload) {
+  const { data } = await api.post(`/rooms/${roomId}/time-slots/generate`, payload)
+  return data
 }
