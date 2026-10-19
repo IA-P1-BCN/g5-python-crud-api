@@ -9,6 +9,7 @@ import profile from './es/profile.js'
 import adminRooms from './es/adminRooms.js'
 import adminUsers from './es/adminUsers.js'
 import adminStats from './es/adminStats.js'
+import dashboard from './es/dashboard.js'
 
 export default {
   common,
@@ -21,4 +22,5 @@ export default {
   adminRooms,
   adminUsers,
   adminStats,
+  dashboard,
 }
