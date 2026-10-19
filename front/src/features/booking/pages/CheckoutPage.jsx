@@ -1,4 +1,3 @@
-// Route page: recap and submit. React Hook Form + Zod. Shows SLOT_TAKEN near the submit button.
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -23,13 +22,7 @@ const DEFAULT_ROOM = { name: '', minPlayers: 1, maxPlayers: 6, pricePerPlayer: 0
 export function CheckoutPage() {
   const navigate = useNavigate()
   const { submitBooking, isSubmitting, error } = useCreateBooking()
-  const {
-    clientDetails,
-    slotId,
-    roomSlug,
-    setClientDetails,
-    setPlayers: saveDraftPlayers,
-  } = useBookingDraftStore()
+  const { clientDetails, slotId, roomSlug } = useBookingDraftStore()
   const { data: room = DEFAULT_ROOM } = useRoom(roomSlug)
   const [players, setPlayers] = useState(room.minPlayers)
 
@@ -51,11 +44,8 @@ export function CheckoutPage() {
   const onSubmit = async (data) => {
     if (!slotId) return
 
-    // ASUMIDO: submitBooking() lee del store, así que lo rellenamos antes de enviar
-    setClientDetails(data)
-    saveDraftPlayers(players)
-
-    const result = await submitBooking()
+    // Valores explícitos: no dependemos del store ni del render anterior (BR-B4)
+    const result = await submitBooking({ slotId, players })
 
     if (result.success) {
       navigate(CONFIRMATION_PATH, {
