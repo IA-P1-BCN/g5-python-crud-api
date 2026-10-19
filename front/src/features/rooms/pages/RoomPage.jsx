@@ -42,6 +42,9 @@ export default function RoomPage() {
       {room.hook && <p className="text-text mb-4">{room.hook}</p>}
       {room.story && <p className="text-text mb-6">{room.story}</p>}
       {room.audience && <p className="text-muted mb-6">{room.audience}</p>}
+      <Button className="mr-3" onClick={() => navigate(`/reservar/${room.slug}`)}>
+        {es.rooms.reserve}
+      </Button>
       <Button variant="secondary" onClick={() => navigate('/salas')}>
         {es.rooms.backToCorridor}
       </Button>

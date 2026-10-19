@@ -6,6 +6,7 @@ export default {
   empty: 'Ahora mismo no hay salas disponibles.',
   error: 'Error al cargar las salas disponibles.',
   notFound: 'Sala no encontrada',
+  reserve: 'Reservar',
   viewDetails: 'Ver sala',
   backToCorridor: 'Volver al corredor',
 }
