@@ -5,7 +5,7 @@ import Skeleton from '@/shared/ui/Skeleton.jsx'
 import { useRooms } from '../hooks/useRooms.js'
 import { getRoomTheme } from '../model/roomThemes.js'
 
-export default function RoomsCorridor({ onEnter }) {
+export default function RoomsCorridor({ onEnter, listBelow }) {
   const { data, isPending, isError } = useRooms()
 
   // Stable reference: the 3D scene is rebuilt whenever this array changes, so it only changes
@@ -28,5 +28,5 @@ export default function RoomsCorridor({ onEnter }) {
   if (isError) return <p role="alert">{es.rooms.loadError}</p>
   if (rooms.length === 0) return <p>{es.rooms.empty}</p>
 
-  return <CorridorView rooms={rooms} onEnter={onEnter} />
+  return <CorridorView rooms={rooms} onEnter={onEnter} listBelow={listBelow} />
 }

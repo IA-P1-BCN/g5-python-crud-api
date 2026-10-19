@@ -99,4 +99,36 @@ describe('CorridorView', () => {
 
     expect(onEnter).toHaveBeenCalledWith(faro)
   })
+
+  describe('listBelow (the page already lists the rooms)', () => {
+    const list = () => screen.queryByRole('list', { name: es.rooms.corridorLabel })
+
+    it('shows the 3D corridor without the hidden poster list', () => {
+      setEnvironment()
+      render(<CorridorView rooms={[faro]} onEnter={() => {}} listBelow />)
+
+      expect(screen.getByTestId('corridor-3d')).toBeInTheDocument()
+      expect(list()).not.toBeInTheDocument()
+    })
+
+    it.each([
+      ['WebGL is missing', { webgl: false }],
+      ['the user prefers reduced motion', { reducedMotion: true }],
+      ['the screen is small', { smallScreen: true }],
+    ])('renders nothing instead of a duplicate list when %s', (_label, environment) => {
+      setEnvironment(environment)
+      const { container } = render(<CorridorView rooms={[faro]} onEnter={() => {}} listBelow />)
+
+      expect(container).toBeEmptyDOMElement()
+    })
+
+    it('renders nothing when the scene fails to start', async () => {
+      setEnvironment()
+      const { container } = render(<CorridorView rooms={[faro]} onEnter={() => {}} listBelow />)
+
+      await userEvent.click(screen.getByTestId('break-3d'))
+
+      expect(container).toBeEmptyDOMElement()
+    })
+  })
 })
