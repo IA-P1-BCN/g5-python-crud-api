@@ -1,0 +1,70 @@
+export default {
+  title: 'Selecciona fecha y hora',
+  selectDate: 'Elige un día',
+  selectDay: 'Día',
+  selectTime: 'Hora',
+  selectPlayers: 'Jugadores',
+  playersUnit: 'jugadores',
+  playersRange: (min, max) => `de ${min} a ${max}`,
+  summary: {
+    noSlot: 'Elige un día y una hora libre',
+    perPlayers: (price, players) => `${price} × ${players} jugadores`,
+  },
+  continue: 'Reservar →',
+  roomNotFound: 'Sala no encontrada',
+  loadingSlots: 'Cargando horarios...',
+  noSlotsAvailable: 'No hay horarios disponibles para esta fecha.',
+  states: {
+    free: 'Disponible',
+    taken: 'Ocupado',
+    blocked: 'Bloqueado',
+    past: 'Pasado',
+  },
+  errors: {
+    loadRoomFailed: 'No se pudo cargar la sala.',
+    nameRequired: 'Escribe tu nombre.',
+    nameTooLong: 'El nombre no puede superar los 100 caracteres.',
+    emailInvalid: 'Escribe un email válido.',
+    phoneInvalid: 'El teléfono solo puede tener números, espacios y + - ( ).',
+    loadFailed: 'No se pudieron cargar los horarios disponibles.',
+  },
+  selectedSlot: 'Horario seleccionado',
+  ticket: {
+    players: 'Jugadores',
+    pricePerPlayer: 'Precio por jugador',
+    dateTime: 'Fecha y hora',
+    total: 'Total',
+  },
+  checkout: {
+    title: 'Tu reserva',
+    players: 'Número de jugadores',
+    submit: 'Confirmar reserva',
+    submitting: 'Procesando...',
+    unspecified: 'No especificado',
+    errors: {
+      slotTaken:
+        'El horario seleccionado ya no está disponible. Por favor, vuelve al paso anterior y selecciona otro.',
+      invalidPlayers: 'El número de jugadores no es válido para esta sala.',
+      roomInactive: 'Esta sala ya no está disponible para reservas.',
+      userInactive: 'Tu cuenta está desactivada y no puede hacer reservas.',
+      bookingLimit:
+        'Has alcanzado el límite de reservas activas. Cancela alguna para reservar otra.',
+      unauthorized: 'Tu sesión ha caducado. Vuelve a iniciar sesión.',
+    },
+  },
+  confirmation: {
+    title: '¡Reserva recibida!',
+    subtitle:
+      'Tu reserva está pendiente de confirmación por nuestro equipo. Puedes verla en Mis reservas.',
+    stamp: 'POR CONFIRMAR',
+    ticket: {
+      header: 'Pase de Acceso - F-Inmersivo',
+      date: 'Fecha',
+      time: 'Hora',
+      bookingId: 'ID de reserva',
+      holder: 'Titular',
+      pending: 'PENDIENTE',
+    },
+    home: 'Volver al inicio',
+  },
+}

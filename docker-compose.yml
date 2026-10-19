@@ -1,0 +1,72 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./back:/app/back
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
+    command: uvicorn back.app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # Vite dev server with hot reload: edit files in ./front and the browser updates (http://localhost:3000).
+  # The production image (Nginx) is front/Dockerfile: `docker build ./front`.
+  front:
+    image: node:22-alpine
+    working_dir: /app
+    ports:
+      - "3000:5173"
+    environment:
+      VITE_API_PROXY_TARGET: http://api:8000
+      VITE_USE_POLLING: "true"
+    volumes:
+      - ./front:/app
+      - front_node_modules:/app/node_modules
+    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # Dev tooling (lint, format, tests). Not started by `docker compose up`.
+  front-tools:
+    image: node:22-alpine
+    profiles: ["tools"]
+    working_dir: /app
+    volumes:
+      - ./front:/app
+      - front_node_modules:/app/node_modules
+    command: sh -c "npm install --no-audit --no-fund && npm run ready"
+
+volumes:
+  postgres_data:
+  front_node_modules:

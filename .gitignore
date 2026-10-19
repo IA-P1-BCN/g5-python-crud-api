@@ -1,0 +1,71 @@
+# Environment variables
+
+.env
+
+# Python
+
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+
+.venv/
+venv/
+env/
+
+# Testing
+
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
+
+# Ruff
+
+.ruff_cache/
+
+# IDEs and editors
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+
+# OS generated files
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build and distribution
+
+build/
+dist/
+*.egg-info/
+
+# Local databases
+
+*.db
+*.sqlite
+*.sqlite3
+
+# Node / front
+
+node_modules/
+dist-ssr/
+*.local
+
+# Logs
+
+logs/
+*.log
+
+# Editor leftovers
+
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

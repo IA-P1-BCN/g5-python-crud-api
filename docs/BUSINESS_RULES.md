@@ -1,0 +1,116 @@
+# BUSINESS RULES
+
+What the system must enforce. Every rule has an ID so tests and tickets can reference it.
+Status: **Sprint 1** = delivery Fri Oct 9. **Sprint 2** = delivery Mon Oct 19.
+Items marked **(to validate)** are proposals the team has not confirmed yet.
+
+## Sprint 1 - CRUD without authentication
+
+### Users (E1)
+| ID | Rule | Error |
+|----|------|-------|
+| BR-U1 | `email` is required, valid format, unique | 422 invalid, 409 duplicate |
+| BR-U2 | `name` required, 1-100 chars. `phone` optional | 422 |
+| BR-U3 | `role` is `client`, `staff` or `admin`. Default `client` | 422 |
+| BR-U4 | Users are deactivated (`is_active=false`), never hard-deleted | - |
+| BR-U5 | An inactive user cannot create bookings | 409 |
+
+### Rooms (E2)
+| ID | Rule | Error |
+|----|------|-------|
+| BR-R1 | `name` required and unique | 409 duplicate |
+| BR-R2 | `capacity` (max players) >= 1, `duration` (minutes) > 0, `base_price` >= 0 | 422 |
+| BR-R3 | Rooms are deactivated (`status=inactive`), never hard-deleted | - |
+| BR-R4 | Inactive rooms are hidden from client listings and accept no new slots or bookings | 409 |
+| BR-R5 | A room with future active bookings cannot be deactivated **(to validate)** | 409 |
+| BR-R6 | A room is shown to clients only if it is active **and** has at least one upcoming time slot, free or taken. A fully booked room stays visible (shown as full); a room with no upcoming slot is hidden. The API exposes it as `has_upcoming_slots` **(to validate)** | - |
+| BR-R7 | `min_players` between 1 and room `capacity`. Capacity cannot be lowered under the players of an active booking | 422, 409 `INVALID_PLAYERS` |
+
+### Time slots (E2)
+| ID | Rule | Error |
+|----|------|-------|
+| BR-S1 | `ends_at` must be after `starts_at` | 422 |
+| BR-S2 | A slot cannot start in the past | 422 |
+| BR-S3 | Slots of the same room cannot overlap (checked in the API and enforced by the PostgreSQL exclusion constraint `ex_time_slots_no_overlap`) | 409 |
+| BR-S4 | Slot `status` is `available` or `blocked` (admin-managed) | 422 |
+| BR-S5 | A slot is **bookable** when `status=available` AND it has no active booking. This is computed, not stored | - |
+| BR-S6 | A slot with an active booking cannot be edited; a slot with any booking (even cancelled) cannot be deleted | 409 |
+| BR-S7 | Bulk generation spaces slot starts by `duration + 30 min` (room reset buffer), skipping past (BR-S2) and overlapping (BR-S3) slots | - |
+| BR-S8 | A bulk generation request covers at most 90 days, and `date_from` must not be after `date_to` nor `first_start` after `last_start` | 422 |
+
+### Bookings (E3)
+| ID | Rule | Error |
+|----|------|-------|
+| BR-B1 | The slot must be bookable (BR-S5), in the future, and its room active | 409 |
+| BR-B2 | `players` between 1 and room `capacity` | 422 |
+| BR-B3 | Initial status is `PENDING` (assigned by the system) | - |
+| BR-B4 | `total_price = room.base_price x players` (price per player) **(to validate)** | - |
+| BR-B5 | Statuses in Sprint 1: `PENDING`, `CONFIRMED`, `CANCELLED` | 422 on invalid change |
+| BR-B6 | **Cancel**: only `PENDING`/`CONFIRMED`, and only if the slot starts in **24h or more**. Cancelling frees the slot | 409 |
+| BR-B7 | **Modify**: `players` (and slot, see BR-L5), only while `PENDING`/`CONFIRMED` and 24h or more before start | 409 |
+| BR-B8 | Double booking is impossible: DB partial unique index on `bookings(time_slot_id)` where status in (`PENDING`,`CONFIRMED`,`IN_PROGRESS`). `IN_PROGRESS` is introduced in Sprint 2 (BR-G1): the status CHECK now accepts `IN_PROGRESS` and `COMPLETED` (ticket 042 onwards), and the index has included it from the start | 409 |
+| BR-B9 | A client holds at most `MAX_ACTIVE_BOOKINGS` (default 5) active bookings; staff and admin are not limited | 409 `BOOKING_LIMIT_REACHED` |
+
+### Cross-cutting (technical)
+| ID | Rule |
+|----|------|
+| BR-X1 | All errors use one JSON shape: `{"detail": "...", "code": "SLOT_TAKEN"}` |
+| BR-X2 | HTTP codes: 200/201/204 ok, 404 not found, 409 business conflict, 422 validation |
+| BR-X3 | Every request is logged (method, path, status). Errors logged with stack trace |
+| BR-X4 | Secrets only via environment variables |
+| BR-X5 | All datetimes stored in UTC, ISO 8601 in the API |
+
+## Sprint 2 - Auth, games, reporting
+
+### Auth and roles (E1)
+| ID | Rule |
+|----|------|
+| BR-A1 | Login via Supabase Auth (Google). The API validates the Supabase JWT |
+| BR-A2 | First login creates a `users` row and stores `auth_id` (Supabase user id). The default role is `client`; if the email matches an address configured in `ADMIN_EMAILS`, the new user receives `role=admin` on first login only, whatever the login method. Existing users' roles are not changed by this configuration. A pre-existing user with the same email and no `auth_id` is linked on its first Google login (any other method gets 409 `DUPLICATE`). |
+| BR-A3 | Role lives in OUR `users` table, not in Supabase **(to validate)** |
+| BR-A4 | Only `admin` can change a user's role |
+| BR-A5 | The last active admin cannot lose the role or be deactivated (409 `LAST_ADMIN`) |
+
+### Permission matrix
+| Action | Client | Staff | Admin |
+|--------|:------:|:-----:|:-----:|
+| List rooms / available slots | yes | yes | yes |
+| Create / edit / deactivate rooms | - | - | yes |
+| Create / edit slots | - | - | yes |
+| Create booking | own | yes | yes |
+| View bookings | own only | all | all |
+| Cancel booking | own, 24h rule | yes | yes |
+| Today's bookings | - | yes | yes |
+| Start / finish game, register result | - | yes | yes |
+| Manage users and roles | - | - | yes |
+| Statistics, CSV export | - | - | yes |
+
+### Games (E4)
+| ID | Rule |
+|----|------|
+| BR-G1 | Booking statuses add `IN_PROGRESS` and `COMPLETED` |
+| BR-G2 | Allowed transitions: `PENDING`->`CONFIRMED`->`IN_PROGRESS`->`COMPLETED`. `PENDING`/`CONFIRMED`->`CANCELLED`. Anything else is 409 |
+| BR-G3 | A game can only start on the booking's date, from `CONFIRMED` |
+| BR-G4 | A result (`completed` bool, `completion_time` seconds) can be registered once, only when `COMPLETED` |
+| BR-G5 | Client can see the result of their own booking: in `result` of the booking detail and in their game history (`GET /users/me/history`, `GET /users/{id}/history`). A client reading another user's history gets 403 `FORBIDDEN`; staff and admin can read any **(to validate)** |
+
+### Lists and reporting (E5)
+| ID | Rule |
+|----|------|
+| BR-L1 | `GET` lists of users, rooms, bookings and time slots support `page` (>= 1, default 1) and `size` (1-100, default 20); otherwise 422. `/bookings/today` and the history endpoints stay plain arrays, and the public day board (`GET /time-slots?date=` alone) is not paginated |
+| BR-L2 | Bookings filter by `user_id`, `status`, `room_id`, `date_from`, `date_to`. Slots by `room_id`, `date`, `available` |
+| BR-L3 | Admin exports bookings to CSV with the same filters |
+| BR-L4 | Statistics: bookings per room, occupancy %, revenue per period |
+| BR-L5 | BR-B7 extended: client can change slot if the new slot is bookable and 24h or more away. The new slot may belong to another room (team-approved): `total_price` is recalculated with the new room's `base_price` (BR-B4) and `players` must fit its capacity (BR-B2). The old slot becomes free |
+
+## Out of scope (Phase 3, not committed)
+Payments, discounts, loyalty points, `booking_players` (team members), pending-booking expiry, websockets, cloud deployment.
+
+## Open decisions
+| # | Question | Default we use until decided |
+|---|----------|------------------------------|
+| D-01 | Price per player or per room? | Per player (BR-B4) |
+| D-02 | Where does the role live? | Our `users` table (BR-A3) |
+| D-03 | Room with future bookings: block deactivation or cancel them? | Block (BR-R5) |
+| D-05 | When is a room visible to clients? | Active and with at least one upcoming slot, even if all are taken (BR-R6) |
+| D-04 | Does each room define a minimum number of players? | Yes: `min_players` (Ticket 056) |
