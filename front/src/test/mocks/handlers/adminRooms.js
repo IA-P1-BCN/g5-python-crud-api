@@ -1,8 +1,8 @@
 import { http, HttpResponse } from 'msw'
 
-let mockRooms = [
+const initialRooms = () => [
   {
-    id: '1',
+    id: 1,
     slug: 'sala-prueba',
     name: 'Sala de Prueba',
     genre: 'Misterio',
@@ -14,9 +14,22 @@ let mockRooms = [
     hook: 'Hook de prueba',
     story: 'Historia de prueba',
     audience: 'General',
+    status: 'active',
     is_active: true,
+    has_upcoming_slots: true,
   },
 ]
+
+let mockRooms = initialRooms()
+
+export const resetMockRooms = () => {
+  mockRooms = initialRooms()
+}
+
+// Lets a test load many rooms to check pagination.
+export const seedMockRooms = (rooms) => {
+  mockRooms = rooms
+}
 
 // --- Slots ---------------------------------------------------------------
 
@@ -42,8 +55,13 @@ export const resetMockSlots = () => {
 // --- Handlers ------------------------------------------------------------
 
 export const adminRoomsHandlers = [
-  http.get('/api/v1/rooms', () => {
-    return HttpResponse.json(mockRooms)
+  // Same shape as the real API: { items, total, page, size }.
+  http.get('/api/v1/rooms', ({ request }) => {
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') ?? 1)
+    const size = Number(url.searchParams.get('size') ?? 20)
+    const items = mockRooms.slice((page - 1) * size, page * size)
+    return HttpResponse.json({ items, total: mockRooms.length, page, size })
   }),
 
   http.post('/api/v1/rooms', async ({ request }) => {
@@ -54,17 +72,20 @@ export const adminRoomsHandlers = [
         { status: 409 },
       )
     }
-    const newRoom = { id: String(Date.now()), is_active: true, ...body }
+    const newRoom = { id: Date.now(), status: 'active', is_active: true, ...body }
     mockRooms.push(newRoom)
     return HttpResponse.json(newRoom, { status: 201 })
   }),
 
-  http.patch('/api/v1/rooms/:roomId', async ({ params, request }) => {
-    const { roomId } = params
-    const body = await request.clone().json()
-    mockRooms = mockRooms.map((r) => (r.id === roomId ? { ...r, ...body } : r))
-    const updated = mockRooms.find((r) => r.id === roomId)
-    return HttpResponse.json(updated)
+  // The real API uses PUT /rooms/{id}/activate and /deactivate (API_CONTRACT.md).
+  http.put('/api/v1/rooms/:roomId/:action', ({ params }) => {
+    const active = params.action === 'activate'
+    if (!active && params.action !== 'deactivate') return new HttpResponse(null, { status: 404 })
+    const id = Number(params.roomId)
+    mockRooms = mockRooms.map((r) =>
+      r.id === id ? { ...r, is_active: active, status: active ? 'active' : 'inactive' } : r,
+    )
+    return HttpResponse.json(mockRooms.find((r) => r.id === id))
   }),
 
   http.get('/api/v1/time-slots', () => {
@@ -85,7 +106,7 @@ export const adminRoomsHandlers = [
     const current = mockSlots.find((s) => s.id === id)
     if (!current) {
       return HttpResponse.json(
-        { detail: 'Time slot not found', code: 'SLOT_NOT_FOUND' },
+        { detail: 'Time slot not found', code: 'NOT_FOUND' },
         { status: 404 },
       )
     }

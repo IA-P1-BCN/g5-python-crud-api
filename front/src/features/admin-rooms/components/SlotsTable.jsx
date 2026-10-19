@@ -1,3 +1,5 @@
+import Button from '@/shared/ui/Button.jsx'
+import EmptyState from '@/shared/ui/EmptyState.jsx'
 import adminRooms from '@/i18n/es/adminRooms'
 
 const t = adminRooms.slots
@@ -9,9 +11,9 @@ const formatDate = (date) => {
 
 export default function SlotsTable({ slots, onEdit, onDelete, onToggleBlock }) {
   return (
-    <table className="w-full border-collapse rounded shadow">
+    <table className="border-line w-full border-collapse border-t text-left text-sm">
       <thead>
-        <tr className="border-b text-left">
+        <tr className="text-muted text-xs uppercase">
           <th scope="col" className="p-3">
             {t.table.date}
           </th>
@@ -32,29 +34,29 @@ export default function SlotsTable({ slots, onEdit, onDelete, onToggleBlock }) {
       <tbody>
         {slots.length === 0 && (
           <tr>
-            <td colSpan={5} className="p-3">
-              {t.empty}
+            <td colSpan={5}>
+              <EmptyState title={t.empty} />
             </td>
           </tr>
         )}
         {slots.map((slot) => {
           const isPast = slot.state === 'past'
           return (
-            <tr key={slot.id} className="border-b">
+            <tr key={slot.id} className="border-line border-t">
               <td className="p-3">{formatDate(slot.date)}</td>
               <td className="p-3">{slot.startTime}</td>
               <td className="p-3">{slot.endTime}</td>
               <td className="p-3">{t.status[slot.state] ?? t.status.free}</td>
-              <td className="space-x-2 p-3">
-                <button onClick={() => onEdit(slot)} disabled={isPast} className="underline">
+              <td className="space-x-2 p-3 whitespace-nowrap">
+                <Button variant="ghost" onClick={() => onEdit(slot)} disabled={isPast}>
                   {t.actions.edit}
-                </button>
-                <button onClick={() => onToggleBlock(slot)} disabled={isPast} className="underline">
+                </Button>
+                <Button variant="ghost" onClick={() => onToggleBlock(slot)} disabled={isPast}>
                   {slot.isBlocked ? t.actions.unblock : t.actions.block}
-                </button>
-                <button onClick={() => onDelete(slot)} className="underline">
+                </Button>
+                <Button variant="ghost" onClick={() => onDelete(slot)}>
                   {t.actions.delete}
-                </button>
+                </Button>
               </td>
             </tr>
           )

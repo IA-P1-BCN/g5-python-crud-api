@@ -115,11 +115,41 @@ describe('AdminSlotsPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/se solapa con otra existente/i)
   })
 
+  it('muestra ROOM_INACTIVE al crear una franja en una sala inactiva', async () => {
+    server.use(
+      http.post('/api/v1/time-slots', () =>
+        HttpResponse.json({ detail: 'Room inactive', code: 'ROOM_INACTIVE' }, { status: 409 }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('10:00')
+
+    await openCreateAndSubmit(user, { date: '2030-11-06', start: '14:00', end: '15:00' })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/sala está inactiva/i)
+  })
+
+  it('muestra NOT_FOUND si la franja ya no existe', async () => {
+    server.use(
+      http.delete('/api/v1/time-slots/:slotId', () =>
+        HttpResponse.json({ detail: 'nope', code: 'NOT_FOUND' }, { status: 404 }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('10:00')
+
+    await user.click(within(rows()[1]).getByRole('button', { name: 'Eliminar' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/ya no existe/i)
+  })
+
   it('muestra el error de reserva activa al eliminar una franja reservada', async () => {
     server.use(
       http.delete('/api/v1/time-slots/:slotId', () =>
         HttpResponse.json(
-          { detail: 'Time slot has an active booking', code: 'SLOT_ACTIVE_BOOKING' },
+          { detail: 'Time slot has an active booking', code: 'SLOT_TAKEN' },
           { status: 409 },
         ),
       ),
@@ -130,7 +160,7 @@ describe('AdminSlotsPage', () => {
 
     await user.click(within(rows()[1]).getByRole('button', { name: 'Eliminar' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/reserva activa/i)
+    expect(await screen.findByRole('alert')).toHaveTextContent(/tiene una reserva/i)
     expect(screen.getByText('10:00')).toBeInTheDocument()
   })
 })
