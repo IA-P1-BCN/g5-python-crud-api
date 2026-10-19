@@ -8,3 +8,8 @@ export function useAuth() {
   if (!context) throw new Error('useAuth must be used inside <AuthProvider>')
   return context
 }
+
+// Id of the logged-in user (Supabase id), or null. Handy to scope query keys per user.
+export function useCurrentUserId() {
+  return useAuth().user?.id ?? null
+}
