@@ -1,6 +1,6 @@
 # Front audit (general)
 
-Date: 2026-10-19. Branch `docs/project-documentation`, up to date with `develop` (ea0ac82). Scope: `front/` only. Method: 5 read-only agents reading the code, deduplicated here. Nothing was run in a browser yet.
+Date: 2026-10-19. Branch `docs/project-documentation`, up to date with `develop` (ea0ac82). Scope: `front/` only. Method: 5 read-only agents reading the code, deduplicated here. The browser test was run on 2026-10-19 after the P0 fixes were merged: see `browser-test.md`.
 
 ## Detail files
 
@@ -11,17 +11,17 @@ Date: 2026-10-19. Branch `docs/project-documentation`, up to date with `develop`
 | [security.md](security.md) | security-reviewer | token, XSS, guards vs permission matrix (F-1 to F-7) |
 | [silent-failures.md](silent-failures.md) | silent-failure-hunter | errors with no feedback, tests that cannot fail (SF-1 to SF-22) |
 | [gaps.md](gaps.md) | general-purpose | what is missing vs API, docs and roles (G-03 to G-10; statistics and CSV were dropped from scope) |
-| browser-test.md | verifier + Chrome | **not done yet**: waiting for client, staff and admin test accounts |
+| browser-test.md | verifier + Chrome | done 2026-10-19: client, staff and admin in real Chrome, shared Supabase DB |
 
 ## Verdict
 
-**Do not demo as is.** The status flow (PENDING -> CONFIRMED -> IN_PROGRESS -> COMPLETED, by staff/admin) is built and role-guarded. But there are 4 real bugs in the booking flow, no bulk slot generation UI, and no navigation to the main client pages.
+**Update after the browser test: the demo flow works end to end** (book, confirm, start, finish, result; see `browser-test.md`). Remaining risks are the environment (migrated DB, roles, named accounts) and small UX gaps (FR-16). Original verdict before the P0 fixes: do not demo as is. The status flow (PENDING -> CONFIRMED -> IN_PROGRESS -> COMPLETED, by staff/admin) is built and role-guarded. But there are 4 real bugs in the booking flow, no bulk slot generation UI, and no navigation to the main client pages.
 
 Security: no Critical or High finding in the front. The API is the authority everywhere that was traced.
 
 ## Answer to "can staff and admin confirm a booking?"
 
-Yes in the code: `PUT /bookings/{id}/confirm` is `require_role("staff","admin")` and `/staff` has a "confirm" button (tickets 081/082 merged). A client cannot. To be proven live in the browser test.
+Yes in the code: `PUT /bookings/{id}/confirm` is `require_role("staff","admin")` and `/staff` has a "confirm" button (tickets 081/082 merged). A client cannot. **Proven live on 2026-10-19**: staff and admin both confirmed a PENDING booking, and staff ran start, finish and result.
 Limits: `/staff` lists today's bookings only (PENDING for tomorrow cannot be confirmed), and staff/admin cannot cancel a client's booking (G-06).
 
 ## Priority 1: fix before the demo (bugs)
@@ -69,5 +69,5 @@ Axios single instance with token interceptor; no XSS sink; role comes from our D
 
 ## Next steps
 
-1. Browser test with 3 accounts (client, staff, admin): confirms or refutes items 1 to 7 and the confirm flow.
+1. ~~Browser test with 3 accounts~~ done, see `browser-test.md` (new findings B1 to B7, E1 to E6).
 2. Charlotte decides which items become tickets; drafts are in `gaps.md` (G-03 to G-10; statistics and CSV were dropped from scope) and the fix ideas in each detail file.

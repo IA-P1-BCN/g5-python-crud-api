@@ -1,14 +1,20 @@
 import es from '@/i18n/es.js'
-import { formatPrice } from '@/shared/lib/format.js'
+import { formatDateTime, formatPrice } from '@/shared/lib/format.js'
 import { computeTotalPrice } from '../model/price'
 
-export function Ticket({ roomName, players, pricePerPlayer }) {
+export function Ticket({ roomName, startsAt, players, pricePerPlayer }) {
   const total = computeTotalPrice({ pricePerPlayer, players })
 
   return (
     <section className="bg-surface border-line rounded-lg border p-5">
       <h2 className="heading-title">{roomName}</h2>
       <dl className="mt-4 space-y-2">
+        {startsAt && (
+          <div className="flex justify-between">
+            <dt className="text-muted">{es.booking.ticket.dateTime}</dt>
+            <dd>{formatDateTime(startsAt)}</dd>
+          </div>
+        )}
         <div className="flex justify-between">
           <dt className="text-muted">{es.booking.ticket.players}</dt>
           <dd className="font-mono">{players}</dd>

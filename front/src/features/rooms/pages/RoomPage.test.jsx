@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import es from '@/i18n/es.js'
-import { roomDto } from '@/test/mocks/handlers/rooms.js'
+import { roomDto, roomsPage } from '@/test/mocks/handlers/rooms.js'
 import { server } from '@/test/mocks/server.js'
 import RoomPage from './RoomPage.jsx'
 
@@ -19,8 +19,8 @@ function renderPage(initialRoute) {
       <MemoryRouter initialEntries={[initialRoute]}>
         <Routes>
           <Route path="/salas" element={<p>{es.rooms.corridorLabel}</p>} />
+          <Route path="/salas/atraco" element={<p>room atraco</p>} />
           <Route path="/salas/:slug" element={<RoomPage />} />
-          <Route path="/reservar/:slug" element={<p>booking grid</p>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -28,6 +28,15 @@ function renderPage(initialRoute) {
 }
 
 describe('RoomPage', () => {
+  beforeEach(() => {
+    server.use(
+      http.get('/api/v1/time-slots', () =>
+        HttpResponse.json({ items: [], total: 0, page: 1, size: 100 }),
+      ),
+      http.get('/api/v1/rooms', () => HttpResponse.json(roomsPage([]))),
+    )
+  })
+
   it('shows the details of an active room', async () => {
     respondWithRoom('faro', roomDto({ slug: 'faro', name: 'Faro 1923' }))
     renderPage('/salas/faro')
@@ -73,12 +82,33 @@ describe('RoomPage', () => {
     expect(screen.getByText(es.rooms.corridorLabel)).toBeInTheDocument()
   })
 
-  it('has a Reservar button that goes to the booking page of the room', async () => {
+  it('shows the facts of the room and the 3 booking steps on the same page', async () => {
     respondWithRoom('faro', roomDto({ slug: 'faro', name: 'Faro 1923' }))
     renderPage('/salas/faro')
 
-    await userEvent.click(await screen.findByRole('button', { name: es.rooms.reserve }))
+    expect(await screen.findByText(/2-4 jugadores · 60 min/)).toBeInTheDocument()
+    expect(screen.getByLabelText(es.rooms.difficulty(3))).toBeInTheDocument()
+    expect(await screen.findByRole('group', { name: es.booking.selectDay })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: es.booking.selectPlayers })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: es.booking.continue })).toBeDisabled()
+  })
 
-    expect(screen.getByText('booking grid')).toBeInTheDocument()
+  it('has chips to switch to another room', async () => {
+    respondWithRoom('faro', roomDto({ slug: 'faro', name: 'Faro 1923' }))
+    server.use(
+      http.get('/api/v1/rooms', () =>
+        HttpResponse.json(
+          roomsPage([
+            roomDto({ slug: 'faro', name: 'Faro 1923' }),
+            roomDto({ id: 2, slug: 'atraco', name: 'Atraco' }),
+          ]),
+        ),
+      ),
+    )
+    renderPage('/salas/faro')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Atraco' }))
+
+    expect(await screen.findByText('room atraco')).toBeInTheDocument()
   })
 })

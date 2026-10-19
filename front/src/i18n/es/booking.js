@@ -1,8 +1,15 @@
 export default {
   title: 'Selecciona fecha y hora',
   selectDate: 'Elige un día',
-  selectTime: 'Horarios',
-  continue: 'Continuar',
+  selectDay: 'Día',
+  selectTime: 'Hora',
+  selectPlayers: 'Jugadores',
+  playersRange: (min, max) => `de ${min} a ${max}`,
+  summary: {
+    noSlot: 'Elige un día y una hora libre',
+    perPlayers: (price, players) => `${price} × ${players} jugadores`,
+  },
+  continue: 'Reservar →',
   roomNotFound: 'Sala no encontrada',
   loadingSlots: 'Cargando horarios...',
   noSlotsAvailable: 'No hay horarios disponibles para esta fecha.',
@@ -24,6 +31,7 @@ export default {
   ticket: {
     players: 'Jugadores',
     pricePerPlayer: 'Precio por jugador',
+    dateTime: 'Fecha y hora',
     total: 'Total',
   },
   checkout: {

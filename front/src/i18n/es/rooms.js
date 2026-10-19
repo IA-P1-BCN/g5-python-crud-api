@@ -1,4 +1,7 @@
 export default {
+  welcome: 'Escape Rooms Barcelona',
+  tagline: 'Recorre el pasillo, elige una puerta y entra en la historia.',
+  sectionTitle: 'Las salas',
   corridorLabel: 'Salas disponibles',
   enter: (name) => `Entrar en ${name}`,
   loading: 'Cargando salas…',
@@ -6,6 +9,10 @@ export default {
   empty: 'Ahora mismo no hay salas disponibles.',
   error: 'Error al cargar las salas disponibles.',
   notFound: 'Sala no encontrada',
+  switchRoom: 'Sala',
+  difficulty: (n) => `Dificultad ${n} de 5`,
+  facts: (min, max, duration, price) =>
+    `${min}-${max} jugadores · ${duration} min · ${price} / jugador`,
   reserve: 'Reservar',
   viewDetails: 'Ver sala',
   backToCorridor: 'Volver al corredor',
