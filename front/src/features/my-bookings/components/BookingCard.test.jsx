@@ -55,10 +55,20 @@ describe('BookingCard actions', () => {
     expect(onCancel).toHaveBeenCalledWith(FUTURE)
   })
 
-  it('disables both buttons and explains why under 24h', () => {
+  it('calls onChangeSlot from the enabled change-slot button', async () => {
+    const onChangeSlot = vi.fn()
+    render(<BookingCard booking={FUTURE} onChangeSlot={onChangeSlot} />)
+
+    await userEvent.click(screen.getByRole('button', { name: es.myBookings.actions.changeSlot }))
+
+    expect(onChangeSlot).toHaveBeenCalledWith(FUTURE)
+  })
+
+  it('disables all the buttons and explains why under 24h', () => {
     render(<BookingCard booking={SOON} onModify={vi.fn()} onCancel={vi.fn()} />)
 
     expect(screen.getByRole('button', { name: es.myBookings.actions.modify })).toBeDisabled()
+    expect(screen.getByRole('button', { name: es.myBookings.actions.changeSlot })).toBeDisabled()
     expect(screen.getByRole('button', { name: es.myBookings.actions.cancel })).toBeDisabled()
     expect(screen.getByText(es.myBookings.actions.tooLate)).toBeInTheDocument()
   })

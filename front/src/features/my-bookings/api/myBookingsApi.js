@@ -18,6 +18,12 @@ export async function updateBookingPlayers({ id, players }) {
   return data
 }
 
+export async function updateBookingSlot({ id, timeSlotId }) {
+  // The API reads `time_slot_id` (snake_case). The new slot may belong to another room (BR-L5).
+  const { data } = await api.put(`/bookings/${id}`, { time_slot_id: timeSlotId })
+  return data
+}
+
 export async function cancelBooking(id) {
   const { data } = await api.put(`/bookings/${id}/cancel`)
   return data
