@@ -1,11 +1,11 @@
-// TanStack Query hook: bookings of today, or of `day` (YYYY-MM-DD). No JSX.
+// TanStack Query hook: the planning list for a view ('today', 'ALL' or a status). No JSX.
 import { useQuery } from '@tanstack/react-query'
-import { fetchTodayBookings } from '../api/staffApi.js'
+import { fetchBookingsView } from '../api/staffApi.js'
 
-export function useTodayBookings(day = '') {
-  // Starts with ['bookings', 'today']: the status mutations invalidate every day at once.
+export function useTodayBookings(view = 'today') {
+  // Starts with ['bookings', 'today']: the status mutations invalidate every view at once.
   return useQuery({
-    queryKey: ['bookings', 'today', day],
-    queryFn: () => fetchTodayBookings(day),
+    queryKey: ['bookings', 'today', view],
+    queryFn: () => fetchBookingsView(view),
   })
 }

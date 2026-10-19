@@ -1,12 +1,11 @@
 // Staff texts. (Spanish). One file per feature: no conflicts.
 export default {
-  title: 'Partidas de hoy',
+  title: 'Partidas',
   loading: 'Cargando partidas…',
   loadError: 'No hemos podido cargar las partidas de hoy.',
   empty: 'Hoy no hay partidas.',
-  day: 'Día',
-  today: 'Hoy',
-  emptyDay: 'No hay partidas este día.',
+  filterToday: 'Hoy',
+  date: 'Fecha',
   emptyFilter: 'Ninguna partida con este estado.',
   filterLabel: 'Filtrar por estado',
   filterAll: 'Todas',
