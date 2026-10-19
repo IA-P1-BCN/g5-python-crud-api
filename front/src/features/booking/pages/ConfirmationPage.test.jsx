@@ -1,11 +1,15 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect } from 'vitest'
-import ConfirmationPage from './ConfirmationPage'
+import ConfirmationPage, { ConfirmationPage as NamedConfirmationPage } from './ConfirmationPage'
 import texts from '@/i18n/es/booking'
 import { formatDateTime } from '@/shared/lib/format.js'
 
 describe('ConfirmationPage', () => {
+  it('is also a named export, which booking/routes.js imports', () => {
+    expect(NamedConfirmationPage).toBe(ConfirmationPage)
+  })
+
   it('renderiza el título de confirmación y el sello animado', () => {
     render(
       <MemoryRouter>
