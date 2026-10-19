@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import es from '@/i18n/es.js'
 import { roomDto } from '@/test/mocks/handlers/rooms.js'
 import { server } from '@/test/mocks/server.js'
+import { formatDateTime } from '@/shared/lib/format.js'
 import { useBookingDraftStore } from '../model/bookingDraft.store.js'
 import { toSlot } from '../model/slotMapper.js'
 import CheckoutPage from './CheckoutPage.jsx'
@@ -83,6 +84,18 @@ describe('CheckoutPage', () => {
 
     // 2 players x 20,00 EUR
     expect(screen.getByText(/40,00/)).toBeInTheDocument()
+  })
+
+  it('uses the players chosen on the room page and shows the date and time', async () => {
+    seedDraft()
+    useBookingDraftStore.getState().setPlayers(3)
+    renderCheckout()
+
+    await screen.findByRole('heading', { name: 'Faro 1923' })
+
+    // 3 players x 20,00 EUR
+    expect(screen.getByText(/60,00/)).toBeInTheDocument()
+    expect(screen.getByText(formatDateTime(slot.startsAt))).toBeInTheDocument()
   })
 
   it('sends the booking with our users.id and goes to the confirmation with the real date', async () => {

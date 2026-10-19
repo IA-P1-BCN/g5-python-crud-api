@@ -9,6 +9,10 @@ export default {
   empty: 'Ahora mismo no hay salas disponibles.',
   error: 'Error al cargar las salas disponibles.',
   notFound: 'Sala no encontrada',
+  switchRoom: 'Sala',
+  difficulty: (n) => `Dificultad ${n} de 5`,
+  facts: (min, max, duration, price) =>
+    `${min}-${max} jugadores · ${duration} min · ${price} / jugador`,
   reserve: 'Reservar',
   viewDetails: 'Ver sala',
   backToCorridor: 'Volver al corredor',
