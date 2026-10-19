@@ -1,5 +1,4 @@
 import RoomsCorridor from '../components/RoomsCorridor.jsx'
-import RoomPoster from '../components/RoomPoster.jsx'
 import { useRooms } from '../hooks/useRooms.js'
 import { useGateStore } from '../model/gate.store.js'
 import Alert from '@/shared/ui/Alert.jsx'
@@ -35,20 +34,10 @@ export default function RoomsPage() {
   return (
     <main className="mx-auto max-w-7xl p-6">
       <header className="mb-6">
-        <h1 className="heading-hero text-text">{es.rooms.welcome}</h1>
+        <h1 className="heading-title text-text">{es.rooms.welcome}</h1>
         <p className="text-muted">{es.rooms.tagline}</p>
       </header>
-      <RoomsCorridor onEnter={startGate} listBelow />
-      <section className="mt-10" aria-labelledby="rooms-section">
-        <h2 id="rooms-section" className="heading-title text-text mb-6">
-          {es.rooms.sectionTitle}
-        </h2>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {rooms.map((room) => (
-            <RoomPoster key={room.id} room={room} onEnter={startGate} />
-          ))}
-        </div>
-      </section>
+      <RoomsCorridor onEnter={startGate} />
     </main>
   )
 }

@@ -14,11 +14,12 @@ import RoomsPage from './RoomsPage.jsx'
 vi.mock('@/features/corridor', async () => {
   const { createElement } = await import('react')
   return {
-    CorridorView: ({ rooms, onEnter, listBelow }) =>
+    CorridorView: ({ rooms, onEnter }) =>
       createElement(
-        'button',
-        { 'data-list-below': String(listBelow), onClick: () => onEnter(rooms[0]) },
-        'corridor-stub',
+        'div',
+        null,
+        createElement('button', { onClick: () => onEnter(rooms[0]) }, 'corridor-stub'),
+        rooms.map((room) => createElement('span', { key: room.id }, room.name)),
       ),
   }
 })
@@ -65,13 +66,6 @@ describe('RoomsPage', () => {
     expect(screen.queryByText('Sala Nueva')).not.toBeInTheDocument()
   })
 
-  it('links each room to its detail page', async () => {
-    respondWithRooms(roomsPage([roomDto({ id: 1, slug: 'faro', name: 'Faro 1923' })]))
-    renderPage()
-
-    expect(await screen.findByRole('button', { name: es.rooms.viewDetails })).toBeInTheDocument()
-  })
-
   it('shows an empty state when no room is visible', async () => {
     respondWithRooms(roomsPage([]))
     renderPage()
@@ -91,20 +85,18 @@ describe('RoomsPage, entering a room', () => {
   it('starts the gate with the chosen room (GateLayer does the rest)', async () => {
     respondWithRooms(roomsPage([roomDto({ id: 1, slug: 'faro', name: 'Faro 1923' })]))
     renderPage()
-    await userEvent.click(await screen.findByRole('button', { name: es.rooms.viewDetails }))
+    await userEvent.click(await screen.findByRole('button', { name: 'corridor-stub' }))
 
     expect(useGateStore.getState()).toMatchObject({ room: { slug: 'faro' }, phase: 'cover' })
   })
 
-  it('shows the welcome, the corridor and the rooms section (FR-17)', async () => {
+  it('shows the welcome and the corridor, without a card list under it (FR-17)', async () => {
     respondWithRooms(roomsPage([roomDto({ id: 1, slug: 'faro', name: 'Faro 1923' })]))
     renderPage()
 
     expect(await screen.findByRole('heading', { level: 1, name: es.rooms.welcome })).toBeVisible()
-    expect(screen.getByText(es.rooms.tagline)).toBeVisible()
-    const corridor = screen.getByRole('button', { name: 'corridor-stub' })
-    expect(corridor).toHaveAttribute('data-list-below', 'true')
-    expect(screen.getByRole('heading', { level: 2, name: es.rooms.sectionTitle })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'corridor-stub' })).toBeVisible()
+    expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument()
   })
 
   it('starts the gate when a door of the corridor is clicked', async () => {
