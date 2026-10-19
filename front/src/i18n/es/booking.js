@@ -3,6 +3,7 @@ export default {
   selectDate: 'Elige un día',
   selectTime: 'Horarios',
   continue: 'Continuar',
+  roomNotFound: 'Sala no encontrada',
   loadingSlots: 'Cargando horarios...',
   noSlotsAvailable: 'No hay horarios disponibles para esta fecha.',
   states: {
@@ -12,6 +13,7 @@ export default {
     past: 'Pasado',
   },
   errors: {
+    loadRoomFailed: 'No se pudo cargar la sala.',
     loadFailed: 'No se pudieron cargar los horarios disponibles.',
     nameRequired: 'Escribe tu nombre.',
     nameTooLong: 'El nombre no puede superar los 100 caracteres.',

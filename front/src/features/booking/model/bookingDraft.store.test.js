@@ -48,4 +48,25 @@ describe('bookingDraft.store', () => {
     expect(state.slotId).toBeNull()
     expect(state.currentStep).toBe(1)
   })
+
+  it('keeps the draft when the same room is opened again', () => {
+    useBookingDraftStore.getState().startRoom('faro')
+    useBookingDraftStore.getState().setSelectedSlot({ id: 1 })
+    useBookingDraftStore.getState().startRoom('faro')
+
+    expect(useBookingDraftStore.getState().selectedSlot).toEqual({ id: 1 })
+  })
+
+  it('resets the slot and the day when another room is opened', () => {
+    useBookingDraftStore.getState().startRoom('faro')
+    useBookingDraftStore.getState().setSelectedDate('2030-01-01')
+    useBookingDraftStore.getState().setSelectedSlot({ id: 1 })
+    useBookingDraftStore.getState().startRoom('mansion')
+
+    const state = useBookingDraftStore.getState()
+    expect(state.roomSlug).toBe('mansion')
+    expect(state.selectedSlot).toBeNull()
+    expect(state.slotId).toBeNull()
+    expect(state.selectedDate).toBeNull()
+  })
 })
