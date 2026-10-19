@@ -9,13 +9,14 @@ import Field from '@/shared/ui/Field.jsx'
 import Spinner from '@/shared/ui/Spinner.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import { useRegister } from '../hooks/useRegister.js'
+import { homeFor } from '../model/roles.js'
 import { registerErrorMessage } from '../model/errors.js'
 import { registerSchema } from '../model/registerSchema.js'
 
 const t = es.auth.register
 
 export default function RegisterPage() {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, role, roleError } = useAuth()
   const signUp = useRegister()
   const {
     register,
@@ -28,7 +29,11 @@ export default function RegisterPage() {
 
   // Wait for the stored session, so a logged-in user never sees the form flash.
   if (loading) return <Spinner label={es.common.loading} />
-  if (isAuthenticated) return <Navigate to="/salas" replace />
+  if (isAuthenticated) {
+    // The role arrives after the session: wait for it (or for its failure) before choosing the page.
+    if (role === null && !roleError) return <Spinner label={es.common.loading} />
+    return <Navigate to={homeFor(role)} replace />
+  }
 
   // Supabase asked to confirm the email first: there is no session yet.
   if (signUp.isSuccess && signUp.data?.needsConfirmation) {

@@ -8,3 +8,6 @@ export function hasRole(userRole, required) {
   const need = ROLES.indexOf(required)
   return have !== -1 && need !== -1 && have >= need
 }
+
+// Where a user lands after login or sign-up: staff and admin open today's planning, clients the rooms.
+export const homeFor = (role) => (hasRole(role, 'staff') ? '/staff' : '/salas')

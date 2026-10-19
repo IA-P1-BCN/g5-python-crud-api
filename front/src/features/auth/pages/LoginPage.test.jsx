@@ -1,9 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import es from '@/i18n/es.js'
+import { meDto } from '@/test/mocks/handlers/auth.js'
+import { server } from '@/test/mocks/server.js'
 import AuthProvider from '../components/AuthProvider.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import LoginPage from './LoginPage.jsx'
@@ -40,6 +43,7 @@ function renderLogin(path = '/login') {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/salas" element={<Salas />} />
+            <Route path="/staff" element={<p>Planning de hoy</p>} />
           </Routes>
         </AuthProvider>
       </MemoryRouter>
@@ -128,5 +132,13 @@ describe('LoginPage', () => {
 
     expect(await screen.findByText('Panel de ana@example.com')).toBeInTheDocument()
     expect(screen.queryByLabelText(es.auth.email)).not.toBeInTheDocument()
+  })
+
+  it.each(['staff', 'admin'])('a logged-in %s lands on the planning (/staff)', async (role) => {
+    server.use(http.get('/api/v1/users/me', () => HttpResponse.json(meDto({ role }))))
+    mocks.auth.getSession.mockResolvedValue({ data: { session } })
+    renderLogin('/login')
+
+    expect(await screen.findByText('Planning de hoy')).toBeInTheDocument()
   })
 })

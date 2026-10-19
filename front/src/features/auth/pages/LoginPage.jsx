@@ -10,11 +10,12 @@ import Field from '@/shared/ui/Field.jsx'
 import Spinner from '@/shared/ui/Spinner.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import { useLogin } from '../hooks/useLogin.js'
+import { homeFor } from '../model/roles.js'
 import { loginErrorMessage } from '../model/errors.js'
 import { loginSchema } from '../model/loginSchema.js'
 
 export default function LoginPage() {
-  const { login, isAuthenticated, loading } = useAuth()
+  const { login, isAuthenticated, loading, role, roleError } = useAuth()
   const passwordLogin = useLogin()
   const [googleSubmitting, setGoogleSubmitting] = useState(false)
   const [googleFailed, setGoogleFailed] = useState(false)
@@ -29,7 +30,11 @@ export default function LoginPage() {
 
   // Wait for the stored session, so a logged-in user never sees the form flash.
   if (loading) return <Spinner label={es.common.loading} />
-  if (isAuthenticated) return <Navigate to="/salas" replace />
+  if (isAuthenticated) {
+    // The role arrives after the session: wait for it (or for its failure) before choosing the page.
+    if (role === null && !roleError) return <Spinner label={es.common.loading} />
+    return <Navigate to={homeFor(role)} replace />
+  }
 
   async function handleGoogle() {
     setGoogleSubmitting(true)

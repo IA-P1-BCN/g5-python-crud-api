@@ -72,7 +72,7 @@ describe('AuthProvider', () => {
 
     expect(mocks.auth.signInWithOAuth).toHaveBeenCalledWith({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/salas` },
+      options: { redirectTo: `${window.location.origin}/login` },
     })
   })
 
