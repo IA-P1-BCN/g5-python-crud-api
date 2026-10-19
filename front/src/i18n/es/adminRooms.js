@@ -81,6 +81,10 @@ export default {
         toBeforeFrom: 'La fecha final no puede ser anterior a la inicial.',
         tooLong: 'El rango no puede superar 90 días.',
         firstAfterLast: 'La primera hora no puede ser posterior a la última.',
+        timezoneChange:
+          'El rango cruza un cambio de hora (verano/invierno): genera por separado cada parte.',
+        otherUtcDay:
+          'Esta hora local cae en otro día en UTC: usa una hora entre las 02:00 y las 23:59.',
       },
     },
     form: {

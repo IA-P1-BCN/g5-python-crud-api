@@ -11,6 +11,13 @@ const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
 const day = z.string().min(1, t.required)
 const time = z.string().min(1, t.required).regex(TIME_RE, t.invalidTime)
 
+const local = (date, time) => new Date(`${date}T${time}`)
+const offset = (date, time) => local(date, time).getTimezoneOffset()
+const utcDay = (date, time) => local(date, time).toISOString().slice(0, 10)
+const valid = (v) =>
+  [v.date_from, v.date_to].every((d) => !Number.isNaN(local(d, v.first_start).getTime())) &&
+  [v.first_start, v.last_start].every((h) => !Number.isNaN(local(v.date_from, h).getTime()))
+
 // Field names are the ones the API expects (POST /rooms/{id}/time-slots/generate).
 export const generateSlotsSchema = z
   .object({ date_from: day, date_to: day, first_start: time, last_start: time })
@@ -23,12 +30,27 @@ export const generateSlotsSchema = z
     path: ['first_start'],
     message: t.firstAfterLast,
   })
+  .refine(
+    (v) => !valid(v) || offset(v.date_from, v.first_start) === offset(v.date_to, v.first_start),
+    {
+      path: ['date_to'],
+      message: t.timezoneChange,
+    },
+  )
+  .superRefine((v, ctx) => {
+    if (!valid(v)) return
+    for (const field of ['first_start', 'last_start']) {
+      if (
+        utcDay(v.date_from, v[field]) !== v.date_from ||
+        utcDay(v.date_to, v[field]) !== v.date_to
+      ) {
+        ctx.addIssue({ code: 'custom', path: [field], message: t.otherUtcDay })
+      }
+    }
+  })
 
 const pad = (n) => String(n).padStart(2, '0')
 
-// The admin types local times, the API wants UTC (BR-X5). The offset is the one of date_from, so
-// a range crossing a daylight-saving change shifts by one hour after it; a local time whose UTC
-// day differs (00:00-02:00 in Spain) is not supported.
 export function toUtcPayload(values) {
   const utc = (time) => {
     const d = new Date(`${values.date_from}T${time}`)
