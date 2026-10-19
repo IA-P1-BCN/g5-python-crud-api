@@ -28,7 +28,7 @@ export default function RegisterPage() {
 
   // Wait for the stored session, so a logged-in user never sees the form flash.
   if (loading) return <Spinner label={es.common.loading} />
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />
+  if (isAuthenticated) return <Navigate to="/salas" replace />
 
   // Supabase asked to confirm the email first: there is no session yet.
   if (signUp.isSuccess && signUp.data?.needsConfirmation) {

@@ -25,8 +25,8 @@ const session = {
   user: { id: 'u1', email: 'ana@example.com', user_metadata: { full_name: 'Ana' } },
 }
 
-// Stands in for /dashboard: it proves the session reached the context.
-function Dashboard() {
+// Stands in for /salas: it proves the session reached the context.
+function Salas() {
   const { user } = useAuth()
   return <p>{`Panel de ${user?.email}`}</p>
 }
@@ -39,7 +39,7 @@ function renderLogin(path = '/login') {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/salas" element={<Salas />} />
           </Routes>
         </AuthProvider>
       </MemoryRouter>
@@ -78,7 +78,7 @@ describe('LoginPage', () => {
     expect(mocks.auth.signInWithPassword).not.toHaveBeenCalled()
   })
 
-  it('successful login stores the session and redirects to /dashboard', async () => {
+  it('successful login stores the session and redirects to /salas', async () => {
     const user = userEvent.setup()
     mocks.auth.signInWithPassword.mockImplementation(async () => {
       // From now on the Axios interceptor finds the token, like with the real client.
@@ -122,7 +122,7 @@ describe('LoginPage', () => {
     expect(screen.getByLabelText(es.auth.email)).toBeInTheDocument()
   })
 
-  it('a user who is already logged in is redirected to /dashboard', async () => {
+  it('a user who is already logged in is redirected to /salas', async () => {
     mocks.auth.getSession.mockResolvedValue({ data: { session } })
     renderLogin('/login')
 

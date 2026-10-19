@@ -29,7 +29,7 @@ export default function LoginPage() {
 
   // Wait for the stored session, so a logged-in user never sees the form flash.
   if (loading) return <Spinner label={es.common.loading} />
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />
+  if (isAuthenticated) return <Navigate to="/salas" replace />
 
   async function handleGoogle() {
     setGoogleSubmitting(true)

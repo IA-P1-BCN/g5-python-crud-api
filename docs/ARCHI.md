@@ -133,7 +133,7 @@ front/
 │   │   │   └── routes.js                  # routes of this feature
 │   │   ├── dashboard/
 │   │   │   ├── pages/
-│   │   │   │   └── DashboardPage.jsx      # /dashboard, where login and register land (ticket 087)
+│   │   │   │   └── DashboardPage.jsx      # /dashboard (no longer the landing page: login and register go to /salas)
 │   │   │   ├── index.js                   # public API of the feature
 │   │   │   └── routes.js                  # routes of this feature
 │   │   ├── booking/
@@ -334,7 +334,7 @@ front/
 | `booking` | Day picker, slot grid, players dial, checkout, confirmation | 071, 072, 073 |
 | `my-bookings` | Client area: list, modify, cancel, change slot, game history | 074, 075, 076, 083 |
 | `auth` | Google login, email login and register pages, `AuthProvider`, `RequireAuth`, `RequireRole` | 077, 078, 087, 088 |
-| `dashboard` | Landing page after login | 087 |
+| `dashboard` | `/dashboard` panel (login lands on `/salas`) | 087 |
 | `profile` | Own profile (`/users/me`) | 079 |
 | `staff` | Today's games, start, finish, result | 081, 082 |
 | `admin-rooms` | Rooms and time slots management | 069, 070 |
@@ -420,7 +420,7 @@ RoomsCorridor (rooms)  ->  CorridorView (corridor)  ->  Corridor.jsx -> scene/cr
 
 ### Access control
 
-Every route except `/login` and `/register` needs a session: `RequireAuth` (ticket 087) redirects to `/login` otherwise, and a successful login or sign-up lands on `/dashboard`.
+Every route except `/login` and `/register` needs a session: `RequireAuth` (ticket 087) redirects to `/login` otherwise, and a successful login or sign-up lands on `/salas`.
 
 `<RequireRole role="staff">` hides routes by role in the UI. The API remains the real authority (`BUSINESS_RULES.md`).
 
