@@ -9,7 +9,7 @@ import { useWebGLSupport } from '../hooks/useWebGLSupport.js'
 // Below Tailwind's `md` breakpoint (768px).
 const SMALL_SCREEN_QUERY = '(max-width: 767px)'
 
-export default function CorridorView({ rooms, onEnter }) {
+export default function CorridorView({ rooms, onEnter, listBelow = false }) {
   const hasWebGL = useWebGLSupport()
   const reducedMotion = useReducedMotion()
   const smallScreen = useMediaQuery(SMALL_SCREEN_QUERY)
@@ -18,15 +18,18 @@ export default function CorridorView({ rooms, onEnter }) {
 
   const mode = getCorridorMode({ hasWebGL: hasWebGL && !sceneFailed, reducedMotion, smallScreen })
 
-  if (mode !== '3d') return <CorridorFallback rooms={rooms} onEnter={onEnter} />
+  // listBelow: the page already shows the room list under the corridor, so do not repeat it.
+  if (mode !== '3d') return listBelow ? null : <CorridorFallback rooms={rooms} onEnter={onEnter} />
 
   // The canvas is not operable by keyboard or screen reader: the poster grid stays next to it, hidden.
   return (
     <>
       <Corridor rooms={rooms} onEnter={onEnter} onError={() => setSceneFailed(true)} />
-      <div className="sr-only">
-        <CorridorFallback rooms={rooms} onEnter={onEnter} />
-      </div>
+      {!listBelow && (
+        <div className="sr-only">
+          <CorridorFallback rooms={rooms} onEnter={onEnter} />
+        </div>
+      )}
     </>
   )
 }

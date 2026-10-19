@@ -3,12 +3,25 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import es from '@/i18n/es.js'
 import { roomDto, roomsPage } from '@/test/mocks/handlers/rooms.js'
 import { server } from '@/test/mocks/server.js'
 import { useGateStore } from '../model/gate.store.js'
 import RoomsPage from './RoomsPage.jsx'
+
+// The 3D corridor is tested in its own feature: a stub that enters the first room is enough.
+vi.mock('@/features/corridor', async () => {
+  const { createElement } = await import('react')
+  return {
+    CorridorView: ({ rooms, onEnter, listBelow }) =>
+      createElement(
+        'button',
+        { 'data-list-below': String(listBelow), onClick: () => onEnter(rooms[0]) },
+        'corridor-stub',
+      ),
+  }
+})
 
 const respondWithRooms = (body, status = 200) =>
   server.use(http.get('/api/v1/rooms', () => HttpResponse.json(body, { status })))
@@ -79,6 +92,25 @@ describe('RoomsPage, entering a room', () => {
     respondWithRooms(roomsPage([roomDto({ id: 1, slug: 'faro', name: 'Faro 1923' })]))
     renderPage()
     await userEvent.click(await screen.findByRole('button', { name: es.rooms.viewDetails }))
+
+    expect(useGateStore.getState()).toMatchObject({ room: { slug: 'faro' }, phase: 'cover' })
+  })
+
+  it('shows the welcome, the corridor and the rooms section (FR-17)', async () => {
+    respondWithRooms(roomsPage([roomDto({ id: 1, slug: 'faro', name: 'Faro 1923' })]))
+    renderPage()
+
+    expect(await screen.findByRole('heading', { level: 1, name: es.rooms.welcome })).toBeVisible()
+    expect(screen.getByText(es.rooms.tagline)).toBeVisible()
+    const corridor = screen.getByRole('button', { name: 'corridor-stub' })
+    expect(corridor).toHaveAttribute('data-list-below', 'true')
+    expect(screen.getByRole('heading', { level: 2, name: es.rooms.sectionTitle })).toBeVisible()
+  })
+
+  it('starts the gate when a door of the corridor is clicked', async () => {
+    respondWithRooms(roomsPage([roomDto({ id: 1, slug: 'faro', name: 'Faro 1923' })]))
+    renderPage()
+    await userEvent.click(await screen.findByRole('button', { name: 'corridor-stub' }))
 
     expect(useGateStore.getState()).toMatchObject({ room: { slug: 'faro' }, phase: 'cover' })
   })
