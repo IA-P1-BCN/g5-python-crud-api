@@ -115,6 +115,31 @@ export const adminRoomsHandlers = [
     return HttpResponse.json(updated)
   }),
 
+  // POST /rooms/{id}/time-slots/generate -> { created_count, skipped_count } (API_CONTRACT.md).
+  // The mock creates one slot per day of the range at first_start.
+  http.post('/api/v1/rooms/:roomId/time-slots/generate', async ({ params, request }) => {
+    const body = await request.clone().json()
+    const created = []
+    for (
+      let d = new Date(body.date_from);
+      d <= new Date(body.date_to);
+      d.setUTCDate(d.getUTCDate() + 1)
+    ) {
+      const day = d.toISOString().slice(0, 10)
+      created.push(
+        withState({
+          id: Date.now() + created.length,
+          room_id: Number(params.roomId),
+          starts_at: `${day}T${body.first_start}:00Z`,
+          ends_at: `${day}T${body.first_start}:00Z`,
+          status: 'available',
+        }),
+      )
+    }
+    mockSlots = [...mockSlots, ...created]
+    return HttpResponse.json({ created_count: created.length, skipped_count: 0 })
+  }),
+
   http.delete('/api/v1/time-slots/:slotId', ({ params }) => {
     mockSlots = mockSlots.filter((s) => s.id !== Number(params.slotId))
     return new HttpResponse(null, { status: 204 })

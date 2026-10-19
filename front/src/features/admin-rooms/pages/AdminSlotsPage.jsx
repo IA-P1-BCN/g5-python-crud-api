@@ -6,6 +6,7 @@ import Spinner from '@/shared/ui/Spinner.jsx'
 import adminRooms from '@/i18n/es/adminRooms'
 import { useAdminSlots } from '../hooks/useAdminSlots'
 import SlotsTable from '../components/SlotsTable'
+import GenerateSlotsForm from '../components/GenerateSlotsForm'
 import SlotForm from '../components/SlotForm'
 
 const t = adminRooms.slots
@@ -13,8 +14,16 @@ const errorMessage = (code) => t.errors[code] ?? t.errors.UNKNOWN
 
 export default function AdminSlotsPage() {
   const { id: roomId } = useParams()
-  const { slots, loading, loadError, createSlot, updateSlot, setBlocked, deleteSlot } =
-    useAdminSlots(roomId)
+  const {
+    slots,
+    loading,
+    loadError,
+    createSlot,
+    updateSlot,
+    setBlocked,
+    deleteSlot,
+    generateSlots,
+  } = useAdminSlots(roomId)
   const [editingSlot, setEditingSlot] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [actionError, setActionError] = useState(null)
@@ -52,6 +61,8 @@ export default function AdminSlotsPage() {
       </div>
 
       {message && <Alert tone="error">{message}</Alert>}
+
+      <GenerateSlotsForm onGenerate={generateSlots} />
 
       {showForm && (
         <SlotForm

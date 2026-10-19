@@ -163,4 +163,126 @@ describe('AdminSlotsPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/tiene una reserva/i)
     expect(screen.getByText('10:00')).toBeInTheDocument()
   })
+
+  describe('generar franjas', () => {
+    const fillGenerate = (v) => {
+      fireEvent.change(screen.getByLabelText('Desde'), { target: { value: v.from } })
+      fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: v.to } })
+      fireEvent.change(screen.getByLabelText('Primera hora de inicio'), {
+        target: { value: v.first },
+      })
+      fireEvent.change(screen.getByLabelText('Última hora de inicio'), {
+        target: { value: v.last },
+      })
+    }
+    const generate = (user) => user.click(screen.getByRole('button', { name: 'Generar franjas' }))
+
+    it('genera franjas, muestra los contadores y refresca la tabla', async () => {
+      let sent
+      server.use(
+        http.post('/api/v1/rooms/:roomId/time-slots/generate', async ({ request }) => {
+          sent = await request.json()
+          return HttpResponse.json({ created_count: 5, skipped_count: 2 })
+        }),
+      )
+      const user = userEvent.setup()
+      renderPage()
+      await screen.findByText('10:00')
+
+      fillGenerate({ from: '2030-12-01', to: '2030-12-03', first: '09:00', last: '20:00' })
+      await generate(user)
+
+      expect(await screen.findByRole('status')).toHaveTextContent('5 creadas')
+      expect(screen.getByRole('status')).toHaveTextContent('2 omitidas')
+      expect(sent).toEqual({
+        date_from: '2030-12-01',
+        date_to: '2030-12-03',
+        first_start: '09:00',
+        last_start: '20:00',
+      })
+    })
+
+    it('añade las franjas nuevas a la tabla', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await screen.findByText('10:00')
+
+      fillGenerate({ from: '2030-12-01', to: '2030-12-02', first: '09:00', last: '20:00' })
+      await generate(user)
+
+      await waitFor(() => expect(rows()).toHaveLength(5)) // header + 2 old + 2 new
+    })
+
+    it('muestra ROOM_INACTIVE', async () => {
+      server.use(
+        http.post('/api/v1/rooms/:roomId/time-slots/generate', () =>
+          HttpResponse.json({ detail: 'x', code: 'ROOM_INACTIVE' }, { status: 409 }),
+        ),
+      )
+      const user = userEvent.setup()
+      renderPage()
+      await screen.findByText('10:00')
+
+      fillGenerate({ from: '2030-12-01', to: '2030-12-03', first: '09:00', last: '20:00' })
+      await generate(user)
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(/sala está inactiva/i)
+    })
+
+    it('muestra VALIDATION_ERROR del servidor', async () => {
+      server.use(
+        http.post('/api/v1/rooms/:roomId/time-slots/generate', () =>
+          HttpResponse.json({ detail: 'x', code: 'VALIDATION_ERROR' }, { status: 422 }),
+        ),
+      )
+      const user = userEvent.setup()
+      renderPage()
+      await screen.findByText('10:00')
+
+      fillGenerate({ from: '2030-12-01', to: '2030-12-03', first: '09:00', last: '20:00' })
+      await generate(user)
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(/no son válidos/i)
+    })
+
+    it('un rango de más de 90 días da error de campo sin llamar a la API', async () => {
+      let called = false
+      server.use(
+        http.post('/api/v1/rooms/:roomId/time-slots/generate', () => {
+          called = true
+          return HttpResponse.json({ created_count: 0, skipped_count: 0 })
+        }),
+      )
+      const user = userEvent.setup()
+      renderPage()
+      await screen.findByText('10:00')
+
+      fillGenerate({ from: '2030-12-01', to: '2031-12-01', first: '09:00', last: '20:00' })
+      await generate(user)
+
+      expect(await screen.findByText(/no puede superar 90 días/i)).toBeInTheDocument()
+      expect(called).toBe(false)
+    })
+
+    it('primera hora posterior a la última da error de campo sin llamar a la API', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await screen.findByText('10:00')
+
+      fillGenerate({ from: '2030-12-01', to: '2030-12-03', first: '21:00', last: '09:00' })
+      await generate(user)
+
+      expect(await screen.findByText(/no puede ser posterior a la última/i)).toBeInTheDocument()
+    })
+
+    it('campos vacíos dan error de campo', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await screen.findByText('10:00')
+
+      await generate(user)
+
+      expect(await screen.findAllByText('Este campo es obligatorio.')).toHaveLength(4)
+    })
+  })
 })

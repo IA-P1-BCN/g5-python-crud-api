@@ -24,3 +24,9 @@ export async function setSlotStatus(slotId, status) {
 export async function deleteSlot(slotId) {
   await api.delete(`/time-slots/${slotId}`) // 204
 }
+
+// Admin only. Times are UTC, like the API. Returns { created_count, skipped_count }.
+export async function generateSlots(roomId, payload) {
+  const { data } = await api.post(`/rooms/${roomId}/time-slots/generate`, payload)
+  return data
+}

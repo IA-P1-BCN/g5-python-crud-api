@@ -61,6 +61,25 @@ export default {
     table: { date: 'Fecha', start: 'Inicio', end: 'Fin', status: 'Estado', actions: 'Acciones' },
     status: { free: 'Disponible', taken: 'Reservada', blocked: 'Bloqueada', past: 'Pasada' },
     actions: { edit: 'Editar', block: 'Bloquear', unblock: 'Desbloquear', delete: 'Eliminar' },
+    generate: {
+      title: 'Generar franjas',
+      help: 'Crea franjas disponibles para varios días a la vez (máximo 90 días). Las horas son UTC. Se omiten las franjas pasadas o solapadas.',
+      labels: {
+        date_from: 'Desde',
+        date_to: 'Hasta',
+        first_start: 'Primera hora de inicio',
+        last_start: 'Última hora de inicio',
+      },
+      submit: 'Generar franjas',
+      done: (created, skipped) => `Franjas generadas: ${created} creadas, ${skipped} omitidas.`,
+      errors: {
+        required: 'Este campo es obligatorio.',
+        invalidTime: 'Introduce una hora válida.',
+        toBeforeFrom: 'La fecha final no puede ser anterior a la inicial.',
+        tooLong: 'El rango no puede superar 90 días.',
+        firstAfterLast: 'La primera hora no puede ser posterior a la última.',
+      },
+    },
     form: {
       date: 'Fecha',
       startTime: 'Hora de inicio',
