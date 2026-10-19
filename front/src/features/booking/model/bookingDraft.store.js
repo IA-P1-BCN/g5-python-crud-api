@@ -7,11 +7,10 @@ const initialState = {
   selectedSlot: null,
   players: 1,
   slotId: null,
-  clientDetails: { name: '', email: '', phone: '' },
   currentStep: 1,
 }
 
-export const useBookingDraftStore = create((set) => ({
+export const useBookingDraftStore = create((set, get) => ({
   ...initialState,
 
   // Comportamiento original de develop: cambiar de día borra el slot elegido
@@ -19,11 +18,13 @@ export const useBookingDraftStore = create((set) => ({
   setSelectedSlot: (slot) => set({ selectedSlot: slot, slotId: slot?.id ?? null }),
   setPlayers: (players) => set({ players }),
   setRoomSlug: (roomSlug) => set({ roomSlug }),
+  // The draft belongs to one room: opening another room starts from a clean draft.
+  startRoom: (roomSlug) => {
+    if (get().roomSlug !== roomSlug) set({ ...initialState, roomSlug })
+  },
 
   // Flujo de checkout
   setSlotId: (slotId) => set({ slotId }),
-  setClientDetails: (details) =>
-    set((state) => ({ clientDetails: { ...state.clientDetails, ...details } })),
   setStep: (step) => set({ currentStep: step }),
 
   reset: () => set(initialState),

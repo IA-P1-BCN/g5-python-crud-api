@@ -22,11 +22,11 @@ const slotDto = (id, hour, state) => ({
 
 const slotsPage = (items) => ({ items, total: items.length, page: 1, size: 100 })
 
-function renderPage() {
+function renderPage(path = '/reservar/faro') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={['/reservar/faro']}>
+      <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route path="/reservar/:slug" element={<BookingPage />} />
           <Route path="/booking/checkout" element={<div>checkout-page</div>} />
@@ -75,7 +75,7 @@ describe('BookingPage', () => {
     )
     renderPage()
 
-    expect(screen.getByText(es.booking.loadingSlots)).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: es.booking.loadingSlots })).toBeInTheDocument()
     const grid = await screen.findByRole('group', { name: es.booking.selectTime })
     const buttons = within(grid).getAllByRole('button')
 
@@ -119,5 +119,62 @@ describe('BookingPage', () => {
     renderPage()
 
     expect(await screen.findByText(es.booking.errors.loadFailed)).toBeInTheDocument()
+  })
+
+  it('does not carry a slot chosen in another room: Continuar stays disabled', async () => {
+    useBookingDraftStore.getState().startRoom('mansion')
+    useBookingDraftStore.getState().setSelectedSlot({ id: 99, startsAt: '2030-01-01T10:00:00Z' })
+    server.use(
+      http.get('/api/v1/time-slots', () =>
+        HttpResponse.json(slotsPage([slotDto(1, '10', 'free')])),
+      ),
+    )
+    renderPage()
+
+    await screen.findByRole('group', { name: es.booking.selectTime })
+
+    expect(useBookingDraftStore.getState().selectedSlot).toBeNull()
+    expect(screen.getByRole('button', { name: es.booking.continue })).toBeDisabled()
+  })
+
+  it('keeps Continuar disabled when the selected slot is not in the displayed slots', async () => {
+    useBookingDraftStore.getState().startRoom('faro')
+    useBookingDraftStore.getState().setSelectedSlot({ id: 99, startsAt: '2030-01-01T10:00:00Z' })
+    server.use(
+      http.get('/api/v1/time-slots', () =>
+        HttpResponse.json(slotsPage([slotDto(1, '10', 'free')])),
+      ),
+    )
+    renderPage()
+
+    await screen.findByRole('group', { name: es.booking.selectTime })
+
+    expect(screen.getByRole('button', { name: es.booking.continue })).toBeDisabled()
+  })
+
+  it('shows "room not found" instead of an endless spinner when the room does not exist', async () => {
+    server.use(http.get('/api/v1/rooms/nope', () => new HttpResponse(null, { status: 404 })))
+    renderPage('/reservar/nope')
+
+    expect(await screen.findByText(es.booking.roomNotFound)).toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  it('shows "room not found" for an inactive room', async () => {
+    server.use(
+      http.get('/api/v1/rooms/off', () =>
+        HttpResponse.json(roomDto({ id: 8, slug: 'off', status: 'inactive' })),
+      ),
+    )
+    renderPage('/reservar/off')
+
+    expect(await screen.findByText(es.booking.roomNotFound)).toBeInTheDocument()
+  })
+
+  it('shows an error alert when loading the room fails', async () => {
+    server.use(http.get('/api/v1/rooms/boom', () => new HttpResponse(null, { status: 500 })))
+    renderPage('/reservar/boom')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(es.booking.errors.loadRoomFailed)
   })
 })

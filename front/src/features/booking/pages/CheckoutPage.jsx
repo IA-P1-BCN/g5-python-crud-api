@@ -1,57 +1,61 @@
-import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
+import { meQueryKey } from '@/features/auth'
 import { useRoom } from '@/features/rooms'
 import es from '@/i18n/es.js'
 import Alert from '@/shared/ui/Alert.jsx'
 import Button from '@/shared/ui/Button.jsx'
-import Field from '@/shared/ui/Field.jsx'
+import Spinner from '@/shared/ui/Spinner.jsx'
 import { PlayersDial } from '../components/PlayersDial.jsx'
 import { Ticket } from '../components/Ticket.jsx'
-import { useCreateBooking } from '../hooks/useCreateBooking'
+import { useCreateBooking } from '../hooks/useCreateBooking.js'
 import { useBookingDraftStore } from '../model/bookingDraft.store.js'
-import { checkoutSchema } from '../model/checkoutSchema.js'
 
 const t = es.booking.checkout
 const CONFIRMATION_PATH = '/booking/confirmation'
 
-// Respaldo cuando no hay sala (p. ej. si se recarga la página: el store vive en memoria)
-const DEFAULT_ROOM = { name: '', minPlayers: 1, maxPlayers: 6, pricePerPlayer: 0 }
-
 export function CheckoutPage() {
+  const { slotId, selectedSlot, roomSlug } = useBookingDraftStore()
+  const { data: room, isLoading, error: roomError } = useRoom(roomSlug)
+
+  // The draft lives in memory: after a reload there is nothing to pay for, go back to the room.
+  if (!slotId) return <Navigate to={roomSlug ? `/reservar/${roomSlug}` : '/salas'} replace />
+
+  if (isLoading)
+    return (
+      <main className="p-6">
+        <Spinner label={es.common.loading} />
+      </main>
+    )
+
+  if (roomError || !room)
+    return (
+      <main className="p-6">
+        <Alert tone="error">{es.booking.errors.loadRoomFailed}</Alert>
+      </main>
+    )
+
+  // Keyed by room: players start at the real min_players of the room.
+  return (
+    <CheckoutForm key={room.id} room={room} slotId={slotId} startsAt={selectedSlot?.startsAt} />
+  )
+}
+
+function CheckoutForm({ room, slotId, startsAt }) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { submitBooking, isSubmitting, error } = useCreateBooking()
-  const { clientDetails, slotId, selectedSlot, roomSlug } = useBookingDraftStore()
-  const { data: room = DEFAULT_ROOM } = useRoom(roomSlug)
   const [players, setPlayers] = useState(room.minPlayers)
 
-  const errorText = { SLOT_TAKEN: t.errors.slotTaken, UNEXPECTED_ERROR: t.errors.unexpected }[error]
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(checkoutSchema),
-    defaultValues: {
-      name: clientDetails.name,
-      email: clientDetails.email,
-      phone: clientDetails.phone,
-    },
-  })
-
-  const onSubmit = async (data) => {
-    if (!slotId) return
-
-    // Valores explícitos: no dependemos del store ni del render anterior (BR-B4)
+  const onSubmit = async (event) => {
+    event.preventDefault()
     const result = await submitBooking({ slotId, players })
 
     if (result.success) {
+      const clientName = queryClient.getQueryData(meQueryKey)?.name
       navigate(CONFIRMATION_PATH, {
-        state: {
-          booking: { ...result.data, startsAt: selectedSlot?.starts_at, clientName: data.name },
-        },
+        state: { booking: { ...result.data, startsAt, clientName } },
       })
     }
   }
@@ -72,15 +76,10 @@ export function CheckoutPage() {
 
       <Ticket roomName={room.name} players={players} pricePerPlayer={room.pricePerPlayer} />
 
-      {/* noValidate: Zod gives the messages, not the browser bubble. */}
-      <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Field label={t.name} error={errors.name?.message} {...register('name')} />
-        <Field label={t.email} type="email" error={errors.email?.message} {...register('email')} />
-        <Field label={t.phone} type="tel" error={errors.phone?.message} {...register('phone')} />
+      <form onSubmit={onSubmit} className="space-y-4">
+        {error && <Alert tone="error">{error}</Alert>}
 
-        {errorText && <Alert tone="error">{errorText}</Alert>}
-
-        <Button type="submit" disabled={isSubmitting || !slotId}>
+        <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? t.submitting : t.submit}
         </Button>
       </form>

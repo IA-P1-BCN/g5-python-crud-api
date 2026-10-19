@@ -10,7 +10,6 @@ describe('bookingDraft.store', () => {
   it('should initialize with default state', () => {
     const state = useBookingDraftStore.getState()
     expect(state.slotId).toBeNull()
-    expect(state.clientDetails).toEqual({ name: '', email: '', phone: '' })
     expect(state.currentStep).toBe(1)
   })
 
@@ -27,18 +26,6 @@ describe('bookingDraft.store', () => {
     expect(state.slotId).toBe('slot-abc-123')
   })
 
-  it('should update client details partially without overwriting existing fields', () => {
-    useBookingDraftStore.getState().setClientDetails({ name: 'Isbel' })
-    useBookingDraftStore.getState().setClientDetails({ email: 'test@example.com' })
-
-    const state = useBookingDraftStore.getState()
-    expect(state.clientDetails).toEqual({
-      name: 'Isbel',
-      email: 'test@example.com',
-      phone: '',
-    })
-  })
-
   it('should reset the draft completely', () => {
     useBookingDraftStore.getState().setSlotId('slot-999')
     useBookingDraftStore.getState().setStep(3)
@@ -47,5 +34,26 @@ describe('bookingDraft.store', () => {
     const state = useBookingDraftStore.getState()
     expect(state.slotId).toBeNull()
     expect(state.currentStep).toBe(1)
+  })
+
+  it('keeps the draft when the same room is opened again', () => {
+    useBookingDraftStore.getState().startRoom('faro')
+    useBookingDraftStore.getState().setSelectedSlot({ id: 1 })
+    useBookingDraftStore.getState().startRoom('faro')
+
+    expect(useBookingDraftStore.getState().selectedSlot).toEqual({ id: 1 })
+  })
+
+  it('resets the slot and the day when another room is opened', () => {
+    useBookingDraftStore.getState().startRoom('faro')
+    useBookingDraftStore.getState().setSelectedDate('2030-01-01')
+    useBookingDraftStore.getState().setSelectedSlot({ id: 1 })
+    useBookingDraftStore.getState().startRoom('mansion')
+
+    const state = useBookingDraftStore.getState()
+    expect(state.roomSlug).toBe('mansion')
+    expect(state.selectedSlot).toBeNull()
+    expect(state.slotId).toBeNull()
+    expect(state.selectedDate).toBeNull()
   })
 })

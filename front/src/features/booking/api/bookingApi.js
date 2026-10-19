@@ -1,9 +1,5 @@
 // Axios calls: slots and create booking. No React, no mapping.
 import { api } from '@/shared/api/client.js'
-import { SlotTakenError } from '../model/errors'
-
-// Códigos del contrato (BR-X1) que significan que la franja ya no se puede reservar
-const SLOT_UNAVAILABLE_CODES = ['SLOT_TAKEN', 'SLOT_NOT_AVAILABLE']
 
 export async function fetchSlots({ roomId, date }) {
   // No `available` filter: the grid also shows taken, blocked and past slots.
@@ -13,26 +9,18 @@ export async function fetchSlots({ roomId, date }) {
   return data.items
 }
 
-export async function createBooking({ slotId, players }) {
-  try {
-    // BookingCreate requires our users.id, not the Supabase uuid
-    const { data: me } = await api.get('/users/me')
-    const { data } = await api.post('/bookings', {
-      user_id: me.id,
-      time_slot_id: slotId,
-      players: players || 1,
-    })
-    return data
-  } catch (error) {
-    const { status, data } = error.response ?? {}
+// Same call as the auth feature: the result is stored under its `meQueryKey`.
+export async function fetchCurrentUser() {
+  const { data } = await api.get('/users/me')
+  return data
+}
 
-    if (SLOT_UNAVAILABLE_CODES.includes(data?.code)) {
-      throw new SlotTakenError()
-    }
-
-    const err = new Error(data?.detail || error.message)
-    err.status = status
-    err.code = data?.code
-    throw err
-  }
+// `userId` is our users.id (BookingCreate.user_id), not the Supabase uuid.
+export async function createBooking({ userId, slotId, players }) {
+  const { data } = await api.post('/bookings', {
+    user_id: userId,
+    time_slot_id: slotId,
+    players,
+  })
+  return data
 }
