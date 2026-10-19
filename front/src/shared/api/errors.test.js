@@ -50,10 +50,18 @@ describe('mapApiError', () => {
     })
   })
 
-  it('no response (network down) → network message, no code', () => {
-    expect(mapApiError(new Error('Network Error'))).toEqual({
+  it('Axios error without a response (network down) → network message, no code', () => {
+    const networkError = Object.assign(new Error('Network Error'), { isAxiosError: true })
+    expect(mapApiError(networkError)).toEqual({
       code: null,
       message: es.common.errors.NETWORK_ERROR,
+    })
+  })
+
+  it('error that is not from Axios → generic message, not the network one', () => {
+    expect(mapApiError(new Error('boom'))).toEqual({
+      code: null,
+      message: es.common.errors.unknown,
     })
   })
 })
