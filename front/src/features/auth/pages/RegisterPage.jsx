@@ -34,7 +34,7 @@ export default function RegisterPage() {
   if (signUp.isSuccess && signUp.data?.needsConfirmation) {
     return (
       <main className="mx-auto flex max-w-md flex-col items-center gap-6 p-8 text-center">
-        <h1 className="text-3xl font-bold">{t.title}</h1>
+        <h1 className="heading-title">{t.title}</h1>
         <Alert tone="success">{t.checkEmail}</Alert>
         <Link to="/login" className="underline">
           {t.loginLink}
@@ -48,7 +48,7 @@ export default function RegisterPage() {
 
   return (
     <main className="mx-auto flex max-w-md flex-col items-center gap-6 p-8 text-center">
-      <h1 className="text-3xl font-bold">{t.title}</h1>
+      <h1 className="heading-title">{t.title}</h1>
       <p>{t.subtitle}</p>
 
       {/* noValidate: the browser would block the submit before our inline Zod messages show. */}
