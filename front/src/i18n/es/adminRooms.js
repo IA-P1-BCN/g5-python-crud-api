@@ -74,7 +74,7 @@ export default {
     actions: { edit: 'Editar', block: 'Bloquear', unblock: 'Desbloquear', delete: 'Eliminar' },
     generate: {
       title: 'Generar franjas',
-      help: 'Crea franjas disponibles para varios días a la vez (máximo 90 días). Las horas son UTC. Se omiten las franjas pasadas o solapadas.',
+      help: 'Crea franjas disponibles para varios días a la vez (máximo 90 días). Las horas son las de tu zona horaria. Se omiten las franjas pasadas o solapadas.',
       labels: {
         date_from: 'Desde',
         date_to: 'Hasta',
@@ -89,6 +89,10 @@ export default {
         toBeforeFrom: 'La fecha final no puede ser anterior a la inicial.',
         tooLong: 'El rango no puede superar 90 días.',
         firstAfterLast: 'La primera hora no puede ser posterior a la última.',
+        timezoneChange:
+          'El rango cruza un cambio de hora (verano/invierno): genera por separado cada parte.',
+        otherUtcDay:
+          'Esta hora local cae en otro día en UTC: usa una hora entre las 02:00 y las 23:59.',
       },
     },
     form: {

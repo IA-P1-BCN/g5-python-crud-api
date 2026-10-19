@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { generateSlotsSchema } from './generateSlotsSchema'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { generateSlotsSchema, toUtcPayload } from './generateSlotsSchema'
 
 const valid = {
   date_from: '2030-11-04',
@@ -36,5 +36,43 @@ describe('generateSlotsSchema', () => {
 
   it('rejects first_start after last_start', () => {
     expect(messages({ ...valid, first_start: '21:00' })).toHaveLength(1)
+  })
+})
+
+describe('toUtcPayload', () => {
+  it('sends the local time as UTC (works in any machine timezone)', () => {
+    const local = new Date('2030-07-01T10:00')
+    const out = toUtcPayload({ ...valid, date_from: '2030-07-01', first_start: '10:00' })
+    expect(out.first_start).toBe(local.toISOString().slice(11, 16))
+  })
+})
+
+describe('local time limits (Europe/Madrid)', () => {
+  beforeAll(() => {
+    vi.stubEnv('TZ', 'Europe/Madrid')
+  })
+
+  it('converts winter and summer local times with their own offset', () => {
+    expect(toUtcPayload({ ...valid, first_start: '10:00' }).first_start).toBe('09:00')
+    expect(
+      toUtcPayload({
+        ...valid,
+        date_from: '2030-07-01',
+        date_to: '2030-07-02',
+        first_start: '10:00',
+      }).first_start,
+    ).toBe('08:00')
+  })
+
+  it('rejects a range that crosses a daylight-saving change', () => {
+    expect(messages({ ...valid, date_from: '2030-03-20', date_to: '2030-04-05' })).toHaveLength(1)
+  })
+
+  it('rejects a local time whose UTC day differs', () => {
+    expect(messages({ ...valid, first_start: '00:30', last_start: '20:00' })).toHaveLength(1)
+  })
+
+  it('accepts 02:00 to 23:00', () => {
+    expect(messages({ ...valid, first_start: '02:00', last_start: '23:00' })).toHaveLength(0)
   })
 })
