@@ -1,4 +1,4 @@
-// Today's bookings ordered by time with status badge and the next-step button (GameActions).
+// Bookings ordered by time with status badge and the next-step button (GameActions).
 import es from '@/i18n/es.js'
 import Badge from '@/shared/ui/Badge.jsx'
 import GameActions from './GameActions.jsx'
@@ -15,11 +15,16 @@ const STATUS_TONE = {
 const formatHour = (iso) =>
   new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
 
-export default function TodayBookingsTable({ bookings }) {
+const formatDate = (iso) =>
+  new Date(iso).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })
+
+// showDate: the list can span several days (all bookings / one status).
+export default function TodayBookingsTable({ bookings, showDate = false }) {
   return (
     <table className="w-full text-left">
       <thead className="label-caps text-muted">
         <tr>
+          {showDate && <th className="py-2">{es.staff.date}</th>}
           <th className="py-2">{es.staff.time}</th>
           <th className="py-2">{es.staff.room}</th>
           <th className="py-2">{es.staff.client}</th>
@@ -31,6 +36,9 @@ export default function TodayBookingsTable({ bookings }) {
       <tbody>
         {bookings.map((booking) => (
           <tr key={booking.id} className="border-line border-t">
+            {showDate && (
+              <td className="py-3 font-mono">{formatDate(booking.time_slot.starts_at)}</td>
+            )}
             <td className="py-3 font-mono">{formatHour(booking.time_slot.starts_at)}</td>
             <td className="py-3">{booking.room.name}</td>
             <td className="py-3">{booking.user.name}</td>

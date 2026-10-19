@@ -1,10 +1,19 @@
-// Axios calls: today's bookings, confirm, start, finish, register result. No React, no mapping.
+// Axios calls: the planning list, confirm, start, finish, register result. No React, no mapping.
 import { api } from '@/shared/api/client.js'
 
-export async function fetchTodayBookings() {
-  // Plain array (not paginated), already ordered by slot start, cancelled excluded.
-  const { data } = await api.get('/bookings/today')
-  return data
+// `view`: 'today' (default), 'ALL' or a booking status. Always a plain array ordered by slot
+// start, cancelled excluded.
+export async function fetchBookingsView(view = 'today') {
+  if (view === 'today') {
+    const { data } = await api.get('/bookings/today')
+    return data
+  }
+  // Any date: the paginated list (staff and admin see everyone's), filtered by status if given.
+  const params = view === 'ALL' ? { size: 100 } : { status: view, size: 100 }
+  const { data } = await api.get('/bookings', { params })
+  return data.items
+    .filter((b) => b.status !== 'CANCELLED')
+    .sort((a, b) => a.time_slot.starts_at.localeCompare(b.time_slot.starts_at))
 }
 
 // PENDING -> CONFIRMED

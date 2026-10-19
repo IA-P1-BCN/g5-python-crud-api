@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import es from '@/i18n/es.js'
@@ -100,5 +101,82 @@ describe('StaffPlanningPage', () => {
     renderPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(es.staff.loadError)
+  })
+
+  it("opens on today's bookings (any status) and has no date picker", async () => {
+    respondWith([todayBookingDto({ id: 1, status: 'COMPLETED', user: { name: 'Lucía Pérez' } })])
+    renderPage()
+
+    expect(await screen.findByText('Lucía Pérez')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: es.staff.title })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: es.staff.filterToday })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.queryByLabelText(/d[ií]a/i)).not.toBeInTheDocument()
+  })
+
+  it('a status chip lists the bookings with that status whatever the date', async () => {
+    respondWith([todayBookingDto({ id: 1, user: { name: 'Lucía Pérez' } })])
+    let query
+    server.use(
+      http.get('/api/v1/bookings', ({ request }) => {
+        query = new URL(request.url).searchParams
+        return HttpResponse.json({
+          items: [todayBookingDto({ id: 2, status: 'PENDING', user: { name: 'Marc Soler' } })],
+          total: 1,
+          page: 1,
+          size: 100,
+        })
+      }),
+    )
+    renderPage()
+    await screen.findByText('Lucía Pérez')
+
+    await userEvent.click(screen.getByRole('button', { name: es.staff.statuses.PENDING }))
+
+    expect(await screen.findByText('Marc Soler')).toBeInTheDocument()
+    expect(query.get('status')).toBe('PENDING')
+    expect(query.get('date_from')).toBeNull()
+
+    await userEvent.click(screen.getByRole('button', { name: es.staff.filterToday }))
+    expect(await screen.findByText('Lucía Pérez')).toBeInTheDocument()
+  })
+
+  it('"Todas" lists every booking of every date, cancelled left out', async () => {
+    respondWith([])
+    server.use(
+      http.get('/api/v1/bookings', () =>
+        HttpResponse.json({
+          items: [
+            todayBookingDto({ id: 2, status: 'PENDING', user: { name: 'Marc Soler' } }),
+            todayBookingDto({ id: 3, status: 'CANCELLED', user: { name: 'Ana Roca' } }),
+          ],
+          total: 2,
+          page: 1,
+          size: 100,
+        }),
+      ),
+    )
+    renderPage()
+    await userEvent.click(await screen.findByRole('button', { name: es.staff.filterAll }))
+
+    expect(await screen.findByText('Marc Soler')).toBeInTheDocument()
+    expect(screen.queryByText('Ana Roca')).not.toBeInTheDocument()
+  })
+
+  it('says so when the chosen view is empty', async () => {
+    respondWith([todayBookingDto({ id: 1 })])
+    server.use(
+      http.get('/api/v1/bookings', () =>
+        HttpResponse.json({ items: [], total: 0, page: 1, size: 100 }),
+      ),
+    )
+    renderPage()
+    await userEvent.click(
+      await screen.findByRole('button', { name: es.staff.statuses.IN_PROGRESS }),
+    )
+
+    expect(await screen.findByText(es.staff.emptyFilter)).toBeInTheDocument()
   })
 })

@@ -1,9 +1,14 @@
 // Staff texts. (Spanish). One file per feature: no conflicts.
 export default {
-  title: 'Partidas de hoy',
+  title: 'Partidas',
   loading: 'Cargando partidas…',
   loadError: 'No hemos podido cargar las partidas de hoy.',
   empty: 'Hoy no hay partidas.',
+  filterToday: 'Hoy',
+  date: 'Fecha',
+  emptyFilter: 'Ninguna partida con este estado.',
+  filterLabel: 'Filtrar por estado',
+  filterAll: 'Todas',
   time: 'Hora',
   room: 'Sala',
   client: 'Cliente',
@@ -30,6 +35,7 @@ export default {
     save: 'Guardar resultado',
   },
   errors: {
+    NOT_GAME_DAY: 'Solo puedes iniciar la partida el día de la partida.',
     INVALID_TRANSITION: 'Esta partida ya cambió de estado. Recarga la lista.',
     DUPLICATE: 'Esta partida ya tiene un resultado.',
   },
