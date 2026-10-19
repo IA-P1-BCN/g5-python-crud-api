@@ -2,7 +2,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import es from '@/i18n/es.js'
 import Alert from '@/shared/ui/Alert.jsx'
 import Button from '@/shared/ui/Button.jsx'
@@ -44,7 +44,7 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex max-w-md flex-col items-center gap-6 p-8 text-center">
-      <h1 className="text-3xl font-bold">{es.auth.title}</h1>
+      <h1 className="heading-title">{es.auth.title}</h1>
       <p>{es.auth.subtitle}</p>
 
       {/* noValidate: the browser would block the submit before our inline Zod messages show. */}
@@ -79,7 +79,14 @@ export default function LoginPage() {
       <Button variant="secondary" onClick={handleGoogle} loading={googleSubmitting}>
         {es.auth.google}
       </Button>
-      {googleFailed && <p role="alert">{es.auth.error}</p>}
+      {googleFailed && <Alert tone="error">{es.auth.error}</Alert>}
+
+      <p>
+        {es.auth.noAccount}{' '}
+        <Link to="/register" className="underline">
+          {es.auth.registerLink}
+        </Link>
+      </p>
     </main>
   )
 }

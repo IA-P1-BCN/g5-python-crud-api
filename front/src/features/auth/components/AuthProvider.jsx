@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'reac
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { setAuthTokenGetter, setUnauthorizedHandler } from '@/shared/api/client.js'
-import { fetchMe, meQueryKey, signInWithPassword } from '../api/authApi.js'
+import { fetchMe, meQueryKey, signInWithPassword, signUpWithPassword } from '../api/authApi.js'
 import { AuthContext } from '../hooks/useAuth.js'
 import { supabase } from '../model/supabaseClient.js'
 
@@ -75,6 +75,19 @@ export default function AuthProvider({ children }) {
     setSession(data.session)
   }, [])
 
+  // Sign-up with email + password. With "confirm email" off Supabase returns a session and the user is
+  // in at once; with it on there is no session yet. Resolves { needsConfirmation }, throws the error.
+  const registerWithPassword = useCallback(async (values) => {
+    const { data, error } = await signUpWithPassword(values)
+    if (error) throw error
+    // An already registered email: Supabase hides it (no error) and returns a user without identities.
+    if (data.user?.identities?.length === 0) {
+      throw Object.assign(new Error('User already registered'), { code: 'user_already_exists' })
+    }
+    if (data.session) setSession(data.session)
+    return { needsConfirmation: !data.session }
+  }, [])
+
   const logout = useCallback(async () => {
     await supabase.auth.signOut()
     setSession(null)
@@ -99,9 +112,20 @@ export default function AuthProvider({ children }) {
       loading: initializing,
       login,
       loginWithPassword,
+      registerWithPassword,
       logout,
     }),
-    [session, me, roleLookupFailed, retryRole, initializing, login, loginWithPassword, logout],
+    [
+      session,
+      me,
+      roleLookupFailed,
+      retryRole,
+      initializing,
+      login,
+      loginWithPassword,
+      registerWithPassword,
+      logout,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

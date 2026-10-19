@@ -8,3 +8,17 @@ export function loginErrorMessage(error) {
   if (error?.code === 'email_not_confirmed') return es.auth.emailNotConfirmed
   return es.auth.loginError
 }
+
+// Supabase sign-up error (or an API DUPLICATE) -> Spanish text. Anything unknown gets the generic message.
+export function registerErrorMessage(error) {
+  const code = error?.response?.data?.code ?? error?.code
+  if (
+    code === 'user_already_exists' ||
+    code === 'DUPLICATE' ||
+    /already registered/i.test(error?.message ?? '')
+  ) {
+    return es.auth.register.duplicate
+  }
+  if (code === 'weak_password') return es.auth.register.weakPassword
+  return es.auth.register.error
+}

@@ -14,3 +14,9 @@ export async function fetchMe() {
 export function signInWithPassword({ email, password }) {
   return supabase.auth.signInWithPassword({ email, password })
 }
+
+// Sign-up with email + password. `name` goes to the user metadata (user_metadata.full_name), which
+// AuthProvider exposes as user.name. The API creates the users row on the first authenticated call.
+export function signUpWithPassword({ name, email, password }) {
+  return supabase.auth.signUp({ email, password, options: { data: { full_name: name } } })
+}
