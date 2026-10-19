@@ -25,6 +25,24 @@ describe('mapApiError', () => {
     expect(mapApiError(apiError('FORBIDDEN'), featureCodes).message).toBe('Solo el admin')
   })
 
+  it.each([
+    'BOOKING_LIMIT_REACHED',
+    'ROOM_HAS_BOOKINGS',
+    'LAST_ADMIN',
+    'ROOM_INACTIVE',
+    'USER_INACTIVE',
+    'INVALID_PLAYERS',
+    'SLOT_OVERLAP',
+    'AUTH_UNAVAILABLE',
+    'METHOD_NOT_ALLOWED',
+    'HTTP_ERROR',
+  ])('maps %s to its common Spanish message', (code) => {
+    expect(mapApiError(apiError(code))).toEqual({
+      code,
+      message: es.common.errors[code],
+    })
+  })
+
   it('unknown code → generic message, code kept', () => {
     expect(mapApiError(apiError('SOMETHING_NEW'))).toEqual({
       code: 'SOMETHING_NEW',
@@ -32,8 +50,16 @@ describe('mapApiError', () => {
     })
   })
 
-  it('no response (network down) → generic message, no code', () => {
-    expect(mapApiError(new Error('Network Error'))).toEqual({
+  it('Axios error without a response (network down) → network message, no code', () => {
+    const networkError = Object.assign(new Error('Network Error'), { isAxiosError: true })
+    expect(mapApiError(networkError)).toEqual({
+      code: null,
+      message: es.common.errors.NETWORK_ERROR,
+    })
+  })
+
+  it('error that is not from Axios → generic message, not the network one', () => {
+    expect(mapApiError(new Error('boom'))).toEqual({
       code: null,
       message: es.common.errors.unknown,
     })
