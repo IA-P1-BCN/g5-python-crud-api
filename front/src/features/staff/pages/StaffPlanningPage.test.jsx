@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import es from '@/i18n/es.js'
@@ -100,5 +101,31 @@ describe('StaffPlanningPage', () => {
     renderPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(es.staff.loadError)
+  })
+
+  it('filters the list by status with the chips, and "Todas" shows everything again', async () => {
+    respondWith([
+      todayBookingDto({ id: 1, status: 'CONFIRMED', user: { name: 'Lucía Pérez' } }),
+      todayBookingDto({ id: 2, status: 'COMPLETED', user: { name: 'Marc Soler' } }),
+    ])
+    renderPage()
+    await screen.findByText('Lucía Pérez')
+
+    await userEvent.click(screen.getByRole('button', { name: es.staff.statuses.COMPLETED }))
+    expect(screen.queryByText('Lucía Pérez')).not.toBeInTheDocument()
+    expect(screen.getByText('Marc Soler')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: es.staff.filterAll }))
+    expect(screen.getByText('Lucía Pérez')).toBeInTheDocument()
+  })
+
+  it('says so when no booking has the chosen status', async () => {
+    respondWith([todayBookingDto({ id: 1, status: 'CONFIRMED' })])
+    renderPage()
+    await userEvent.click(
+      await screen.findByRole('button', { name: es.staff.statuses.IN_PROGRESS }),
+    )
+
+    expect(screen.getByText(es.staff.emptyFilter)).toBeInTheDocument()
   })
 })
