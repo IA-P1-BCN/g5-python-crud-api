@@ -2,6 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, vi } from 'vitest'
 import { AuthProvider } from '@/features/auth'
 import es from '@/i18n/es.js'
+import { http, HttpResponse } from 'msw'
+import { roomsPage } from '@/test/mocks/handlers/rooms.js'
+import { server } from '@/test/mocks/server.js'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { adminRoomsRoutes } from '@/features/admin-rooms'
@@ -70,18 +73,31 @@ describe('private routes', () => {
     mocks.auth.signOut.mockResolvedValue({ error: null })
   })
 
-  it('with a session the home page renders', async () => {
+  it('with a session "/" redirects to the rooms page', async () => {
     mocks.auth.getSession.mockResolvedValue({ data: { session } })
+    server.use(http.get('/api/v1/rooms', () => HttpResponse.json(roomsPage([]))))
     renderApp('/')
 
-    expect(await screen.findByRole('heading', { name: 'Escape rooms' })).toBeInTheDocument()
+    expect(await screen.findByText(es.rooms.empty)).toBeInTheDocument()
+  })
+
+  it('an unknown URL shows the 404 page', async () => {
+    mocks.auth.getSession.mockResolvedValue({ data: { session } })
+    renderApp('/nada-que-ver')
+
+    expect(
+      await screen.findByRole('heading', { name: es.common.notFound.title }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: es.common.notFound.back })).toHaveAttribute(
+      'href',
+      '/salas',
+    )
   })
 
   it('without a session the home page redirects to /login', async () => {
     renderApp('/')
 
     expect(await screen.findByRole('heading', { name: es.auth.title })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Escape rooms' })).not.toBeInTheDocument()
   })
 
   it('/dashboard without a session redirects to /login', async () => {

@@ -12,10 +12,22 @@ export default {
     rooms: 'Salas',
     history: 'Historial',
     profile: 'Perfil',
+    myBookings: 'Mis reservas',
+    adminUsers: 'Usuarios',
     staff: 'Planning de hoy',
     adminRooms: 'Gestión de salas',
     login: 'Acceder',
     logout: 'Cerrar sesión',
+  },
+  notFound: {
+    title: 'Página no encontrada',
+    description: 'La dirección que buscas no existe o ha cambiado.',
+    back: 'Ir a las salas',
+  },
+  crash: {
+    title: 'Algo ha salido mal',
+    description: 'Ha ocurrido un error inesperado. Recarga la página para intentarlo de nuevo.',
+    reload: 'Recargar',
   },
   errors: {
     UNAUTHORIZED: 'Tu sesión ha caducado. Vuelve a iniciar sesión.',

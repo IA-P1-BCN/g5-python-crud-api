@@ -63,6 +63,7 @@ describe('NavBar', () => {
     expect(link(nav.rooms)).toBeInTheDocument()
     expect(link(nav.staff)).not.toBeInTheDocument()
     expect(link(nav.adminRooms)).not.toBeInTheDocument()
+    expect(link(nav.adminUsers)).not.toBeInTheDocument()
   })
 
   it('staff: adds the staff planning but no admin links', async () => {
@@ -83,6 +84,31 @@ describe('NavBar', () => {
     expect(link(nav.staff)).toBeInTheDocument()
     expect(link(nav.history)).toBeInTheDocument()
     expect(link(nav.rooms)).toBeInTheDocument()
+  })
+
+  it.each(['client', 'staff', 'admin'])('%s: has Mis reservas to /mis-reservas', async (role) => {
+    signInAs(role)
+    renderNavBar()
+
+    expect(await screen.findByRole('link', { name: nav.myBookings })).toHaveAttribute(
+      'href',
+      '/mis-reservas',
+    )
+  })
+
+  it('only the admin sees Usuarios (/admin/usuarios)', async () => {
+    signInAs('staff')
+    const { unmount } = renderNavBar()
+    await screen.findByRole('link', { name: nav.staff })
+    expect(link(nav.adminUsers)).not.toBeInTheDocument()
+    unmount()
+
+    signInAs('admin')
+    renderNavBar()
+    expect(await screen.findByRole('link', { name: nav.adminUsers })).toHaveAttribute(
+      'href',
+      '/admin/usuarios',
+    )
   })
 
   it.each(['client', 'staff', 'admin'])('%s: has the Perfil link to /perfil', async (role) => {
@@ -108,6 +134,7 @@ describe('NavBar', () => {
     expect(await screen.findByRole('link', { name: nav.login })).toBeInTheDocument()
     expect(link(nav.rooms)).toBeInTheDocument()
     expect(link(nav.history)).not.toBeInTheDocument()
+    expect(link(nav.myBookings)).not.toBeInTheDocument()
     expect(link(nav.staff)).not.toBeInTheDocument()
     expect(link(nav.adminRooms)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: nav.logout })).not.toBeInTheDocument()

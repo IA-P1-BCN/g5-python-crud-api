@@ -20,6 +20,7 @@ function renderPage(initialRoute) {
         <Routes>
           <Route path="/salas" element={<p>{es.rooms.corridorLabel}</p>} />
           <Route path="/salas/:slug" element={<RoomPage />} />
+          <Route path="/reservar/:slug" element={<p>booking grid</p>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -70,5 +71,14 @@ describe('RoomPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: es.rooms.backToCorridor }))
 
     expect(screen.getByText(es.rooms.corridorLabel)).toBeInTheDocument()
+  })
+
+  it('has a Reservar button that goes to the booking page of the room', async () => {
+    respondWithRoom('faro', roomDto({ slug: 'faro', name: 'Faro 1923' }))
+    renderPage('/salas/faro')
+
+    await userEvent.click(await screen.findByRole('button', { name: es.rooms.reserve }))
+
+    expect(screen.getByText('booking grid')).toBeInTheDocument()
   })
 })
