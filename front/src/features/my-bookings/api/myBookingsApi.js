@@ -6,10 +6,17 @@ export async function fetchGameHistory() {
   return data
 }
 
-export async function fetchMyBookings() {
-  // A client only gets their own bookings (the API scopes it from the JWT).
+// Current user as the API knows it. Same call and same query key as the auth feature, so the cache
+// is shared; we need the numeric `id` here (the Supabase id of useAuth is a different thing).
+export async function fetchCurrentUser() {
+  const { data } = await api.get('/users/me')
+  return data
+}
+
+export async function fetchMyBookings(userId) {
+  // Staff and admin get EVERYONE's bookings unless `user_id` is sent (a client is scoped by the API).
   // Size 100 is the API maximum: more than that needs real pagination (not in ticket 074).
-  const { data } = await api.get('/bookings', { params: { size: 100 } })
+  const { data } = await api.get('/bookings', { params: { user_id: userId, size: 100 } })
   return data.items
 }
 
