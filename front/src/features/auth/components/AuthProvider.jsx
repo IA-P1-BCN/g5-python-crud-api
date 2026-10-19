@@ -13,6 +13,15 @@ export default function AuthProvider({ children }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
+  // The local session is dropped even if Supabase cannot be reached.
+  const signOutSafely = useCallback(async () => {
+    try {
+      await supabase.auth.signOut()
+    } catch {
+      // nothing to do: the caller clears the local state anyway
+    }
+  }, [])
+
   // Layout effect: runs before the children's effects, so their first request already has the token.
   useLayoutEffect(() => {
     const removeToken = setAuthTokenGetter(async () => {
@@ -20,32 +29,41 @@ export default function AuthProvider({ children }) {
       return data.session?.access_token ?? null
     })
     const removeUnauthorized = setUnauthorizedHandler(async () => {
-      await supabase.auth.signOut()
+      await signOutSafely()
       setSession(null)
-      queryClient.removeQueries({ queryKey: meQueryKey })
+      queryClient.clear()
       navigate('/login', { replace: true })
     })
     return () => {
       removeToken()
       removeUnauthorized()
     }
-  }, [navigate, queryClient])
+  }, [navigate, queryClient, signOutSafely])
 
   useEffect(() => {
     let active = true
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return
-      setSession(data.session)
-      setInitializing(false)
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (active) setSession(data.session)
+      })
+      .catch(() => {
+        // no readable session: treat the visitor as logged out
+      })
+      .finally(() => {
+        if (active) setInitializing(false)
+      })
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === 'SIGNED_OUT') queryClient.clear()
+      setSession(nextSession)
+    })
     return () => {
       active = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [queryClient])
 
   const {
     data: me,
@@ -89,10 +107,10 @@ export default function AuthProvider({ children }) {
   }, [])
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut()
+    await signOutSafely()
     setSession(null)
-    queryClient.removeQueries({ queryKey: meQueryKey })
-  }, [queryClient])
+    queryClient.clear()
+  }, [queryClient, signOutSafely])
 
   const value = useMemo(
     () => ({

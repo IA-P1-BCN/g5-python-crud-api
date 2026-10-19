@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import es from '@/i18n/es.js'
 import { server } from '@/test/mocks/server.js'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth.js'
 import LoginPage from '../pages/LoginPage.jsx'
 import AuthProvider from './AuthProvider.jsx'
@@ -15,6 +16,7 @@ const mocks = vi.hoisted(() => ({
     getSession: vi.fn(),
     onAuthStateChange: vi.fn(),
     signInWithOAuth: vi.fn(),
+    signInWithPassword: vi.fn(),
     signOut: vi.fn(),
   },
 }))
@@ -35,8 +37,10 @@ function Probe() {
   )
 }
 
-function renderApp(path) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+function renderApp(
+  path,
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[path]}>
@@ -118,5 +122,108 @@ describe('AuthProvider', () => {
 
     expect(await screen.findByRole('button', { name: es.auth.google })).toBeInTheDocument()
     expect(mocks.auth.signOut).toHaveBeenCalled()
+  })
+
+  describe('cache between users (FR-06)', () => {
+    const bookingsKey = ['bookings', 'mine']
+
+    function Bookings() {
+      const { logout, loginWithPassword } = useAuth()
+      const { data } = useQuery({ queryKey: bookingsKey, queryFn: () => [], enabled: false })
+      return (
+        <div>
+          <p>{data ? `reservas:${data}` : 'sin reservas'}</p>
+          <button onClick={logout}>salir</button>
+          <button onClick={() => loginWithPassword({ email: 'b@x.com', password: 'p' })}>
+            entrar-b
+          </button>
+        </div>
+      )
+    }
+
+    function renderBookings(client) {
+      return render(
+        <QueryClientProvider client={client}>
+          <MemoryRouter>
+            <AuthProvider>
+              <Bookings />
+            </AuthProvider>
+          </MemoryRouter>
+        </QueryClientProvider>,
+      )
+    }
+
+    it('logout then login as B: no data of A on the first render', async () => {
+      mocks.auth.getSession.mockResolvedValue({ data: { session } })
+      server.use(http.get('/api/v1/users/me', () => HttpResponse.json({ role: 'client' })))
+      mocks.auth.signInWithPassword.mockResolvedValue({
+        data: { session: { access_token: 'jwt-b', user: { id: 'u2', email: 'b@x.com' } } },
+        error: null,
+      })
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      client.setQueryData(bookingsKey, ['de-A'])
+      renderBookings(client)
+      expect(await screen.findByText('reservas:de-A')).toBeInTheDocument()
+
+      await userEvent.click(screen.getByRole('button', { name: 'salir' }))
+      expect(await screen.findByText('sin reservas')).toBeInTheDocument()
+      expect(client.getQueryData(bookingsKey)).toBeUndefined()
+
+      await userEvent.click(screen.getByRole('button', { name: 'entrar-b' }))
+      expect(screen.queryByText(/de-A/)).not.toBeInTheDocument()
+    })
+
+    it('401 clears the whole cache', async () => {
+      mocks.auth.getSession.mockResolvedValue({ data: { session } })
+      server.use(
+        http.get('/api/v1/users/me', () =>
+          HttpResponse.json({ code: 'UNAUTHORIZED' }, { status: 401 }),
+        ),
+      )
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      client.setQueryData(bookingsKey, ['de-A'])
+      renderApp('/perfil', client)
+      await screen.findByRole('button', { name: es.auth.google })
+      expect(client.getQueryData(bookingsKey)).toBeUndefined()
+    })
+
+    it('SIGNED_OUT event clears the whole cache', async () => {
+      const client = new QueryClient()
+      client.setQueryData(bookingsKey, ['de-A'])
+      renderApp('/perfil', client)
+      await screen.findByText('Invitado')
+      const callback = mocks.auth.onAuthStateChange.mock.calls[0][0]
+      callback('SIGNED_OUT', null)
+      await waitFor(() => expect(client.getQueryData(bookingsKey)).toBeUndefined())
+    })
+
+    it('logout still clears the cache and session when signOut rejects', async () => {
+      mocks.auth.getSession.mockResolvedValue({ data: { session } })
+      server.use(http.get('/api/v1/users/me', () => HttpResponse.json({ role: 'client' })))
+      mocks.auth.signOut.mockRejectedValue(new Error('network'))
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      client.setQueryData(bookingsKey, ['de-A'])
+      renderBookings(client)
+      await screen.findByText('reservas:de-A')
+      await userEvent.click(screen.getByRole('button', { name: 'salir' }))
+      expect(await screen.findByText('sin reservas')).toBeInTheDocument()
+    })
+  })
+
+  it('getSession rejecting ends the loading state', async () => {
+    mocks.auth.getSession.mockRejectedValue(new Error('storage down'))
+    function Loading() {
+      return <p>{useAuth().loading ? 'cargando' : 'listo'}</p>
+    }
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <AuthProvider>
+            <Loading />
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    expect(await screen.findByText('listo')).toBeInTheDocument()
   })
 })

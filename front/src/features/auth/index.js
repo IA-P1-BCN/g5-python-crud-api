@@ -2,6 +2,7 @@
 export { authRoutes } from './routes.js'
 export { default as AuthProvider } from './components/AuthProvider.jsx'
 export { default as RequireRole } from './components/RequireRole.jsx'
-export { useAuth } from './hooks/useAuth.js'
+export { useAuth, useCurrentUserId } from './hooks/useAuth.js'
 export { hasRole } from './model/roles.js'
 export { default as RequireAuth } from './components/RequireAuth.jsx'
+export { meQueryKey } from './api/authApi.js'
