@@ -55,7 +55,7 @@ export function AdminRoomsPage() {
   return (
     <main className="mx-auto max-w-5xl p-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="heading-hero text-text">{t.title}</h1>
+        <h1 className="heading-title text-text">{t.title}</h1>
         <Dialog
           open={open}
           onOpenChange={(next) => {
