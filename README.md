@@ -1,405 +1,265 @@
-# Escape Room Management
+<div align="center">
 
-Web platform for managing escape rooms, bookings, teams, and customer experiences.
+# 🔐 Escape Room Management
 
-## Documentation
+**A web platform to browse escape rooms in an immersive 3D corridor, book a time slot, and run the games on the day.**
 
-| Doc                                      | Content                                    |
-| ---------------------------------------- | ------------------------------------------ |
-| [PRD](docs/PRD.md)                       | Context, scope per sprint                  |
-| [Stack](docs/STACK.md)                   | FastAPI, PostgreSQL, Supabase Auth, pytest |
-| [Architecture](docs/ARCHI.md)            | Structure, layers, tests                   |
-| [Business rules](docs/BUSINESS_RULES.md) | Rules Sprint 1 and 2, permissions          |
-| [User stories](docs/STORIES.md)          | Stories and acceptance criteria            |
-| [Tickets](docs/TICKETS.md)               | Tickets and timeline                       |
-| [Work split](docs/WORK_SPLIT.md)         | 4 parts to choose from, by resource        |
-| [API contract](docs/API_CONTRACT.md)     | Endpoints and error format                 |
-| [Diagrams](docs/DIAGRAMS.md)             | ER, flows, state machine (Mermaid)         |
-| [Contributing](docs/CONTRIBUTING.md)     | Git flow, PR rules                         |
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Tailwind](https://img.shields.io/badge/Tailwind-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Auth-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Tests](https://img.shields.io/badge/back%20tests-448%20passing-43A047?style=for-the-badge&logo=checkmarx&logoColor=white)
 
-## Tech Stack
+[📖 Overview](#-overview) • [🚀 Getting started](#-getting-started) • [🧪 Tests](#-running-the-tests) • [🔌 API](#-api) • [🧱 Architecture](#-architecture) • [🎨 Colors](#-project-colors) • [📋 Kanban](#-kanban) • [📚 Docs](#-documentation)
 
-* Python 3.12
-* FastAPI
-* Pydantic v2
-* SQLAlchemy 2.x
-* Alembic
-* PostgreSQL 16
-* Docker Compose
-* Supabase PostgreSQL for shared team development
-* pytest + httpx
-* Ruff
+</div>
 
-## Prerequisites
+## 📖 Overview
 
-* Git
-* Docker Desktop
-* Docker Compose
+At the **Factoría F5 bootcamp (IA P1, Barcelona)** our team of four built an app for an **escape room business**: a REST API (FastAPI) and a React client to browse the rooms, book a time slot and run the games on the day.
 
-## Getting Started
+**🧩 The problem it solves**
 
-### 1. Clone the repository
+Escape room owners often manage bookings with phone calls, messages and spreadsheets. That leads to double bookings, last-minute cancellations nobody can track, and staff who do not know who is arriving or which room is free.
+
+This app puts everything in one place: customers book online and the system makes double booking impossible; staff see exactly who plays today; owners manage rooms and schedules without touching the database.
+
+**👥 Who is it for?**
+
+- 🧑‍🤝‍🧑 **Clients** browse the rooms, book, modify or cancel (24h rule) and see their game history and results.
+- 🧑‍✈️ **Staff** see today's bookings, start and finish games and register results.
+- 🛠️ **Admins** manage rooms, time slots, users and roles.
+
+**✨ Features**
+
+- 🚪 Immersive 3D corridor (Three.js) with an accessible poster-grid fallback
+- 📅 Slot grid with live states: free, taken, blocked, past
+- 🔒 Google login via Supabase and role-based access (client / staff / admin)
+- 🎮 Game flow: `PENDING → CONFIRMED → IN_PROGRESS → COMPLETED`
+- 🚫 Double booking impossible (enforced by the database)
+- 📘 Interactive API docs (Swagger UI), generated automatically
+
+## 🚀 Getting started
+
+**Prerequisites:** Git, Docker Desktop (with Docker Compose).
 
 ```bash
 git clone https://github.com/IA-P1-BCN/g5-python-crud-api.git
 cd g5-python-crud-api
-```
-
-### 2. Configure environment variables
-
-Create your local `.env` file from the example:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Review the values in `.env` before starting the application.
-
-### Local development
-
-By default, the project can run against the PostgreSQL 16 database provided by Docker Compose.
-
-The local configuration uses:
-
-```text
-DATABASE_URL
-POSTGRES_DB
-POSTGRES_USER
-POSTGRES_PASSWORD
-POSTGRES_HOST
-POSTGRES_PORT
-```
-
-### Shared team database
-
-For shared team development, the project can also use the common PostgreSQL database hosted in Supabase.
-
-Add the following variable to your local `.env`:
-
-```text
-SHARED_DATABASE_URL=<your-supabase-postgresql-connection-string>
-```
-
-When `SHARED_DATABASE_URL` is configured, the application uses the shared Supabase PostgreSQL database instead of the local Docker PostgreSQL database.
-
-The Supabase connection string must be copied from the project's Supabase dashboard.
-
-Do not commit the real Supabase connection string or any other credentials.
-
-**Important:** `.env` is local-only and must never be committed to Git.
-
-### Alembic database override
-
-Alembic can optionally use a separate database connection through:
-
-```text
-ALEMBIC_DATABASE_URL=<database-connection-string>
-```
-
-When `ALEMBIC_DATABASE_URL` is not defined, Alembic uses the application's effective database connection.
-
-This should only be used when a specific migration target is required.
-
-### 3. Build and start the environment
-
-Make sure Docker Desktop is running, then execute:
-
-```bash
-docker compose up -d --build
-```
-
-This starts:
-
-* FastAPI application
-* PostgreSQL 16 database
-
-The PostgreSQL service includes a healthcheck using `pg_isready`.
-
-The API depends on PostgreSQL being healthy before it starts.
-
-When shared Supabase mode is enabled, the local PostgreSQL container may still start because it is part of the Docker Compose environment. The application can nevertheless use the shared database configured through `SHARED_DATABASE_URL`.
-
-### 4. Apply database migrations
-
-Run the latest Alembic migrations:
-
-```bash
-docker compose exec api alembic upgrade head
-```
-
-Check the current migration:
-
-```bash
-docker compose exec api alembic current
-```
-
-**Shared database warning:** migrations against the shared Supabase database affect the entire team. Coordinate schema changes with the team before applying migrations to the shared database.
-
-### 5. Verify the containers
-
-```bash
-docker compose ps
-```
-
-Expected result:
-
-```text
-api    Up
-db     Up (healthy)
-```
-
-The `db` service may still be running even when the application is configured to use the shared Supabase database.
-
-### 6. Access the API
-
-The API is available at:
-
-* API: http://localhost:8000
-* Swagger UI: http://localhost:8000/docs
-* ReDoc: http://localhost:8000/redoc
-
-### 7. Verify the API
-
-From PowerShell:
-
-```powershell
-Invoke-WebRequest http://localhost:8000/ -UseBasicParsing
-```
-
-Expected response:
-
-```text
-StatusCode : 200
-Content    : {"message":"Escape Room API"}
-```
-
-### 8. Verify the database connection
-
-To verify that the API container can connect to its configured PostgreSQL database through SQLAlchemy:
-
-```bash
-docker compose exec api python -c "from sqlalchemy import text; from back.app.database import engine; conn = engine.connect(); print(conn.execute(text('SELECT 1')).scalar()); conn.close()"
-```
-
-Expected output:
-
-```text
-1
-```
-
-This confirms that the API container can successfully connect to the currently configured database.
-
-To check which database is actually being used:
-
-```bash
-docker compose exec api python -c "from sqlalchemy import text; from back.app.database import engine; conn = engine.connect(); print(conn.execute(text('SELECT current_database(), current_user')).one()); conn.close()"
-```
-
-To list the current public tables:
-
-```bash
-docker compose exec api python -c "from sqlalchemy import text; from back.app.database import engine; conn = engine.connect(); print(conn.execute(text(\"SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name\")).fetchall()); conn.close()"
-```
-
-## Database
-
-The project supports two database modes.
-
-### Local database
-
-The default local environment uses PostgreSQL 16 running in Docker.
-
-```text
-FastAPI
-   ↓
-DATABASE_URL
-   ↓
-Docker PostgreSQL
-```
-
-Each developer can have an independent local database.
-
-### Shared database
-
-For team development, the API can use the shared Supabase PostgreSQL database.
-
-```text
-FastAPI
-   ↓
-SHARED_DATABASE_URL
-   ↓
-Supabase PostgreSQL
-   ↓
-Shared team database
-```
-
-This mode allows the team to work with the same database state, including shared records such as users, rooms, time slots, and bookings.
-
-**Important:** avoid destructive database operations against the shared database unless they have been explicitly coordinated with the team.
-
-### Current Sprint 1 models
-
-* `users`
-* `rooms`
-* `time_slots`
-* `bookings`
-
-## Database Migrations
-
-The database schema is managed with SQLAlchemy models and Alembic migrations.
-
-### Apply migrations
-
-```bash
-docker compose exec api alembic upgrade head
-```
-
-### Show the current migration
-
-```bash
-docker compose exec api alembic current
-```
-
-### Generate a new migration
-
-After changing SQLAlchemy models:
-
-```bash
-docker compose exec api alembic revision --autogenerate -m "describe the change"
-```
-
-Review the generated migration before applying it.
-
-### Reset the local database
-
-To stop the environment:
-
-```bash
-docker compose down
-```
-
-To stop the environment and remove the PostgreSQL volume:
-
-```bash
-docker compose down -v
-```
-
-Then recreate the environment:
-
-```bash
+cp .env.example .env          # review the values, never commit .env
 docker compose up -d --build
 docker compose exec api alembic upgrade head
 ```
 
-**Warning:** `docker compose down -v` permanently deletes the local PostgreSQL data stored in the Docker volume.
+| URL                           | What                          |
+| ----------------------------- | ----------------------------- |
+| http://localhost:3000         | Web client (Vite, hot reload) |
+| http://localhost:8000/docs    | Swagger UI                    |
+| http://localhost:8000/redoc   | ReDoc                         |
 
-Do not use this command as a way to reset the shared Supabase database.
+> 💡 **Tip:** The front proxies `/api` to the API container, so the browser talks to one origin and no CORS setup is needed.
 
-## Development Commands
+> 📝 **Note:** **Shared team database (optional):** set `SHARED_DATABASE_URL` in your `.env` to use the common Supabase PostgreSQL instead of the local container. Migrations on it affect the whole team: coordinate first. Optionally `ALEMBIC_DATABASE_URL` picks a specific migration target.
 
-### Run the test suite
+> ⚠️ **Warning:** Never run `docker compose down -v`: it deletes the local database volume. Never commit real connection strings.
+
+**Initial admin:** set `ADMIN_EMAILS` (comma-separated) in `.env`. Those emails get the `admin` role on their **first login only**; everyone else is a `client`.
+
+## 🧪 Running the tests
 
 ```bash
+# Backend: pytest + httpx, SQLite in-memory
 docker compose exec api pytest
-```
-
-### Check code quality
-
-```bash
 docker compose exec api ruff check .
-```
 
-### Format code
-
-```bash
-docker compose exec api ruff format .
-```
-
-### Check formatting without changing files
-
-```bash
-docker compose exec api ruff format --check .
-```
-
-## Frontend Development
-
-### See your changes as you code (hot reload)
-
-```bash
-docker compose up
-```
-
-Starts `db`, `api` and `front`. The `front` container runs the Vite dev server on
-http://localhost:3000: save a file in `front/` and the browser updates by itself. Calls to
-`/api` are proxied to the API container.
-
-`front` waits for the API healthcheck (`/health`) before starting. The first start runs
-`npm install`, so give it a few seconds. The production image (Nginx) is `front/Dockerfile`.
-
-## Frontend Development Commands
-
-Lint, formatting and tests for the front run in Docker (Node 22), so everyone gets the
-same result whatever their editor settings. The style lives in the repo:
-`front/.prettierrc`, `.editorconfig`, `front/eslint.config.js` (100 characters per line).
-
-### End of ticket, before the PR
-
-```bash
+# Frontend: prettier + eslint + vitest (run before each PR)
 docker compose run --rm front-tools
 ```
 
-This single command formats the code (Prettier), runs the linter (ESLint) and the tests
-(Vitest). It is the front equivalent of `ruff format` + `ruff check` + `pytest`.
-Commit the files it reformats along with your ticket.
+> 📝 **Note:** `front-tools` runs `prettier --write` on the whole `front/`. After it, `git status` and restore the files that are not yours.
 
-### Other commands
+**Migrations:** `alembic current` · new one: `alembic revision --autogenerate -m "describe the change"` (review it before applying).
 
-```bash
-docker compose run --rm front-tools npm run format        # format only
-docker compose run --rm front-tools npm run check         # verify only (no changes), as in CI
+## ⏱️ How a booking works
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: create booking
+    PENDING --> CONFIRMED: confirm
+    CONFIRMED --> IN_PROGRESS: start (day of the slot)
+    IN_PROGRESS --> COMPLETED: finish
+    PENDING --> CANCELLED: cancel (24h or more before)
+    CONFIRMED --> CANCELLED: cancel (24h or more before)
+    COMPLETED --> [*]: register result
 ```
 
-`docker compose up` does not start `front-tools`: it only runs on demand.
+`total_price = room.base_price × players`. Double booking is impossible: a partial unique index on `bookings(time_slot_id)` guards active bookings.
 
-### VS Code
+## 🔌 API
 
-Open the repo and accept the recommended extensions (Prettier, ESLint, Ruff). The shared
-`.vscode/settings.json` formats on save with the project rules.
+Base path `/api/v1`. Errors always look like `{ "detail": "...", "code": "SLOT_TAKEN" }`. Lists are paginated (`?page=1&size=20`). Full contract: [API_CONTRACT.md](docs/API_CONTRACT.md).
 
-## Project Documentation
+| Resource   | Main endpoints                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------ |
+| 👤 Users   | `POST/GET /users` · `GET /users/me/history` · `PUT /users/{id}/role` (admin)                     |
+| 🚪 Rooms   | `POST/GET /rooms` · `GET /rooms/{id or slug}` · `PUT /rooms/{id}` · `activate` / `deactivate`   |
+| 🕒 Slots   | `POST/GET /time-slots` · `POST /rooms/{id}/time-slots/generate` (admin)                          |
+| 📅 Bookings| `POST/GET /bookings` · `PUT …/confirm` · `cancel` · `start` · `finish` · `POST …/result`        |
+| 📊 Reports | `GET /bookings/today` (staff) · `GET /users/me/history` |
+| ❤️ Health  | `GET /health`                                                                                    |
 
-| Document                                 | Description                            |
-| ---------------------------------------- | -------------------------------------- |
-| [PRD](docs/PRD.md)                       | Context and sprint scope               |
-| [Stack](docs/STACK.md)                   | Technology decisions                   |
-| [Architecture](docs/ARCHI.md)            | Structure, layers, and testing         |
-| [Business Rules](docs/BUSINESS_RULES.md) | Business rules and permissions         |
-| [User Stories](docs/STORIES.md)          | Stories and acceptance criteria        |
-| [Tickets](docs/TICKETS.md)               | Work distribution and timeline         |
-| [Work Split](docs/WORK_SPLIT.md)         | Work distribution by resource          |
-| [API Contract](docs/API_CONTRACT.md)     | Endpoints and error format             |
-| [Diagrams](docs/DIAGRAMS.md)             | ER diagrams, flows, and state machines |
-| [Contributing](docs/CONTRIBUTING.md)     | Git workflow, TDD, and PR rules        |
+## 🧱 Architecture
 
-## Project Board
+MVC on the back, feature folders on the front. Routes hold HTTP only, controllers hold the business rules and never import FastAPI.
 
-GitHub Projects: `escape_room_project`
+```
+g5-python-crud-api/
+│
+├── back/app/                  # FastAPI API
+│   ├── models/                  → SQLAlchemy tables
+│   ├── schemas/                 → Pydantic request / response
+│   ├── controllers/             → Business rules (BR-*)
+│   ├── routes/                  → HTTP only
+│   ├── dependencies/            → get_current_user, require_role(...)
+│   └── core/                    → errors, security (JWT), pagination
+│
+├── front/src/                 # React + Vite client
+│   ├── app/                     → providers, routes, layout
+│   ├── features/                → rooms, corridor, booking, my-bookings, auth,
+│   │                              profile, staff, admin-rooms, admin-users
+│   ├── shared/                  → Axios client, hooks, UI components
+│   └── i18n/es/                 → All user-facing texts (Spanish)
+│
+├── alembic/                   # Migrations
+├── docs/                      # PRD, STACK, ARCHI, API contract, rules, design
+├── docker-compose.yml         # api + db + front (+ front-tools on demand)
+└── pyproject.toml             # Dependencies, ruff and pytest config
+```
 
-## Authentication
+On the front, the dependency flow is `app → features → shared`, enforced by ESLint. Data flows `Page → hook (TanStack Query) → api function → Axios → FastAPI`.
 
-The API uses Supabase Auth JWTs for authentication and role-based authorization.
+## 🧭 Key decisions
 
-### Initial admin setup
+| Decision                                  | Why                                                                      |
+| ----------------------------------------- | ------------------------------------------------------------------------ |
+| One resource per person, same files       | Four people in parallel with few merge conflicts                         |
+| Supabase used only for authentication     | Data stays in our PostgreSQL; role lives in our `users` table            |
+| Nginx / Vite proxy instead of CORS        | The browser sees one origin                                              |
+| JavaScript + Zod instead of TypeScript    | The team's language; data validated where it enters the app              |
+| Tailwind with design tokens, no MUI       | One look from the mockup; the default Tailwind palette is forbidden      |
+| Three.js corridor with a fallback         | Immersive on capable devices, always usable without WebGL                |
 
-Set the optional `ADMIN_EMAILS` environment variable to a comma-separated list of email addresses that should receive the `admin` role when their user account is created on first login.
+## 🎨 Project colors
 
-- Email addresses are matched case-insensitively, and surrounding whitespace is ignored.
-- Users whose email is not listed receive the `client` role.
-- This setting only determines the role at first user creation. It does not change the role of existing users.
-- Leave `ADMIN_EMAILS` empty to assign the `client` role to all newly created users.
+Always dark. Use the tokens (`bg-surface`, `text-muted`, `border-line`…), never the default Tailwind palette: a test fails otherwise. Source: `front/src/index.css`, details in [DESIGN.md](docs/DESIGN.md).
 
-Example:
+**Base and action**
 
-    ADMIN_EMAILS=admin@example.com, another-admin@example.com
+| Swatch | Token | Hex |
+| :----: | ----- | --- |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-0A0B0D-0A0B0D?style=flat-square) | `bg` | `#0A0B0D` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-121418-121418?style=flat-square) | `surface` | `#121418` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-1A1D23-1A1D23?style=flat-square) | `surface-2` | `#1A1D23` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-ECEAE4-ECEAE4?style=flat-square) | `text` | `#ECEAE4` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-A4A39B-A4A39B?style=flat-square) | `muted` | `#A4A39B` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-3DFF8F-3DFF8F?style=flat-square) | `exit` (primary action) | `#3DFF8F` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-FF5A6E-FF5A6E?style=flat-square) | `error` | `#FF5A6E` |
 
-See [STACK.md](docs/STACK.md) for the current technology decisions.
+**Booking states**
+
+| Swatch | State | Hex |
+| :----: | ----- | --- |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-FFD166-FFD166?style=flat-square) | `pending` | `#FFD166` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-3DFF8F-3DFF8F?style=flat-square) | `confirmed` | `#3DFF8F` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-7CC4FF-7CC4FF?style=flat-square) | `in-progress` | `#7CC4FF` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-C4A6FF-C4A6FF?style=flat-square) | `done` | `#C4A6FF` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-FF8A98-FF8A98?style=flat-square) | `cancelled` | `#FF8A98` |
+
+**Room themes** (accent / dark background, switched with `data-room`)
+
+| Swatch | Room | Accent | Dark |
+| :----: | ---- | ------ | ---- |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-E0A243-E0A243?style=flat-square) | 🕰️ El Relojero | `#E0A243` | `#2A1B0D` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-4FC48F-4FC48F?style=flat-square) | 📚 La Biblioteca Prohibida | `#4FC48F` | `#0C2A20` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-5CC3E6-5CC3E6?style=flat-square) | 🌊 Faro 1923 | `#5CC3E6` | `#0A2734` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-FF4560-FF4560?style=flat-square) | 💎 El Gran Atraco | `#FF4560` | `#1D0B10` |
+| ![](https://img.shields.io/badge/%20%20%20%20%20-9AA0A6-9AA0A6?style=flat-square) | 🧪 Laboratorio Zero (default theme) | `#9AA0A6` | `#1B1D20` |
+
+**Fonts:** Big Shoulders Display (titles) · Hanken Grotesk (body) · Share Tech Mono (codes, labels).
+
+## 📋 Kanban
+
+Work is tracked on the GitHub board **[escape_room_project](https://github.com/orgs/IA-P1-BCN/projects/29)**. Each ticket has an issue and a PR that closes it (`Closes #n`).
+
+```mermaid
+flowchart LR
+    A["📥 Backlog<br/>25"] --> B["✅ Ready<br/>4"] --> C["🚧 In progress<br/>3"] --> D["👀 In review<br/>0"] --> E["🎉 Done<br/>66"]
+```
+
+| Column         | Meaning                                  | Tickets |
+| -------------- | ---------------------------------------- | :-----: |
+| 📥 Backlog     | Identified, not ready to start           | 25      |
+| ✅ Ready       | Clear acceptance criteria, can be taken  | 4       |
+| 🚧 In progress | Someone is working on it                 | 3       |
+| 👀 In review   | PR open, waiting for review              | 0       |
+| 🎉 Done        | Merged into `develop`                    | 66      |
+
+_Snapshot of 2026-10-19 (98 items); the board is the live source._
+
+**Git flow:** branch from `develop` as `<type>/<ticket>-<desc>`, Conventional Commits, PR always to `develop`. Details in [CONTRIBUTING.md](docs/CONTRIBUTING.md).
+
+## 📚 Documentation
+
+| Doc                                      | Content                                  |
+| ---------------------------------------- | ---------------------------------------- |
+| [PRD](docs/PRD.md)                       | Context, scope per sprint                |
+| [Stack](docs/STACK.md)                   | Technology choices                       |
+| [Architecture](docs/ARCHI.md)            | Structure, layers, tests                 |
+| [Business rules](docs/BUSINESS_RULES.md) | Rules of both sprints, permissions       |
+| [User stories](docs/STORIES.md)          | Stories and acceptance criteria          |
+| [Tickets](docs/TICKETS.md)               | Tickets and timeline                     |
+| [Work split](docs/WORK_SPLIT.md)         | Who owns what                            |
+| [API contract](docs/API_CONTRACT.md)     | Endpoints and error format               |
+| [Design](docs/DESIGN.md)                 | Tokens and shared components             |
+| [Rooms](docs/ROOMS.md)                   | Initial room catalogue                   |
+| [Diagrams](docs/DIAGRAMS.md)             | ER, flows, state machine (Mermaid)       |
+| [Contributing](docs/CONTRIBUTING.md)     | Git flow, PR rules                       |
+
+## 🧰 Tech stack
+
+|          |                                                                       |
+| -------- | --------------------------------------------------------------------- |
+| Backend  | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2, Alembic, PostgreSQL 16 |
+| Frontend | React 19, Vite, Tailwind 4, TanStack Query, Zustand, React Hook Form + Zod, Axios, Three.js |
+| Auth     | Supabase Auth (Google), JWT validated by the API                      |
+| Tests    | pytest + httpx, Vitest + Testing Library + MSW                        |
+| Tooling  | Docker Compose, ruff, ESLint, Prettier                                |
+
+> 📝 **Note:** The customers are Spanish-speaking, so the interface copy is in Spanish. Code, comments and commits are in English.
+
+## 🔭 Next improvements
+
+Planned but **not built yet**:
+
+- 📊 Business statistics (bookings per room, occupancy, revenue) and the admin dashboard (tickets 046, 084)
+- 📤 CSV export of bookings (tickets 047, 085)
+- 📄 Pagination controls in the front lists (the API already paginates)
+- 💳 Payments, discounts and loyalty points
+- 👥 Names of the players in each booking (today only the number of players is stored)
+- ⏳ Expiry of pending bookings
+- 🔔 Real-time updates (websockets)
+- ☁️ Cloud deployment
+
+## 👩‍💻 Team
+
+Built by the **G5** team at the Factoría F5 P1 IA School training, Barcelona.
+
+| | Name | Role | GitHub |
+| :-: | ---- | ---- | ------ |
+| 🧑‍💼 | Leandro | Product Owner | [@Leandroletoile](https://github.com/Leandroletoile) |
+| 🧑‍🏫 | Marie-Charlotte Doulcet | Scrum Master | [@Charlottedoulcet](https://github.com/Charlottedoulcet) |
+| 👩‍💻 | Isbelita | Developer | [@Isbelita-dot](https://github.com/Isbelita-dot) |
+| 👩‍💻 | Carolay Vasquez | Developer | [@carovasq](https://github.com/carovasq) |
