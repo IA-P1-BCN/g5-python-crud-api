@@ -6,6 +6,8 @@ import EmptyState from '@/shared/ui/EmptyState.jsx'
 import Spinner from '@/shared/ui/Spinner.jsx'
 import BookingCard from '../components/BookingCard.jsx'
 import BookingTabs from '../components/BookingTabs.jsx'
+import CancelDialog from '../components/CancelDialog.jsx'
+import ModifyPlayersDialog from '../components/ModifyPlayersDialog.jsx'
 import { useMyBookings } from '../hooks/useMyBookings.js'
 import { filterBookings } from '../model/bookingFilters.js'
 
@@ -13,6 +15,8 @@ const t = es.myBookings.page
 
 export default function MyBookingsPage() {
   const [tab, setTab] = useState('upcoming')
+  // Which dialog is open, and for which booking: { type: 'modify' | 'cancel', booking } or null.
+  const [action, setAction] = useState(null)
   const { data, isPending, isError } = useMyBookings()
   const bookings = data ? filterBookings(data, tab) : []
 
@@ -28,12 +32,22 @@ export default function MyBookingsPage() {
           <ul className="flex flex-col gap-3">
             {bookings.map((booking) => (
               <li key={booking.id}>
-                <BookingCard booking={booking} />
+                <BookingCard
+                  booking={booking}
+                  onModify={(b) => setAction({ type: 'modify', booking: b })}
+                  onCancel={(b) => setAction({ type: 'cancel', booking: b })}
+                />
               </li>
             ))}
           </ul>
         )}
       </div>
+      {action?.type === 'modify' && (
+        <ModifyPlayersDialog booking={action.booking} open onOpenChange={() => setAction(null)} />
+      )}
+      {action?.type === 'cancel' && (
+        <CancelDialog booking={action.booking} open onOpenChange={() => setAction(null)} />
+      )}
     </main>
   )
 }

@@ -33,4 +33,26 @@ export default {
     loadError: 'No hemos podido cargar tus reservas. Inténtalo de nuevo.',
     empty: 'No hay reservas en esta pestaña.',
   },
+  errors: {
+    tooLateToCancel: 'Ya no se puede cancelar: faltan menos de 24 horas.',
+    tooLateToModify: 'Ya no se puede modificar: faltan menos de 24 horas.',
+    invalidPlayers: 'El número de jugadores no es válido para esta sala.',
+  },
+  actions: {
+    modify: 'Modificar jugadores',
+    cancel: 'Cancelar reserva',
+    tooLate: 'No se puede modificar ni cancelar con menos de 24 horas de antelación.',
+  },
+  cancelDialog: {
+    title: 'Cancelar la reserva',
+    description:
+      '¿Seguro que quieres cancelar tu reserva en {room}? Esta acción no se puede deshacer.',
+    confirm: 'Sí, cancelar',
+    keep: 'Mantener reserva',
+  },
+  modifyDialog: {
+    title: 'Modificar jugadores',
+    description: 'Elige el número de jugadores para {room}.',
+    save: 'Guardar',
+  },
 }
