@@ -16,7 +16,7 @@ const t = es.booking.checkout
 const CONFIRMATION_PATH = '/booking/confirmation'
 
 export function CheckoutPage() {
-  const { slotId, selectedSlot, roomSlug } = useBookingDraftStore()
+  const { slotId, selectedSlot, roomSlug, players: draftPlayers } = useBookingDraftStore()
   const { data: room, isLoading, error: roomError } = useRoom(roomSlug)
 
   // The draft lives in memory: after a reload there is nothing to pay for, go back to the room.
@@ -36,17 +36,25 @@ export function CheckoutPage() {
       </main>
     )
 
-  // Keyed by room: players start at the real min_players of the room.
+  // Keyed by room: players start from the draft, kept inside the min..max of the room.
   return (
-    <CheckoutForm key={room.id} room={room} slotId={slotId} startsAt={selectedSlot?.startsAt} />
+    <CheckoutForm
+      key={room.id}
+      room={room}
+      slotId={slotId}
+      startsAt={selectedSlot?.startsAt}
+      draftPlayers={draftPlayers}
+    />
   )
 }
 
-function CheckoutForm({ room, slotId, startsAt }) {
+function CheckoutForm({ room, slotId, startsAt, draftPlayers }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { submitBooking, isSubmitting, error } = useCreateBooking()
-  const [players, setPlayers] = useState(room.minPlayers)
+  const [players, setPlayers] = useState(
+    Math.min(room.maxPlayers, Math.max(room.minPlayers, draftPlayers)),
+  )
 
   const onSubmit = async (event) => {
     event.preventDefault()
@@ -74,7 +82,12 @@ function CheckoutForm({ room, slotId, startsAt }) {
         />
       </fieldset>
 
-      <Ticket roomName={room.name} players={players} pricePerPlayer={room.pricePerPlayer} />
+      <Ticket
+        roomName={room.name}
+        startsAt={startsAt}
+        players={players}
+        pricePerPlayer={room.pricePerPlayer}
+      />
 
       <form onSubmit={onSubmit} className="space-y-4">
         {error && <Alert tone="error">{error}</Alert>}
