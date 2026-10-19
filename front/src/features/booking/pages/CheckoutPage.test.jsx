@@ -39,7 +39,9 @@ describe('CheckoutPage Acceptance Tests', () => {
 
   it('completes the success flow and redirects to the confirmation screen with booking state', async () => {
     const user = userEvent.setup()
-    useBookingDraftStore.getState().setSlotId('valid-slot-123')
+    useBookingDraftStore
+      .getState()
+      .setSelectedSlot({ id: 'valid-slot-123', starts_at: '2030-11-06T10:00:00Z' })
 
     renderWithRouter(<CheckoutPage />)
 
@@ -53,7 +55,7 @@ describe('CheckoutPage Acceptance Tests', () => {
         expect.objectContaining({
           state: expect.objectContaining({
             booking: expect.objectContaining({
-              slotId: 'valid-slot-123',
+              startsAt: '2030-11-06T10:00:00Z',
               clientName: 'Usuario Test',
             }),
           }),

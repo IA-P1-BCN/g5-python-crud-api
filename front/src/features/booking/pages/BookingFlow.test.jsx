@@ -54,7 +54,9 @@ describe('Booking flow', () => {
     await userEvent.click(within(grid).getAllByRole('button')[0])
     await userEvent.click(screen.getByRole('button', { name: es.booking.continue }))
 
-    expect(await screen.findByRole('heading', { name: es.booking.checkout.title })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: es.booking.checkout.title }),
+    ).toBeInTheDocument()
     expect(useBookingDraftStore.getState().roomSlug).toBe('faro')
     expect(screen.getByRole('button', { name: es.booking.checkout.submit })).toBeEnabled()
   })

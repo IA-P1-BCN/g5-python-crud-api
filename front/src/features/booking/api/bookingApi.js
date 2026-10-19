@@ -15,7 +15,10 @@ export async function fetchSlots({ roomId, date }) {
 
 export async function createBooking({ slotId, players }) {
   try {
+    // BookingCreate requires our users.id, not the Supabase uuid
+    const { data: me } = await api.get('/users/me')
     const { data } = await api.post('/bookings', {
+      user_id: me.id,
       time_slot_id: slotId,
       players: players || 1,
     })

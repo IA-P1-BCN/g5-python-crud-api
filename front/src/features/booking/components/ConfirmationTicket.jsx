@@ -1,6 +1,7 @@
 import texts from '@/i18n/es/booking'
+import { formatDateTime } from '@/shared/lib/format.js'
 
-export function ConfirmationTicket({ bookingId, clientName, slotId }) {
+export function ConfirmationTicket({ bookingId, clientName, startsAt }) {
   const t = texts.confirmation.ticket
 
   return (
@@ -26,7 +27,9 @@ export function ConfirmationTicket({ bookingId, clientName, slotId }) {
           <span className="text-muted text-xs font-semibold uppercase">
             {t.date} / {t.time}
           </span>
-          <span className="text-text text-lg font-medium">{slotId}</span>
+          <span className="text-text text-lg font-medium">
+            {startsAt ? formatDateTime(startsAt) : '—'}
+          </span>
         </div>
       </div>
     </div>

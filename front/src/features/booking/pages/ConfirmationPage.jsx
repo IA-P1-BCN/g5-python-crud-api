@@ -19,7 +19,7 @@ export default function ConfirmationPage() {
         <ConfirmationTicket
           bookingId={bookingData.id}
           clientName={bookingData.clientName}
-          slotId={bookingData.slotId}
+          startsAt={bookingData.startsAt}
         />
 
         {/* El sello cae sobre el ticket */}

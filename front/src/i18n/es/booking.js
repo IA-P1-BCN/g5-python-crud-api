@@ -40,10 +40,10 @@ export default {
     },
   },
   confirmation: {
-    title: '¡Reserva confirmada!',
+    title: '¡Reserva recibida!',
     subtitle:
-      'La transmisión ha sido asegurada. Te hemos enviado un correo con los detalles de acceso.',
-    stamp: 'CONFIRMADO',
+      'Tu reserva está pendiente de confirmación por nuestro equipo. Puedes verla en Mis reservas.',
+    stamp: 'POR CONFIRMAR',
     ticket: {
       header: 'Pase de Acceso - F-Inmersivo',
       date: 'Fecha',

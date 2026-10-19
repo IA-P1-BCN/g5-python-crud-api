@@ -1,6 +1,9 @@
 import { http, HttpResponse } from 'msw'
 
 export const bookingHandlers = [
+  // The booking needs our users.id (BookingCreate.user_id)
+  http.get('*/users/me', () => HttpResponse.json({ id: 7, role: 'client' })),
+
   http.post('*/bookings', async ({ request }) => {
     const body = await request.clone().json()
 

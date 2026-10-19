@@ -22,7 +22,7 @@ const DEFAULT_ROOM = { name: '', minPlayers: 1, maxPlayers: 6, pricePerPlayer: 0
 export function CheckoutPage() {
   const navigate = useNavigate()
   const { submitBooking, isSubmitting, error } = useCreateBooking()
-  const { clientDetails, slotId, roomSlug } = useBookingDraftStore()
+  const { clientDetails, slotId, selectedSlot, roomSlug } = useBookingDraftStore()
   const { data: room = DEFAULT_ROOM } = useRoom(roomSlug)
   const [players, setPlayers] = useState(room.minPlayers)
 
@@ -49,7 +49,9 @@ export function CheckoutPage() {
 
     if (result.success) {
       navigate(CONFIRMATION_PATH, {
-        state: { booking: { ...result.data, slotId, clientName: data.name } },
+        state: {
+          booking: { ...result.data, startsAt: selectedSlot?.starts_at, clientName: data.name },
+        },
       })
     }
   }
