@@ -3,7 +3,7 @@ import adminRooms from '@/i18n/es/adminRooms'
 import Alert from '@/shared/ui/Alert.jsx'
 import Button from '@/shared/ui/Button.jsx'
 import Field from '@/shared/ui/Field.jsx'
-import { generateSlotsSchema } from '../model/generateSlotsSchema'
+import { generateSlotsSchema, toUtcPayload } from '../model/generateSlotsSchema'
 
 const t = adminRooms.slots.generate
 
@@ -31,7 +31,7 @@ export default function GenerateSlotsForm({ onGenerate }) {
     }
     setErrors({})
     setSubmitting(true)
-    const res = await onGenerate(parsed.data)
+    const res = await onGenerate(toUtcPayload(parsed.data))
     setSubmitting(false)
     setResult(
       res.success

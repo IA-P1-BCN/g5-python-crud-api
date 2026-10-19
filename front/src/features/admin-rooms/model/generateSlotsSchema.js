@@ -23,3 +23,16 @@ export const generateSlotsSchema = z
     path: ['first_start'],
     message: t.firstAfterLast,
   })
+
+const pad = (n) => String(n).padStart(2, '0')
+
+// The admin types local times, the API wants UTC (BR-X5). The offset is the one of date_from, so
+// a range crossing a daylight-saving change shifts by one hour after it; a local time whose UTC
+// day differs (00:00-02:00 in Spain) is not supported.
+export function toUtcPayload(values) {
+  const utc = (time) => {
+    const d = new Date(`${values.date_from}T${time}`)
+    return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
+  }
+  return { ...values, first_start: utc(values.first_start), last_start: utc(values.last_start) }
+}

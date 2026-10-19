@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { generateSlotsSchema } from './generateSlotsSchema'
+import { generateSlotsSchema, toUtcPayload } from './generateSlotsSchema'
 
 const valid = {
   date_from: '2030-11-04',
@@ -36,5 +36,13 @@ describe('generateSlotsSchema', () => {
 
   it('rejects first_start after last_start', () => {
     expect(messages({ ...valid, first_start: '21:00' })).toHaveLength(1)
+  })
+})
+
+describe('toUtcPayload', () => {
+  it('sends the local time as UTC (works in any machine timezone)', () => {
+    const local = new Date('2030-07-01T10:00')
+    const out = toUtcPayload({ ...valid, date_from: '2030-07-01', first_start: '10:00' })
+    expect(out.first_start).toBe(local.toISOString().slice(11, 16))
   })
 })

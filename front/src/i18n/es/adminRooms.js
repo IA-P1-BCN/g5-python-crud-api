@@ -66,7 +66,7 @@ export default {
     actions: { edit: 'Editar', block: 'Bloquear', unblock: 'Desbloquear', delete: 'Eliminar' },
     generate: {
       title: 'Generar franjas',
-      help: 'Crea franjas disponibles para varios días a la vez (máximo 90 días). Las horas son UTC. Se omiten las franjas pasadas o solapadas.',
+      help: 'Crea franjas disponibles para varios días a la vez (máximo 90 días). Las horas son las de tu zona horaria. Se omiten las franjas pasadas o solapadas.',
       labels: {
         date_from: 'Desde',
         date_to: 'Hasta',
