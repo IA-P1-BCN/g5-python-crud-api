@@ -33,7 +33,15 @@ Cross-owner dependency (only one): FR-04 (owner C) needs the logged-in user id. 
 | B | FR-06 (P0), FR-07 (P0), FR-08 (P0), FR-09 (P1) |
 | C | FR-04 (P0), FR-05 (P0), FR-10 (P1) |
 | D | FR-11 (P0), FR-12 (P0), FR-15 (P1) |
-| Anyone | FR-13, FR-14 (P1) |
+| Anyone | FR-13, FR-14 (P1), FR-16 (P1, new) |
+
+### Status (2026-10-19, after the browser test)
+
+| Ticket | Status |
+|---|---|
+| FR-00, 01, 02, 04, 05, 06, 07, 08, 11, 12 | Merged, verified in the browser (`browser-test.md`) |
+| FR-03, 09, 10, 13, 14, 15 | Open (P1) |
+| FR-16 | New, open (P1) |
 
 ## Rules for every ticket (project CONTRIBUTING)
 
@@ -210,6 +218,9 @@ Reports: G-10.
 
 ---
 
+### FR-16 (P1) Small UX gaps found by the browser test
+From `browser-test.md`: B1 slot form says UTC but tables show local time (show local time in the form or add a hint with the offset); B3 add the room name column in the admin rooms table; B4 show date and time on the checkout page; B6 check why the day picker offers only 3 days; E3/E4 explain a 401 for an account without a name and the vague register error (400/429) instead of a silent logout. B5 (success feedback after confirm and after saving a result) goes into FR-10; B2 (no stats page, docs still list it) goes into FR-14.
+
 ## After the demo (not scheduled)
 
 - Corridor robustness: `webglcontextlost`, dispose when setup throws, 767 vs 800 px breakpoint, font loading for signs, fewer point lights (S6 to S11). Owner: whoever owns `corridor/`.
@@ -220,4 +231,5 @@ Reports: G-10.
 ## Checks outside the code (Charlotte or whoever has access)
 
 - Supabase > Auth > URL Configuration: only `http://localhost:3000/**` and the production origin (F-7).
-- Test accounts for the browser run (client, staff, admin) are still needed.
+- Test accounts exist and the browser run is done (`browser-test.md`). On any new database: run `alembic upgrade head` once, then set roles with SQL (new accounts are `client`).
+- `.env.example` still lacks a `SHARED_DATABASE_URL` placeholder line (E6).
