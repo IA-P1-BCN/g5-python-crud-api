@@ -18,6 +18,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "pytest-cov",
     "httpx",
     "ruff",
 ]
@@ -32,3 +33,12 @@ ignore = ["EXE002", "B008"]
 [tool.pytest.ini_options]
 testpaths = ["back/tests"]
 pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["back/app"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.coverage.html]
+directory = "back/htmlcov"
