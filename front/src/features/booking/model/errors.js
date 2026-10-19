@@ -1,1 +1,7 @@
-// Booking business error codes -> message keys (SLOT_TAKEN...). Passed to mapApiError from shared.
+export class SlotTakenError extends Error {
+  constructor(message = 'The selected time slot is no longer available.') {
+    super(message)
+    this.name = 'SlotTakenError'
+    this.code = 'SLOT_TAKEN'
+  }
+}

@@ -1,8 +1,8 @@
-// Booking flow texts. (Spanish). One file per feature: no conflicts.
 export default {
   title: 'Selecciona fecha y hora',
   selectDate: 'Elige un día',
   selectTime: 'Horarios',
+  continue: 'Continuar',
   loadingSlots: 'Cargando horarios...',
   noSlotsAvailable: 'No hay horarios disponibles para esta fecha.',
   states: {
@@ -31,5 +31,27 @@ export default {
     email: 'Email',
     phone: 'Teléfono (opcional)',
     submit: 'Confirmar reserva',
+    submitting: 'Procesando...',
+    unspecified: 'No especificado',
+    errors: {
+      slotTaken:
+        'El horario seleccionado ya no está disponible. Por favor, vuelve al paso anterior y selecciona otro.',
+      unexpected: 'Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.',
+    },
+  },
+  confirmation: {
+    title: '¡Reserva recibida!',
+    subtitle:
+      'Tu reserva está pendiente de confirmación por nuestro equipo. Puedes verla en Mis reservas.',
+    stamp: 'POR CONFIRMAR',
+    ticket: {
+      header: 'Pase de Acceso - F-Inmersivo',
+      date: 'Fecha',
+      time: 'Hora',
+      bookingId: 'ID de reserva',
+      holder: 'Titular',
+      pending: 'PENDIENTE',
+    },
+    home: 'Volver al inicio',
   },
 }

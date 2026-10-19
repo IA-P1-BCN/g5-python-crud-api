@@ -1,22 +1,29 @@
-// MSW handlers for the booking endpoints (see docs/API_CONTRACT.md). One file per feature: no conflicts.
 import { http, HttpResponse } from 'msw'
 
 export const bookingHandlers = [
-  http.get('/api/v1/time-slots', ({ request }) => {
-    const url = new URL(request.url)
-    const date = url.searchParams.get('date') || '2026-06-01'
+  // The booking needs our users.id (BookingCreate.user_id)
+  http.get('*/users/me', () => HttpResponse.json({ id: 7, role: 'client' })),
 
-    return HttpResponse.json({
-      items: [
-        { id: 'slot-1', starts_at: `${date}T10:00:00Z`, state: 'past' },
-        { id: 'slot-2', starts_at: `${date}T11:00:00Z`, state: 'blocked' },
-        { id: 'slot-3', starts_at: `${date}T12:00:00Z`, state: 'taken' },
-        { id: 'slot-4', starts_at: `${date}T13:00:00Z`, state: 'free' },
-      ],
-      total: 4,
-      page: 1,
-      size: 20,
-    })
+  http.post('*/bookings', async ({ request }) => {
+    const body = await request.clone().json()
+
+    // Trigger the SLOT_TAKEN error flow (API_CONTRACT.md: 409 + code)
+    if (body.time_slot_id === 'error-slot-taken') {
+      return HttpResponse.json(
+        { detail: 'The selected time slot is no longer available.', code: 'SLOT_TAKEN' },
+        { status: 409 },
+      )
+    }
+
+    return HttpResponse.json(
+      {
+        id: 'booking-1',
+        time_slot_id: body.time_slot_id,
+        players: body.players,
+        status: 'PENDING',
+      },
+      { status: 201 },
+    )
   }),
 ]
 

@@ -8,9 +8,9 @@
 
 ### Isbel
 
-- **Hoy:**
-- **Resultado (tarde):**
-- **Bloqueos:**
+**Hoy:** Revisión de restricciones de arquitectura (Feature-Sliced Design) y corrección de reglas de importación con ESLint.
+- **Resultado (tarde):** Refactorización del componente compartido `Toast.jsx` y adaptación de rutas absolutas y relativas.
+- **Bloqueos:** Ajustes menores en la resolución de módulos de prueba.
 
 ### Carolay
 
@@ -36,9 +36,9 @@
 
 ### Isbel
 
-- **Hoy:**
-- **Resultado (tarde):**
-- **Bloqueos:**
+- **Hoy:** Construcción de los componentes visuales de la pantalla de confirmación (`Stamp.jsx`, `Ticket.jsx`) y la página `ConfirmationPage.jsx`.
+- **Resultado (tarde):** Implementación de la animación del sello y pruebas de integración para el pase de acceso.
+- **Bloqueos:** Ninguno.
 
 ### Carolay
 
@@ -71,9 +71,9 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ### Isbel
 
-- **Hoy:**
-- **Resultado (tarde):**
-- **Bloqueos:**
+**Hoy:** Desarrollo de la página de pago (`CheckoutPage.jsx`), el hook `useCreateBooking.js` y las pruebas de aceptación correspondientes.
+- **Resultado (tarde):** Verificación del flujo de éxito y de la correcta visualización del error cuando un horario es ocupado por otro usuario.
+- **Bloqueos:** Ninguno.
 
 ### Carolay
 
@@ -101,9 +101,9 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ### Isbel
 
-- **Hoy:**
-- **Resultado (tarde):**
-- **Bloqueos:**
+**Hoy:** Implementación del store de Zustand para el borrador (`bookingDraft.store.js`) asegurando la persistencia ante cambios de paso.
+- **Resultado (tarde):** Creación y validación exitosa de los tests unitarios del store (`bookingDraft.store.test.js`).
+- **Bloqueos:** Ninguno.
 
 ### Carolay
 
@@ -134,9 +134,9 @@ Nuevo día = nuevo bloque añadido arriba (el más reciente primero).
 
 ### Isbel
 
-- **Hoy:**
-- **Resultado (tarde):**
-- **Bloqueos:**
+- **Hoy:** Planificación inicial de las tareas de la épica E3 Bookings (Sprint 2) y análisis técnico de los requisitos del Ticket 073 para el flujo de reservas.
+- **Resultado (tarde):** Definición de la arquitectura del borrador de reserva y estructuración de los componentes necesarios.
+- **Bloqueos:** Ninguno.
 
 ### Carolay
 
