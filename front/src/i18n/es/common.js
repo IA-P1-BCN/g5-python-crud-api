@@ -9,7 +9,7 @@ export default {
   pageOf: (page, pages) => `Página ${page} de ${pages}`,
   nav: {
     label: 'Navegación principal',
-    rooms: 'Salas',
+    rooms: 'Home',
     history: 'Historial',
     profile: 'Perfil',
     myBookings: 'Mis reservas',

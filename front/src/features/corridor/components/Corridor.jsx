@@ -28,5 +28,10 @@ export default function Corridor({ rooms, onEnter, onError }) {
     return () => corridor.dispose()
   }, [rooms])
 
-  return <div ref={containerRef} className="h-screen w-full" />
+  return (
+    <div
+      ref={containerRef}
+      className="border-line mb-8 h-[clamp(340px,60vh,540px)] w-full overflow-hidden rounded-lg border"
+    />
+  )
 }

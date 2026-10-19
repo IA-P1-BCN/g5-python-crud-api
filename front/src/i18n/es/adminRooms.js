@@ -1,5 +1,7 @@
 export default {
   title: 'Gestión de Salas',
+  create: 'Crear nueva sala',
+  createTitle: 'Nueva sala',
   createSuccess:
     'Sala creada con éxito. Los clientes la verán solo cuando tenga franjas horarias próximas asignadas (BR-R6).',
   // Messages for backend codes that only make sense on this screen.
@@ -8,7 +10,13 @@ export default {
   },
   loading: 'Cargando salas...',
   empty: 'Todavía no hay salas creadas.',
-  table: { slug: 'Slug', genre: 'Género', status: 'Estado', actions: 'Acciones', slots: 'Franjas' },
+  table: {
+    name: 'Nombre de la sala',
+    genre: 'Género',
+    status: 'Estado',
+    actions: 'Acciones',
+    slots: 'Franjas',
+  },
   active: 'Activa',
   inactive: 'Inactiva',
   activate: 'Activar',

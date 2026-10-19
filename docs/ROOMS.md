@@ -6,13 +6,13 @@ Initial catalogue of the escape rooms, ready to be inserted in the database (tic
 
 | # | Name | Slug | Genre | Players (min-max) | Duration | Price / player | Difficulty (1-5) | Status |
 |---|------|------|-------|-------------------|----------|----------------|------------------|--------|
-| 1 | El Relojero | `relojero` | Misterio victoriano | 2-5 | 60 min | 22 EUR | 2 | active |
-| 2 | La Biblioteca Prohibida | `biblioteca` | Fantasía oscura | 3-6 | 75 min | 25 EUR | 4 | active |
-| 3 | Faro 1923 | `faro` | Terror marítimo | 2-4 | 60 min | 20 EUR | 3 | active |
-| 4 | El Gran Atraco | `atraco` | Robo y espionaje | 4-8 | 90 min | 30 EUR | 5 | active |
-| 5 | Laboratorio Zero | `lab` | Ciencia ficción | 3-5 | 60 min | 24 EUR | 3 | **inactive** (archived) |
+| 1 | El Relojero | `relojero` | Misterio victoriano | 2-5 | 60 min | 15 EUR | 2 | active |
+| 2 | La Biblioteca Prohibida | `biblioteca` | Fantasía oscura | 3-6 | 75 min | 17 EUR | 4 | active |
+| 3 | Faro 1923 | `faro` | Terror marítimo | 2-4 | 60 min | 14 EUR | 3 | active |
+| 4 | El Gran Atraco | `atraco` | Robo y espionaje | 4-8 | 90 min | 19 EUR | 5 | active |
+| 5 | Laboratorio Zero | `lab` | Ciencia ficción | 3-5 | 60 min | 16 EUR | 3 | **inactive** (archived) |
 
-Example total (rule BR-B4, `total_price = base_price x players`): El Relojero for 3 players = 3 x 22 = 66 EUR.
+Example total (rule BR-B4, `total_price = base_price x players`): El Relojero for 3 players = 3 x 15 = 45 EUR.
 
 ## Mapping to the database
 
@@ -39,12 +39,12 @@ All the fields in this document can be inserted: the catalog columns from ticket
 | `genre` | Misterio victoriano |
 | `min_players` / `capacity` | 2 / 5 |
 | `duration` | 60 |
-| `base_price` | 22.00 |
+| `base_price` | 15.00 |
 | `difficulty` | 2 |
 | `audience` | Para empezar y jugar en familia |
 | `status` | active |
 | `hook` | El maestro relojero desapareció. Su taller sigue sonando. |
-| `story` | Londres, 1887. El maestro Aldous Vane lleva tres días sin salir de su taller y los relojes de la calle marcan horas distintas. Tenéis una hora para encontrar su rastro antes de que el último engranaje se detenga. |
+| `story` | Londres, 1887. El maestro relojero lleva tres días sin salir de su taller y los relojes de la calle marcan horas distintas. Seguid sus pistas entre engranajes y péndulos antes de que el último reloj se pare. |
 
 ### 2. La Biblioteca Prohibida
 
@@ -55,12 +55,12 @@ All the fields in this document can be inserted: the catalog columns from ticket
 | `genre` | Fantasía oscura |
 | `min_players` / `capacity` | 3 / 6 |
 | `duration` | 75 |
-| `base_price` | 25.00 |
+| `base_price` | 17.00 |
 | `difficulty` | 4 |
 | `audience` | Para jugadores con experiencia |
 | `status` | active |
 | `hook` | Un libro falta en el índice. Nadie admite haberlo tocado. |
-| `story` | Los archivos de un monasterio guardan lo que la Iglesia nunca quiso leer en voz alta. Alguien arrancó una ficha del catálogo. Si el volumen se abre a medianoche, la biblioteca se cierra para siempre... con vosotros dentro. |
+| `story` | Un monasterio guarda libros que nadie debía leer. Alguien ha arrancado una ficha del catálogo y, a medianoche, las puertas se cerrarán. Encontrad el volumen que falta antes de quedaros dentro. |
 
 ### 3. Faro 1923
 
@@ -71,12 +71,12 @@ All the fields in this document can be inserted: the catalog columns from ticket
 | `genre` | Terror marítimo |
 | `min_players` / `capacity` | 2 / 4 |
 | `duration` | 60 |
-| `base_price` | 20.00 |
+| `base_price` | 14.00 |
 | `difficulty` | 3 |
 | `audience` | Para quien busca sustos |
 | `status` | active |
 | `hook` | El diario del farero se interrumpe a mitad de frase. |
-| `story` | Cabo de Creus, una noche de temporal. El farero no responde por radio y la luz gira sola. Subid la escalera, leed su diario y apagad lo que lleva encendido desde hace cien años. |
+| `story` | Cabo de Creus, 1923. El farero no responde por radio y la luz del faro gira sola. Subid la escalera, leed su diario y descubrid qué ocurrió en esa torre antes de que se apague la luz. |
 
 ### 4. El Gran Atraco
 
@@ -87,12 +87,12 @@ All the fields in this document can be inserted: the catalog columns from ticket
 | `genre` | Robo y espionaje |
 | `min_players` / `capacity` | 4 / 8 |
 | `duration` | 90 |
-| `base_price` | 30.00 |
+| `base_price` | 19.00 |
 | `difficulty` | 5 |
 | `audience` | Para equipos grandes y competitivos |
 | `status` | active |
 | `hook` | Una cámara acorazada, ocho minutos de ventana y cero errores. |
-| `story` | El banco más vigilado de la ciudad guarda un cuadro que no figura en ningún inventario. Sois un equipo de especialistas: láseres, códigos y un guardia que da la ronda cada ocho minutos. Salid con el botín o no salgáis. |
+| `story` | Una cámara acorazada, un cuadro que no figura en ningún inventario y un guardia que pasa cada ocho minutos. Sois el equipo: desactivad los láseres y salid con el botín. |
 
 ### 5. Laboratorio Zero (inactive)
 
@@ -105,12 +105,12 @@ Archived room, kept to test deactivation and reactivation (ticket 057). Not show
 | `genre` | Ciencia ficción |
 | `min_players` / `capacity` | 3 / 5 |
 | `duration` | 60 |
-| `base_price` | 24.00 |
+| `base_price` | 16.00 |
 | `difficulty` | 3 |
 | `audience` | Para equipos experimentados |
 | `status` | inactive |
 | `hook` | Archivada. |
-| `story` | (empty) |
+| `story` | Un experimento salió mal y el laboratorio quedó sellado. Descifrad los registros y encontrad la salida antes de que el sistema se reinicie. |
 
 ## Time slots
 

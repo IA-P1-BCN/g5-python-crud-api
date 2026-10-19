@@ -21,7 +21,10 @@ beforeEach(() => {
   server.use(...adminRoomsHandlers)
 })
 
+const openForm = (user) => user.click(screen.getByRole('button', { name: /crear nueva sala/i }))
+
 const fillRoom = async (user, { slug = 'new-adventure', name = 'New Adventure Room' } = {}) => {
+  await openForm(user)
   await user.type(screen.getByLabelText(/slug/i), slug)
   await user.type(screen.getByLabelText(/^nombre/i), name)
   await user.type(screen.getByLabelText(/género/i), 'Sci-Fi')
@@ -34,13 +37,14 @@ const save = (user) => user.click(screen.getByRole('button', { name: /guardar sa
 describe('AdminRoomsPage', () => {
   it('lists the rooms from the paginated API', async () => {
     renderPage()
-    expect(await screen.findByText('sala-prueba')).toBeInTheDocument()
+    expect(await screen.findByText('Sala de Prueba')).toBeInTheDocument()
   })
 
   it('shows a field error when the form is submitted empty', async () => {
     const user = userEvent.setup()
     renderPage()
-    await screen.findByText('sala-prueba')
+    await screen.findByText('Sala de Prueba')
+    await openForm(user)
     await save(user)
     expect(await screen.findByText(/el slug es obligatorio/i)).toBeInTheDocument()
   })
@@ -48,7 +52,7 @@ describe('AdminRoomsPage', () => {
   it('shows a field error under an empty capacity (no silent 0)', async () => {
     const user = userEvent.setup()
     renderPage()
-    await screen.findByText('sala-prueba')
+    await screen.findByText('Sala de Prueba')
     await fillRoom(user)
     await user.clear(screen.getByLabelText(/capacidad/i))
     await save(user)
@@ -58,7 +62,7 @@ describe('AdminRoomsPage', () => {
   it('shows the difficulty error under its field', async () => {
     const user = userEvent.setup()
     renderPage()
-    await screen.findByText('sala-prueba')
+    await screen.findByText('Sala de Prueba')
     await fillRoom(user)
     await user.clear(screen.getByLabelText(/dificultad/i))
     await user.type(screen.getByLabelText(/dificultad/i), '9')
@@ -76,18 +80,18 @@ describe('AdminRoomsPage', () => {
     )
     const user = userEvent.setup()
     renderPage()
-    await screen.findByText('sala-prueba')
+    await screen.findByText('Sala de Prueba')
     await fillRoom(user)
     await save(user)
     expect(await screen.findByText(/los clientes la verán solo cuando/i)).toBeInTheDocument()
     expect(sent).toMatchObject({ slug: 'new-adventure', capacity: 4, duration: 60 })
-    expect(screen.getByLabelText(/slug/i)).toHaveValue('')
+    expect(screen.queryByLabelText(/slug/i)).not.toBeInTheDocument()
   })
 
   it('shows the duplicate slug error from the API', async () => {
     const user = userEvent.setup()
     renderPage()
-    await screen.findByText('sala-prueba')
+    await screen.findByText('Sala de Prueba')
     await fillRoom(user, { slug: 'slug-duplicado' })
     await save(user)
     expect(await screen.findByRole('alert')).toHaveTextContent(/este slug ya existe/i)
@@ -101,7 +105,7 @@ describe('AdminRoomsPage', () => {
     )
     const user = userEvent.setup()
     renderPage()
-    await screen.findByText('sala-prueba')
+    await screen.findByText('Sala de Prueba')
     await fillRoom(user)
     await save(user)
     expect(await screen.findByRole('alert')).toHaveTextContent(/no se ha podido completar/i)
@@ -115,7 +119,7 @@ describe('AdminRoomsPage', () => {
     )
     const user = userEvent.setup()
     renderPage()
-    await screen.findByText('sala-prueba')
+    await screen.findByText('Sala de Prueba')
     await fillRoom(user)
     await save(user)
     expect(await screen.findByRole('alert')).toHaveTextContent(/algún dato no es válido/i)
@@ -125,7 +129,7 @@ describe('AdminRoomsPage', () => {
     const user = userEvent.setup()
     renderPage()
     await user.click(await screen.findByRole('button', { name: /^desactivar$/i }))
-    const row = screen.getByText('sala-prueba').closest('tr')
+    const row = screen.getByText('Sala de Prueba').closest('tr')
     expect(await within(row).findByRole('button', { name: /^activar$/i })).toBeInTheDocument()
     expect(within(row).getByText('Inactiva')).toBeInTheDocument()
   })
@@ -157,14 +161,15 @@ describe('AdminRoomsPage', () => {
       Array.from({ length: 25 }, (_, i) => ({
         id: i + 1,
         slug: `sala-${i + 1}`,
+        name: `Sala ${i + 1}`,
         genre: 'x',
         is_active: true,
       })),
     )
     const user = userEvent.setup()
     renderPage()
-    expect(await screen.findByText('sala-1')).toBeInTheDocument()
+    expect(await screen.findByText('Sala 1')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /siguiente/i }))
-    expect(await screen.findByText('sala-21')).toBeInTheDocument()
+    expect(await screen.findByText('Sala 21')).toBeInTheDocument()
   })
 })

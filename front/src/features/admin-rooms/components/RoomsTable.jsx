@@ -13,7 +13,7 @@ export function RoomsTable({ rooms, onToggleActive }) {
     <table className="border-line w-full border-t text-left text-sm">
       <thead className="text-muted text-xs uppercase">
         <tr>
-          <th className="px-4 py-3 font-medium">{t.table.slug}</th>
+          <th className="px-4 py-3 font-medium">{t.table.name}</th>
           <th className="px-4 py-3 font-medium">{t.table.genre}</th>
           <th className="px-4 py-3 font-medium">{t.table.status}</th>
           <th className="px-4 py-3 text-right font-medium">{t.table.actions}</th>
@@ -22,7 +22,7 @@ export function RoomsTable({ rooms, onToggleActive }) {
       <tbody>
         {rooms.map((room) => (
           <tr key={room.id} className="border-line border-t">
-            <td className="px-4 py-3">{room.slug}</td>
+            <td className="px-4 py-3">{room.name}</td>
             <td className="px-4 py-3">{room.genre}</td>
             <td className="px-4 py-3">
               <Badge tone={room.is_active ? 'confirmed' : 'cancelled'}>

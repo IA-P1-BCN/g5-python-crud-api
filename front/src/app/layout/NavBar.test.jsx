@@ -71,22 +71,26 @@ describe('NavBar', () => {
     renderNavBar()
 
     expect(await screen.findByRole('link', { name: nav.staff })).toBeInTheDocument()
-    expect(link(nav.history)).toBeInTheDocument()
-    expect(link(nav.rooms)).toBeInTheDocument()
+    expect(link(nav.profile)).toBeInTheDocument()
+    expect(link(nav.history)).not.toBeInTheDocument()
+    expect(link(nav.myBookings)).not.toBeInTheDocument()
+    expect(link(nav.rooms)).not.toBeInTheDocument()
     expect(link(nav.adminRooms)).not.toBeInTheDocument()
   })
 
-  it('admin: shows every link', async () => {
+  it('admin: shows the management links but not the client ones', async () => {
     signInAs('admin')
     renderNavBar()
 
     expect(await screen.findByRole('link', { name: nav.adminRooms })).toBeInTheDocument()
     expect(link(nav.staff)).toBeInTheDocument()
-    expect(link(nav.history)).toBeInTheDocument()
-    expect(link(nav.rooms)).toBeInTheDocument()
+    expect(link(nav.profile)).toBeInTheDocument()
+    expect(link(nav.rooms)).not.toBeInTheDocument()
+    expect(link(nav.history)).not.toBeInTheDocument()
+    expect(link(nav.myBookings)).not.toBeInTheDocument()
   })
 
-  it.each(['client', 'staff', 'admin'])('%s: has Mis reservas to /mis-reservas', async (role) => {
+  it.each(['client'])('%s: has Mis reservas to /mis-reservas', async (role) => {
     signInAs(role)
     renderNavBar()
 

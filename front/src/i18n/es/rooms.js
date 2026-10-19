@@ -1,7 +1,6 @@
 export default {
   welcome: 'Escape Rooms Barcelona',
-  tagline: 'Recorre el pasillo, elige una puerta y entra en la historia.',
-  sectionTitle: 'Las salas',
+  tagline: 'Elige una puerta del pasillo: cada sala esconde una historia distinta.',
   corridorLabel: 'Salas disponibles',
   enter: (name) => `Entrar en ${name}`,
   loading: 'Cargando salas…',

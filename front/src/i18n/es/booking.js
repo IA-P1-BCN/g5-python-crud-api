@@ -4,6 +4,7 @@ export default {
   selectDay: 'Día',
   selectTime: 'Hora',
   selectPlayers: 'Jugadores',
+  playersUnit: 'jugadores',
   playersRange: (min, max) => `de ${min} a ${max}`,
   summary: {
     noSlot: 'Elige un día y una hora libre',
