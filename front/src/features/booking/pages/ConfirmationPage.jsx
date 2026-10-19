@@ -3,7 +3,7 @@ import ConfirmationTicket from '../components/ConfirmationTicket'
 import Stamp from '../components/Stamp'
 import texts from '@/i18n/es/booking'
 
-export default function ConfirmationPage() {
+export function ConfirmationPage() {
   const location = useLocation()
   const t = texts.confirmation
 
@@ -32,3 +32,5 @@ export default function ConfirmationPage() {
     </div>
   )
 }
+
+export default ConfirmationPage
