@@ -2,7 +2,6 @@ import axios from 'axios'
 
 export const api = axios.create({ baseURL: '/api/v1' })
 
-// shared must not import features, so the auth feature plugs itself in through these setters.
 let getToken = null
 let onUnauthorized = null
 

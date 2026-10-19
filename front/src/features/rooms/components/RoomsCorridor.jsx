@@ -8,8 +8,6 @@ import { getRoomTheme } from '../model/roomThemes.js'
 export default function RoomsCorridor({ onEnter, listBelow }) {
   const { data, isPending, isError } = useRooms()
 
-  // Stable reference: the 3D scene is rebuilt whenever this array changes, so it only changes
-  // when a field the scene draws (id, slug, name, genre) does.
   const sceneKey = data?.map((r) => [r.id, r.slug, r.name, r.genre].join(':')).join('|')
   const rooms = useMemo(
     () => data?.map((room) => ({ ...room, accent: getRoomTheme(room.slug).accent })),

@@ -1,4 +1,3 @@
-// Route page: create an account with name, email and password (Supabase sign-up).
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Link, Navigate } from 'react-router-dom'
@@ -27,15 +26,12 @@ export default function RegisterPage() {
     defaultValues: { name: '', email: '', password: '', confirmPassword: '' },
   })
 
-  // Wait for the stored session, so a logged-in user never sees the form flash.
   if (loading) return <Spinner label={es.common.loading} />
   if (isAuthenticated) {
-    // The role arrives after the session: wait for it (or for its failure) before choosing the page.
     if (role === null && !roleError) return <Spinner label={es.common.loading} />
     return <Navigate to={homeFor(role)} replace />
   }
 
-  // Supabase asked to confirm the email first: there is no session yet.
   if (signUp.isSuccess && signUp.data?.needsConfirmation) {
     return (
       <main className="mx-auto flex max-w-md flex-col items-center gap-6 p-8 text-center">
@@ -48,7 +44,6 @@ export default function RegisterPage() {
     )
   }
 
-  // The confirmation field only exists to validate the form: it is never sent.
   const onSubmit = ({ name, email, password }) => signUp.mutate({ name, email, password })
 
   return (
@@ -56,7 +51,6 @@ export default function RegisterPage() {
       <h1 className="heading-title">{t.title}</h1>
       <p>{t.subtitle}</p>
 
-      {/* noValidate: the browser would block the submit before our inline Zod messages show. */}
       <form
         noValidate
         onSubmit={handleSubmit(onSubmit)}

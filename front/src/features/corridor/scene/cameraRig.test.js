@@ -39,7 +39,7 @@ describe('createCameraRig', () => {
 
     expect(rig.turn).toBeGreaterThan(0.985)
     expect(camera.position.z).toBeCloseTo(-3, 1)
-    expect(camera.position.x).toBeGreaterThan(1) // moved away from the left wall
+    expect(camera.position.x).toBeGreaterThan(1)
   })
 
   it('tightens the field of view on the chosen door', () => {
@@ -67,6 +67,6 @@ describe('createCameraRig', () => {
 
     runFor(1, { hoverDoor: doorAt(-1, -3) })
 
-    expect(camera.rotation.y).toBeGreaterThan(before) // turned toward the left
+    expect(camera.rotation.y).toBeGreaterThan(before)
   })
 })

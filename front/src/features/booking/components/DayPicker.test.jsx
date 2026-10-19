@@ -1,4 +1,3 @@
-// Ensure that the buttons labeled with the days of the week are displayed on the screen and that pressing one of them announces the corresponding date.
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { DayPicker } from './DayPicker'

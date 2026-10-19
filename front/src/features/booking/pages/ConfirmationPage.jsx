@@ -11,12 +11,10 @@ export function ConfirmationPage() {
   const t = texts.confirmation
   const bookingData = location.state?.booking
 
-  // The booking is done: the draft is no longer needed.
   useEffect(() => {
     resetDraft()
   }, [resetDraft])
 
-  // After a reload the router state is gone: do not pretend a booking was just made.
   if (!bookingData) return <Navigate to="/mis-reservas" replace />
 
   return (
@@ -31,7 +29,6 @@ export function ConfirmationPage() {
           startsAt={bookingData.startsAt}
         />
 
-        {/* El sello cae sobre el ticket */}
         <Stamp className="absolute top-1/2 -right-4 z-10 -translate-y-1/2 md:top-1/3 md:-right-8" />
       </div>
 

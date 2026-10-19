@@ -5,16 +5,14 @@ const EYE_Y = 1.6
 const START_Z = 0.4
 const FOV = 62
 const FOV_SELECTED = 50
-const REFERENCE_ASPECT = 1.5 // below this width/height ratio the FOV is widened (see fitAspect)
+const REFERENCE_ASPECT = 1.5
 const TURN_SECONDS = 1.2
 
-// Moves the camera every frame: idle sway, mouse/drag look, lean toward the hovered door and
-// the walk up to the chosen one. `turn` goes 0 (down the corridor) -> 1 (facing the door).
 export function createCameraRig(camera) {
   const look = new Vector3()
   let fovScale = 1
   let turn = 0
-  let lean = 0 // 0..1, how much the camera leans toward the hovered door
+  let lean = 0
   let leanDoor = null
   let yaw = 0
   let pitch = 0
@@ -24,7 +22,6 @@ export function createCameraRig(camera) {
     get turn() {
       return turn
     },
-    // Narrow window: widen the vertical FOV so the horizontal view stays the one of a wide screen.
     fitAspect(aspect) {
       const reference = Math.tan((FOV * Math.PI) / 360) * Math.max(1, REFERENCE_ASPECT / aspect)
       fovScale = (Math.atan(reference) * 360) / Math.PI / FOV
@@ -41,7 +38,7 @@ export function createCameraRig(camera) {
       const e = smoothstep(turn)
       let [Y, P, X, Z, fov] = [yaw, pitch, shift, START_Z, FOV]
       if (leanDoor) {
-        Y = lerp(Y, (leanDoor.userData.side * Math.PI) / 2, 0.2 * lean) // slight lean toward the door
+        Y = lerp(Y, (leanDoor.userData.side * Math.PI) / 2, 0.2 * lean)
         fov -= 5 * lean
       }
       if (chosenDoor) {

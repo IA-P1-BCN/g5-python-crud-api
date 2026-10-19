@@ -6,7 +6,6 @@ import es from '@/i18n/es.js'
 import AuthProvider from './AuthProvider.jsx'
 import RequireAuth from './RequireAuth.jsx'
 
-// Supabase is mocked (its keys do not exist in tests). /users/me goes through the MSW handler.
 const mocks = vi.hoisted(() => ({
   auth: {
     getSession: vi.fn(),

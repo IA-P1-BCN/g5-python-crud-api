@@ -1,4 +1,3 @@
-// TanStack Query hook: one room (api + mapper). No JSX.
 import { useQuery } from '@tanstack/react-query'
 import { fetchRoom } from '../api/roomsApi.js'
 import { toRoom } from '../model/roomMapper.js'

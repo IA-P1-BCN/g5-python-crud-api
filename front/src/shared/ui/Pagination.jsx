@@ -1,9 +1,6 @@
 import es from '@/i18n/es.js'
 import Button from './Button.jsx'
 
-// Generic pagination controls. Same shape as the API lists: { page (starts at 1), size, total }.
-// No business logic: it only asks for another page through onPageChange.
-// Unavailable buttons use aria-disabled, not disabled, so keyboard focus is not lost on the last page.
 export default function Pagination({ page, size, total, onPageChange }) {
   const pages = Math.ceil(total / size)
   if (pages <= 1) return null

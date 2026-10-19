@@ -1,4 +1,3 @@
-// TanStack mutation: modify players, then invalidate my bookings.
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateBookingPlayers } from '../api/myBookingsApi.js'
 

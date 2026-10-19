@@ -1,4 +1,3 @@
-// Route page: client game history (past bookings with result).
 import es from '@/i18n/es.js'
 import Alert from '@/shared/ui/Alert.jsx'
 import EmptyState from '@/shared/ui/EmptyState.jsx'

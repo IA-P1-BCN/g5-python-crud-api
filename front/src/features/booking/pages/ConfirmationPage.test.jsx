@@ -26,7 +26,6 @@ describe('ConfirmationPage', () => {
       </MemoryRouter>,
     )
 
-    // Verifica que los datos inyectados se muestren en el ticket
     expect(screen.getByText('reserva-test-789')).toBeInTheDocument()
     expect(screen.getByText('Loris Garcia')).toBeInTheDocument()
     expect(screen.getByText(formatDateTime('2030-11-06T10:00:00Z'))).toBeInTheDocument()

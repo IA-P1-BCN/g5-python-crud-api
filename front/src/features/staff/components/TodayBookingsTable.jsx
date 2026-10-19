@@ -1,9 +1,7 @@
-// Bookings ordered by time with status badge and the next-step button (GameActions).
 import es from '@/i18n/es.js'
 import Badge from '@/shared/ui/Badge.jsx'
 import GameActions from './GameActions.jsx'
 
-// Badge tone for each booking status (the tones come from the design system, DESIGN.md).
 const STATUS_TONE = {
   PENDING: 'pending',
   CONFIRMED: 'confirmed',
@@ -18,7 +16,6 @@ const formatHour = (iso) =>
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })
 
-// showDate: the list can span several days (all bookings / one status).
 export default function TodayBookingsTable({ bookings, showDate = false }) {
   return (
     <table className="w-full text-left">

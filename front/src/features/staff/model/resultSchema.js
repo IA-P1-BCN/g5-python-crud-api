@@ -3,8 +3,6 @@ import es from '@/i18n/es.js'
 
 export const resultSchema = z.object({
   completed: z.boolean(),
-  // An <input type="number"> gives text. We check it is not empty first,
-  // because z.coerce.number() would turn '' into 0 without complaining.
   completion_time: z
     .string()
     .trim()

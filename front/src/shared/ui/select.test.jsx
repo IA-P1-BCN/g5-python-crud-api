@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select.jsx'
 
-// jsdom lacks these browser APIs, which Radix Select calls when it opens.
 beforeAll(() => {
   Element.prototype.hasPointerCapture ??= () => false
   Element.prototype.setPointerCapture ??= () => {}

@@ -1,5 +1,3 @@
-// Route page: the planning. Opens on today's bookings; chips switch to all bookings or to one
-// status, whatever the date (e.g. every PENDING one to confirm).
 import { useState } from 'react'
 import es from '@/i18n/es.js'
 import Alert from '@/shared/ui/Alert.jsx'
@@ -9,7 +7,6 @@ import Spinner from '@/shared/ui/Spinner.jsx'
 import TodayBookingsTable from '../components/TodayBookingsTable.jsx'
 import { useTodayBookings } from '../hooks/useTodayBookings.js'
 
-// Cancelled bookings are never listed.
 const STATUSES = ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED']
 
 export default function StaffPlanningPage() {

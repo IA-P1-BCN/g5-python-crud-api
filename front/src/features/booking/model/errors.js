@@ -1,4 +1,3 @@
-// Booking error codes (API_CONTRACT.md) -> Spanish messages. Used with mapApiError(error, bookingErrors).
 import es from '@/i18n/es.js'
 
 const t = es.booking.checkout.errors

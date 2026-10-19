@@ -1,4 +1,3 @@
-// Zod schema of the register form. Messages are Spanish texts from i18n.
 import { z } from 'zod'
 import es from '@/i18n/es.js'
 

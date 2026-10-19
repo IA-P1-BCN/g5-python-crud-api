@@ -1,9 +1,7 @@
-// TanStack mutation: update profile, then refresh the cached user.
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProfile } from '../api/userApi.js'
 import { profileQueryKey } from './useMe.js'
 
-// Same key as auth's `meQueryKey` (not importable: auth only exposes its index.js).
 const AUTH_ME_KEY = ['auth', 'me']
 
 export function useUpdateMe() {

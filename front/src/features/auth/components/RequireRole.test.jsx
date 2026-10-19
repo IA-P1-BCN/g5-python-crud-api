@@ -25,13 +25,11 @@ const session = {
   user: { id: 'u1', email: 'ana@example.com', user_metadata: { full_name: 'Ana' } },
 }
 
-// Logged in with the given role: the session exists and /users/me answers with that role.
 function signInAs(role) {
   mocks.auth.getSession.mockResolvedValue({ data: { session } })
   server.use(http.get('/api/v1/users/me', () => HttpResponse.json(meDto({ role }))))
 }
 
-// Logged in, but the API cannot tell us the role.
 function signInWithRoleLookupFailing() {
   mocks.auth.getSession.mockResolvedValue({ data: { session } })
   server.use(

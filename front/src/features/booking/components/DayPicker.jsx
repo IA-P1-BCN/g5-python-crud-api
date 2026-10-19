@@ -1,4 +1,3 @@
-// Presentational: day selection. Props only.
 import es from '@/i18n/es.js'
 
 export function DayPicker({ selectedDate, onSelectDate, dates = [] }) {

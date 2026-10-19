@@ -20,7 +20,6 @@ export default function ResultForm({ booking }) {
   })
   const mutation = useRegisterResult()
 
-  // `result` is what the schema returned: completion_time is already a number.
   const onSubmit = (result) => mutation.mutate({ id: booking.id, result })
 
   return (

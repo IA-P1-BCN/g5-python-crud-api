@@ -11,7 +11,6 @@ import StaffPlanningPage from './StaffPlanningPage.jsx'
 const respondWith = (body, status = 200) =>
   server.use(http.get('/api/v1/bookings/today', () => HttpResponse.json(body, { status })))
 
-// Same formatting as the table, so the test does not depend on the machine's time zone.
 const hour = (iso) =>
   new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
 
@@ -62,7 +61,6 @@ describe('StaffPlanningPage', () => {
     renderPage()
 
     const rows = await screen.findAllByRole('row')
-    // rows[0] is the header row
     expect(within(rows[1]).getByText(hour(morning))).toBeInTheDocument()
     expect(within(rows[1]).getByText('Lucía Pérez')).toBeInTheDocument()
     expect(within(rows[1]).getByText(es.staff.statuses.CONFIRMED)).toBeInTheDocument()
@@ -79,7 +77,6 @@ describe('StaffPlanningPage', () => {
     renderPage()
 
     const rows = await screen.findAllByRole('row')
-    // rows[0] is the header row
     expect(
       within(rows[1]).getByRole('button', { name: es.staff.actions.start }),
     ).toBeInTheDocument()

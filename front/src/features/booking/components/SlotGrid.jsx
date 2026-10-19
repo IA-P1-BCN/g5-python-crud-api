@@ -1,4 +1,3 @@
-// Presentational: slot grid with disabled states. Props only.
 import { isSlotSelectable } from '../model/slotState'
 import es from '@/i18n/es.js'
 

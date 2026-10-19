@@ -1,4 +1,3 @@
-// Route page: where the user lands after login. Minimal for now.
 import { useAuth } from '@/features/auth'
 import es from '@/i18n/es.js'
 

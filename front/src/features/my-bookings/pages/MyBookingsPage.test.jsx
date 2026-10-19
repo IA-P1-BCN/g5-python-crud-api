@@ -10,7 +10,6 @@ import MyBookingsPage from './MyBookingsPage.jsx'
 
 const t = es.myBookings
 
-// Only Date is faked (so "today" is fixed); timers stay real for MSW and waitFor.
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-10-16T12:00:00Z'))

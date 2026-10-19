@@ -1,4 +1,3 @@
-// Route page: own profile (/perfil): name and phone editable, email read-only.
 import es from '@/i18n/es.js'
 import Alert from '@/shared/ui/Alert.jsx'
 import Spinner from '@/shared/ui/Spinner.jsx'
@@ -16,9 +15,7 @@ export default function ProfilePage() {
       <h1 className="heading-title mb-6">{t.title}</h1>
       {isPending && <Spinner label={es.common.loading} />}
       {isError && <Alert tone="error">{t.loadError}</Alert>}
-      {/* The form mounts only once the data is here: defaultValues are then the real values. */}
       {data && <ProfileForm profile={data} />}
-      {/* Staff and admin do not play: to book they use a separate client account. */}
       {data?.role === 'client' && <ScoreBoard />}
     </main>
   )

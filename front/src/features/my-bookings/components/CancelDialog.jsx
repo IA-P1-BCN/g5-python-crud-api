@@ -1,4 +1,3 @@
-// Confirmation dialog to cancel a booking. Controlled by the parent (open / onOpenChange).
 import { mapApiError } from '@/shared/api/errors.js'
 import es from '@/i18n/es.js'
 import Alert from '@/shared/ui/Alert.jsx'
@@ -20,7 +19,7 @@ export default function CancelDialog({ booking, open, onOpenChange }) {
   const { mutate, isPending, error, reset } = useCancelBooking()
 
   function handleOpenChange(next) {
-    if (!next) reset() // forget an old error when the dialog closes
+    if (!next) reset()
     onOpenChange(next)
   }
 

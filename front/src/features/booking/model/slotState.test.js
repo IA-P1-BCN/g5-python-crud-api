@@ -1,4 +1,3 @@
-// A pure unit test that verifies the `isSlotSelectable` function across all four states.
 import { describe, it, expect } from 'vitest'
 import { SLOT_STATES, isSlotSelectable } from './slotState'
 

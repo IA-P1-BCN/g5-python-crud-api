@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { roomSchema } from './roomSchema'
 
-// The form gives strings; the schema returns numbers for the API.
 const valid = {
   slug: 'sala-misterio',
   name: 'Sala Misterio',

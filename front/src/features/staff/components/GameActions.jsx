@@ -1,5 +1,3 @@
-// Next step of a booking, depending on its status: one button (confirm / start / finish)
-// or the result form. Calls the mutation and shows the API error (INVALID_TRANSITION...).
 import es from '@/i18n/es.js'
 import { mapApiError } from '@/shared/api/errors.js'
 import Alert from '@/shared/ui/Alert.jsx'
@@ -12,12 +10,10 @@ import { staffErrorCodes } from '../model/errors.js'
 import { allowedActions } from '../model/gameTransitions.js'
 import ResultForm from './ResultForm.jsx'
 
-// Same rule as the API (BR-G3): the UTC day of the slot must be today's.
 const isGameDay = (booking) =>
   booking.time_slot.starts_at.slice(0, 10) === new Date().toISOString().slice(0, 10)
 
 export default function GameActions({ booking }) {
-  // One mutation per button. Hooks must always be called, so they stay above any early return.
   const mutations = {
     confirm: useConfirmBooking(),
     start: useStartGame(),
@@ -32,7 +28,6 @@ export default function GameActions({ booking }) {
 
   const mutation = mutations[action]
 
-  // Starting is only allowed on the day of the game: say it without calling the API.
   const handleClick = (m) => {
     const blocked = action === 'start' && !isGameDay(booking)
     setWrongDay(blocked)

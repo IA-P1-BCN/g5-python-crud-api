@@ -1,6 +1,3 @@
-// Route guard: <RequireRole role="staff">. The API stays the real authority.
-// Not logged in -> /login. Logged in without enough role -> 403 screen.
-// Logged in but the role could not be loaded -> error with retry and logout.
 import { Navigate, useLocation } from 'react-router-dom'
 import es from '@/i18n/es.js'
 import Alert from '@/shared/ui/Alert.jsx'
@@ -21,7 +18,6 @@ export default function RequireRole({ role, children }) {
     return <Navigate to="/login" replace state={{ from: location }} />
   }
 
-  // Without the role we cannot decide: give the user a way out instead of an endless spinner.
   if (roleError) {
     return (
       <main className="mx-auto max-w-xl px-4 py-16 text-center">
@@ -36,7 +32,6 @@ export default function RequireRole({ role, children }) {
     )
   }
 
-  // Logged in and the role has not arrived yet: do not flash a 403.
   if (userRole === null) {
     return <Spinner label={es.common.loading} />
   }

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { filterBookings } from './bookingFilters.js'
 
-// "Today" is fixed so the tests never depend on the real clock.
 const NOW = new Date('2026-10-16T12:00:00Z')
 
 const booking = (id, status, startsAt) => ({

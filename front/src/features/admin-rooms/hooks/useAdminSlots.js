@@ -39,7 +39,6 @@ export function useAdminSlots(roomId) {
 
   return {
     slots: state.slots,
-    // Cargando mientras los datos guardados no son de la sala actual
     loading: state.roomId !== roomId,
     loadError: state.loadError,
     refresh,

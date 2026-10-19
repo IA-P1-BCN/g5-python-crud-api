@@ -11,7 +11,6 @@ import AuthProvider from '../components/AuthProvider.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import LoginPage from './LoginPage.jsx'
 
-// Supabase is mocked (its keys do not exist in tests). /users/me goes through the MSW handler.
 const mocks = vi.hoisted(() => ({
   auth: {
     getSession: vi.fn(),
@@ -28,7 +27,6 @@ const session = {
   user: { id: 'u1', email: 'ana@example.com', user_metadata: { full_name: 'Ana' } },
 }
 
-// Stands in for /salas: it proves the session reached the context.
 function Salas() {
   const { user } = useAuth()
   return <p>{`Panel de ${user?.email}`}</p>
@@ -85,7 +83,6 @@ describe('LoginPage', () => {
   it('successful login stores the session and redirects to /salas', async () => {
     const user = userEvent.setup()
     mocks.auth.signInWithPassword.mockImplementation(async () => {
-      // From now on the Axios interceptor finds the token, like with the real client.
       mocks.auth.getSession.mockResolvedValue({ data: { session } })
       return { data: { session, user: session.user }, error: null }
     })

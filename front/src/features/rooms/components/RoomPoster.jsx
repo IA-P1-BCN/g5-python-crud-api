@@ -1,4 +1,3 @@
-// Presentational: room poster card. Props only, no data fetching, no routing.
 import Button from '@/shared/ui/Button.jsx'
 import es from '@/i18n/es.js'
 

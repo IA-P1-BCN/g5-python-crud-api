@@ -9,7 +9,7 @@ afterEach(() => {
 
 describe('GateTransition', () => {
   it('calls onDone when the animation ends', () => {
-    stubMatchMedia(false) // the user accepts animations
+    stubMatchMedia(false)
     const onDone = vi.fn()
     render(<GateTransition room={{ slug: 'faro' }} onDone={onDone} />)
 
@@ -19,11 +19,10 @@ describe('GateTransition', () => {
   })
 
   it('calls onDone right away when the user prefers reduced motion', () => {
-    stubMatchMedia(true) // the user asked for less animation
+    stubMatchMedia(true)
     const onDone = vi.fn()
     render(<GateTransition room={{ slug: 'faro' }} onDone={onDone} />)
 
-    // no animationEnd fired: the animation never plays, so it would never come
     expect(onDone).toHaveBeenCalledTimes(1)
   })
 
@@ -32,7 +31,6 @@ describe('GateTransition', () => {
     const onDone = vi.fn()
     render(<GateTransition room={{ slug: 'relojero' }} onDone={onDone} />)
 
-    // animationend bubbles up from the children: only the gate's own end counts
     fireAnimationEnd(screen.getByTestId('gate').firstChild)
 
     expect(onDone).not.toHaveBeenCalled()
@@ -66,7 +64,6 @@ describe('GateTransition', () => {
     const onDone = vi.fn()
     render(<GateTransition room={{ slug: 'faro' }} onDone={onDone} />)
 
-    // a ::before animation reports the gate as target, but with its own name
     fireAnimationEnd(screen.getByTestId('gate'), 'gate-beam-cover')
 
     expect(onDone).not.toHaveBeenCalled()

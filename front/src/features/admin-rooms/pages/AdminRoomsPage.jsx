@@ -27,7 +27,6 @@ export function AdminRoomsPage() {
   const [formError, setFormError] = useState(null)
   const [open, setOpen] = useState(false)
 
-  // Runs an API call and shows its error in Spanish; returns true when it worked.
   const run = async (action, setError) => {
     setError(null)
     setSuccess(false)
@@ -40,7 +39,6 @@ export function AdminRoomsPage() {
     }
   }
 
-  // The form lives in a dialog: its error shows inside it, and it closes once the room is saved.
   const handleSubmit = async (values) => {
     const ok = await run(() => saveRoom(values), setFormError)
     setSuccess(ok)

@@ -1,4 +1,3 @@
-// Presentational: one booking (status, room, date, players, price, actions). Props only.
 import es from '@/i18n/es.js'
 import { formatPrice } from '@/shared/lib/format.js'
 import Badge from '@/shared/ui/Badge.jsx'
@@ -7,7 +6,6 @@ import { canModify, EDITABLE_STATUSES } from '../model/canModify.js'
 
 const t = es.myBookings.card
 
-// Booking status -> Badge tone (the five booking states of DESIGN.md).
 const STATUS_TONE = {
   PENDING: 'pending',
   CONFIRMED: 'confirmed',
@@ -16,8 +14,6 @@ const STATUS_TONE = {
   CANCELLED: 'cancelled',
 }
 
-// Slots are stored in UTC (BR-X5) and shown in the user's local time, like the slot grid, ticket and
-// staff table. The 24h rule and the back stay in UTC.
 const DATE_FORMAT = { day: 'numeric', month: 'long', year: 'numeric' }
 const TIME_FORMAT = { hour: '2-digit', minute: '2-digit' }
 

@@ -1,4 +1,3 @@
-// TanStack mutation: change slot, then invalidate my bookings and slots.
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateBookingSlot } from '../api/myBookingsApi.js'
 

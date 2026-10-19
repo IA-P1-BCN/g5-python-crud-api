@@ -1,5 +1,3 @@
-// Mounted once in App, above the routes, so the gate outlives the page change:
-// cover the screen -> navigate behind it -> uncover progressively.
 import { useNavigate } from 'react-router-dom'
 import { useGateStore } from '../model/gate.store.js'
 import GateTransition from './GateTransition.jsx'

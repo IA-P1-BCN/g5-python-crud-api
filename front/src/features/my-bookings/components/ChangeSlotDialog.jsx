@@ -1,4 +1,3 @@
-// Dialog to pick another slot, in this room or another one (BR-L5). Reuses DayPicker/SlotGrid/useSlots from @/features/booking.
 import { useState } from 'react'
 import { DayPicker, SlotGrid, getUpcomingDates, useSlots } from '@/features/booking'
 import { useRooms } from '@/features/rooms'
@@ -21,7 +20,6 @@ import { MY_BOOKINGS_ERRORS } from '../model/errors.js'
 
 const t = es.myBookings.changeSlotDialog
 
-// The new slot must be 24h or more away (BR-L5): offer a week, and hide slots that are too close.
 const DAYS_OFFERED = 7
 
 export default function ChangeSlotDialog({ booking, open, onOpenChange }) {
@@ -30,7 +28,6 @@ export default function ChangeSlotDialog({ booking, open, onOpenChange }) {
   const [slot, setSlot] = useState(null)
   const [roomId, setRoomId] = useState(booking.room.id)
   const { data: rooms = [] } = useRooms()
-  // Only rooms where the current players fit (BR-B2); the current room is always offered.
   const offeredRooms = rooms.filter(
     (r) => r.id === booking.room.id || r.maxPlayers >= booking.players,
   )
@@ -39,8 +36,8 @@ export default function ChangeSlotDialog({ booking, open, onOpenChange }) {
 
   function handleOpenChange(next) {
     if (!next) {
-      reset() // forget an old error
-      setSlot(null) // and an unsaved choice
+      reset()
+      setSlot(null)
       setRoomId(booking.room.id)
     }
     onOpenChange(next)
@@ -48,12 +45,12 @@ export default function ChangeSlotDialog({ booking, open, onOpenChange }) {
 
   function handleDateChange(nextDate) {
     setDate(nextDate)
-    setSlot(null) // a slot of another day must not stay selected
+    setSlot(null)
   }
 
   function handleRoomChange(nextRoomId) {
     setRoomId(nextRoomId)
-    setSlot(null) // nor a slot of another room
+    setSlot(null)
   }
 
   function handleSave() {

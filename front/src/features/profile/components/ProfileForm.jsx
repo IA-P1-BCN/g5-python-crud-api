@@ -1,4 +1,3 @@
-// Profile form: name and phone editable, email read-only. React Hook Form + Zod.
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import es from '@/i18n/es.js'
@@ -23,7 +22,6 @@ export default function ProfileForm({ profile }) {
   })
 
   return (
-    // noValidate: the Zod messages are shown, not the browser's own bubble.
     <form noValidate onSubmit={handleSubmit((values) => mutate(values))} className="space-y-4">
       <Field
         label={t.name}
@@ -38,7 +36,6 @@ export default function ProfileForm({ profile }) {
         autoComplete="tel"
         {...register('phone')}
       />
-      {/* Not registered: the email is never sent (the API rejects unknown fields). */}
       <Field label={t.email} defaultValue={profile.email} disabled />
       {isSuccess && <Alert tone="success">{t.saved}</Alert>}
       {isError && <Alert tone="error">{mapApiError(error).message}</Alert>}

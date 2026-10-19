@@ -15,7 +15,6 @@ describe('computePlayerStats', () => {
   })
 
   it('takes the best time among escaped games only, formatted mm:ss', () => {
-    // 600s lost game must be ignored: only escaped games count
     const stats = computePlayerStats([game(true, 2710), game(false, 600), game(true, 1805)])
     expect(stats.bestTime).toBe('30:05')
   })

@@ -1,4 +1,3 @@
-// Verify that the grid renders correctly, disables unavailable time slots, and responds only when you click on available options.
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { SlotGrid } from './SlotGrid'

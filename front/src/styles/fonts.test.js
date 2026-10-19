@@ -5,7 +5,6 @@ const css = readFileSync('src/index.css', 'utf8')
 const main = readFileSync('src/main.jsx', 'utf8')
 const resolve = createRequire(import.meta.url).resolve
 
-// The fonts are self-hosted with @fontsource and imported in main.jsx.
 const FONTS = [
   ['--font-display', 'Big Shoulders Display', 'big-shoulders-display'],
   ['--font-sans', 'Hanken Grotesk', 'hanken-grotesk'],
@@ -22,7 +21,6 @@ describe('fonts', () => {
     expect(imports.some((name) => name.startsWith(`@fontsource/${pkg}/`))).toBe(true)
   })
 
-  // Catches what broke the build once: `latin-700.css` is not exported by every package.
   it.each(imports)('%s resolves to a real file', (name) => {
     expect(() => resolve(name)).not.toThrow()
   })

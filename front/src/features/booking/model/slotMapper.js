@@ -1,5 +1,3 @@
-// Maps a time slot DTO (GET /time-slots) to the view model of the slot grid.
-// `state` (free / taken / blocked / past) is computed by the API
 export function toSlot(dto) {
   return {
     id: dto.id,

@@ -14,8 +14,6 @@ const renderPage = () =>
     </MemoryRouter>,
   )
 
-// The shared server (test/setup.js) fails on any request without a handler.
-// server.use() puts the admin handlers before booking's GET /rooms.
 beforeEach(() => {
   resetMockRooms()
   server.use(...adminRoomsHandlers)

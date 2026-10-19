@@ -1,6 +1,3 @@
-// Room entrance animations. Colours come from var(--rc) / var(--rd) (set by data-room),
-// no Sass colour variables. One block per entrance, named like roomThemes.js.
-// cover: the entrance plays and hides the page. uncover: the gate fades out on the new page.
 $duration: 1.1s;
 $uncover: 1.8s;
 
@@ -12,13 +9,11 @@ $uncover: 1.8s;
   background: var(--rd);
   animation: gate-cover $duration ease-in forwards;
 
-  // the two parts stay hidden unless an entrance below uses them
   > span {
     display: none;
     position: absolute;
   }
 
-  // relojero: a clock dial zooms in while its hand spins
   &[data-entrance='gears'] {
     display: grid;
     place-items: center;
@@ -49,7 +44,6 @@ $uncover: 1.8s;
     }
   }
 
-  // faro: a lighthouse beam sweeps the dark screen
   &[data-entrance='fog']::before {
     content: '';
     position: absolute;
@@ -66,7 +60,6 @@ $uncover: 1.8s;
     animation: gate-beam-cover $duration linear forwards;
   }
 
-  // biblioteca: two book pages swing shut
   &[data-entrance='book'] > span {
     display: block;
     top: 0;
@@ -89,7 +82,6 @@ $uncover: 1.8s;
     }
   }
 
-  // atraco: a vault door rolls in and turns
   &[data-entrance='vault'] {
     display: grid;
     place-items: center;
@@ -115,7 +107,6 @@ $uncover: 1.8s;
     }
   }
 
-  // lab: two airlock panels slide together
   &[data-entrance='airlock'] > span {
     display: block;
     top: 0;
@@ -136,22 +127,17 @@ $uncover: 1.8s;
     }
   }
 
-  // the entrance parts keep their last frame (forwards) while the whole gate fades away
   &[data-phase='uncover'] {
     animation: gate-uncover $uncover ease-in-out forwards;
 
-    // the lighthouse beam keeps sweeping too
     &[data-entrance='fog']::before {
       animation: gate-beam-uncover $uncover linear forwards;
     }
 
-    // the clock hand does not stop: it keeps turning while the gate fades
     &[data-entrance='gears'] > span:first-child::after {
       animation: gate-hand-uncover $uncover linear forwards;
     }
   }
-
-  // 'fade' (default theme) needs nothing: the base fade-in is the whole entrance
 }
 
 @keyframes gate-cover {
@@ -163,7 +149,6 @@ $uncover: 1.8s;
   }
 }
 
-// the effect stays fully visible for a moment, then melts away slowly
 @keyframes gate-uncover {
   0%,
   25% {
@@ -192,7 +177,6 @@ $uncover: 1.8s;
   }
 }
 
-// slow, constant sweep: half a turn per phase
 @keyframes gate-beam-cover {
   to {
     transform: rotate(180deg);

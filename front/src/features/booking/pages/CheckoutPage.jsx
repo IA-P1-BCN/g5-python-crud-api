@@ -19,7 +19,6 @@ export function CheckoutPage() {
   const { slotId, selectedSlot, roomSlug, players: draftPlayers } = useBookingDraftStore()
   const { data: room, isLoading, error: roomError } = useRoom(roomSlug)
 
-  // The draft lives in memory: after a reload there is nothing to pay for, go back to the room.
   if (!slotId) return <Navigate to={roomSlug ? `/reservar/${roomSlug}` : '/salas'} replace />
 
   if (isLoading)
@@ -36,7 +35,6 @@ export function CheckoutPage() {
       </main>
     )
 
-  // Keyed by room: players start from the draft, kept inside the min..max of the room.
   return (
     <CheckoutForm
       key={room.id}

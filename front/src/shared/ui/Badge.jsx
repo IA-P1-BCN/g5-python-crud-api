@@ -16,8 +16,6 @@ const badgeStyles = cva('inline-flex items-center rounded-pill px-2.5 py-0.5 tex
   defaultVariants: { tone: 'neutral' },
 })
 
-// Generic status badge. No business logic: the feature chooses the tone for each status
-// (pending, confirmed, in-progress, done, cancelled map to the booking states).
 export default function Badge({ tone, className, ...props }) {
   return <span className={cn(badgeStyles({ tone }), className)} {...props} />
 }

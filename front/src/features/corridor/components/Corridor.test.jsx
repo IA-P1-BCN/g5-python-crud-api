@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import Corridor from './Corridor.jsx'
 import { createCorridor } from '../scene/createCorridor.js'
 
-// Three.js needs WebGL (not available in jsdom): the scene factory is replaced by a fake.
 vi.mock('../scene/createCorridor.js', () => ({ createCorridor: vi.fn() }))
 
 const faro = { id: 3, slug: 'faro', name: 'Faro 1923' }

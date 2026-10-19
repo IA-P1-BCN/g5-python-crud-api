@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createLabel } from './labelTexture.js'
 
-// jsdom has no 2D canvas: a fake context records the font that was picked.
 function fakeContext(textWidth) {
   const ctx = { font: '', measureText: vi.fn(() => ({ width: textWidth })), fillText: vi.fn() }
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx)
@@ -30,7 +29,7 @@ describe('createLabel', () => {
   })
 
   it('shrinks the font so a long text still fits in the sign', () => {
-    const ctx = fakeContext(940) // twice the 470px available
+    const ctx = fakeContext(940)
 
     createLabel('a very long room name', '#fff')
 

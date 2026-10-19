@@ -11,8 +11,6 @@ import { meDto } from '@/test/mocks/handlers/auth.js'
 import { server } from '@/test/mocks/server.js'
 import { adminUsersRoutes } from '../routes.js'
 
-// Supabase is mocked (its keys do not exist in tests). /users/me goes through MSW, so the real
-// RequireRole decides who sees the page.
 const mocks = vi.hoisted(() => ({
   auth: {
     getSession: vi.fn(),
@@ -55,13 +53,11 @@ function renderPage() {
 const rowOf = (name) => screen.getByRole('row', { name: new RegExp(name) })
 const roleSelect = (name) => within(rowOf(name)).getByRole('combobox', { name: t.roleLabel(name) })
 
-// Opens the role selector of a user and picks an option (Radix renders the list in a portal).
 async function pickRole(user, name, role) {
   await user.click(roleSelect(name))
   await user.click(await screen.findByRole('option', { name: t.roles[role] }))
 }
 
-// jsdom lacks these browser APIs, which Radix Select calls when it opens.
 beforeAll(() => {
   Element.prototype.hasPointerCapture ??= () => false
   Element.prototype.setPointerCapture ??= () => {}
@@ -84,14 +80,13 @@ describe('AdminUsersPage', () => {
     renderPage()
 
     expect(await screen.findByRole('table', { name: t.table.label })).toBeInTheDocument()
-    expect(screen.getAllByRole('row')).toHaveLength(5) // header + 4 users
+    expect(screen.getAllByRole('row')).toHaveLength(5)
 
     const bruno = within(rowOf('Bruno Cliente'))
     expect(bruno.getByText('bruno@example.com')).toBeInTheDocument()
     expect(roleSelect('Bruno Cliente')).toHaveTextContent(t.roles.client)
     expect(bruno.getByRole('button', { name: t.deactivate })).toBeInTheDocument()
 
-    // A deactivated user shows its state and offers no actions.
     const dani = within(rowOf('Dani Inactivo'))
     expect(dani.getByText(t.status.inactive)).toBeInTheDocument()
     expect(dani.queryByRole('button', { name: t.deactivate })).not.toBeInTheDocument()

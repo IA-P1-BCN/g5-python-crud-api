@@ -17,7 +17,6 @@ function renderForm() {
   )
 }
 
-// Records the call made to POST /bookings/:id/result.
 function spyOnResult() {
   const call = { id: null, body: null }
   server.use(

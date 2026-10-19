@@ -75,8 +75,7 @@ front/
 │   │   │   │   └── SlotsTable.jsx
 │   │   │   ├── hooks/
 │   │   │   │   ├── useAdminRooms.js
-│   │   │   │   ├── useAdminSlots.js
-│   │   │   │   └── useSaveRoom.js
+│   │   │   │   └── useAdminSlots.js
 │   │   │   ├── model/
 │   │   │   │   ├── errors.js
 │   │   │   │   ├── roomSchema.js          # Zod schema
@@ -84,19 +83,6 @@ front/
 │   │   │   ├── pages/
 │   │   │   │   ├── AdminRoomsPage.jsx     # /admin/salas
 │   │   │   │   └── AdminSlotsPage.jsx     # /admin/salas/:id/horarios
-│   │   │   ├── index.js                   # public API of the feature
-│   │   │   └── routes.js                  # routes of this feature
-│   │   ├── admin-stats/
-│   │   │   ├── api/
-│   │   │   │   └── adminStatsApi.js
-│   │   │   ├── components/
-│   │   │   │   ├── BookingsPerRoom.jsx
-│   │   │   │   ├── ExportCsvButton.jsx    # CSV export
-│   │   │   │   └── KpiCards.jsx
-│   │   │   ├── hooks/
-│   │   │   │   └── useStats.js
-│   │   │   ├── pages/
-│   │   │   │   └── AdminStatsPage.jsx
 │   │   │   ├── index.js                   # public API of the feature
 │   │   │   └── routes.js                  # routes of this feature
 │   │   ├── admin-users/
@@ -225,7 +211,6 @@ front/
 │   │   │   │   ├── Atmosphere.jsx         # clock / beam / dust / lasers
 │   │   │   │   ├── RoomsCorridor.jsx    # loads rooms, adds accent, renders the corridor (CorridorView)
 │   │   │   │   ├── GateTransition.jsx     # room entrance animation
-│   │   │   │   ├── RoomHero.jsx           # room detail header
 │   │   │   │   └── RoomPoster.jsx         # room card
 │   │   │   ├── hooks/
 │   │   │   │   ├── useRoom.js             # TanStack Query: detail
@@ -263,7 +248,6 @@ front/
 │   ├── i18n/
 │   │   ├── es/
 │   │   │   ├── adminRooms.js              # texts (Spanish) of adminRooms
-│   │   │   ├── adminStats.js              # texts (Spanish) of adminStats
 │   │   │   ├── adminUsers.js              # texts (Spanish) of adminUsers
 │   │   │   ├── auth.js                    # texts (Spanish) of auth
 │   │   │   ├── booking.js                 # texts (Spanish) of booking
@@ -279,9 +263,7 @@ front/
 │   │   │   ├── client.js                  # the only Axios instance (/api/v1, JWT interceptor)
 │   │   │   └── errors.js                  # generic backend error mapping
 │   │   ├── hooks/
-│   │   │   ├── useCountdown.js
 │   │   │   ├── useMediaQuery.js
-│   │   │   ├── usePagination.js
 │   │   │   └── useReducedMotion.js
 │   │   ├── lib/
 │   │   │   └── format.js                  # price and date formatting
@@ -299,7 +281,6 @@ front/
 │   │   ├── mocks/
 │   │   │   ├── handlers/
 │   │   │   │   ├── adminRooms.js          # MSW handlers of adminRooms
-│   │   │   │   ├── adminStats.js          # MSW handlers of adminStats
 │   │   │   │   ├── adminUsers.js          # MSW handlers of adminUsers
 │   │   │   │   ├── auth.js                # MSW handlers of auth
 │   │   │   │   ├── booking.js             # MSW handlers of booking
@@ -339,7 +320,6 @@ front/
 | `staff` | Today's games, start, finish, result | 081, 082 |
 | `admin-rooms` | Rooms and time slots management | 069, 070 |
 | `admin-users` | Users list and role change | 080 |
-| `admin-stats` | Statistics, CSV export | 084, 085 |
 
 **Inside a feature:**
 
@@ -359,7 +339,7 @@ front/
 | Folder | Content |
 |--------|---------|
 | `api/` | The single Axios client, generic error mapping |
-| `hooks/` | `useCountdown`, `useReducedMotion`, `usePagination` |
+| `hooks/` | `useReducedMotion` |
 | `lib/` | Price and date formatting |
 | `ui/` | Button, Chip, Badge, Skeleton, Toast, Pagination |
 

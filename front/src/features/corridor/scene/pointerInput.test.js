@@ -19,7 +19,7 @@ beforeEach(() => {
   camera = new PerspectiveCamera(60, 1, 0.1, 50)
   camera.updateMatrixWorld()
   door = new Mesh(new BoxGeometry(2, 2, 0.1), new MeshBasicMaterial())
-  door.position.set(0, 0, -5) // straight ahead of the camera = centre of the canvas
+  door.position.set(0, 0, -5)
   door.updateMatrixWorld()
   door.userData = { room: { id: 7 } }
   dispatch = vi.fn()

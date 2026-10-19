@@ -19,7 +19,6 @@ const buttonStyles = cva(
   },
 )
 
-// Generic button. No business logic. `loading` blocks double submits.
 export default function Button({
   variant,
   loading = false,

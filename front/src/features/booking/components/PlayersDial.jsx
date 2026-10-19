@@ -1,15 +1,12 @@
-// Controlled component: PlayersDial({ value, min, max, onChange }). Knows nothing about rooms.
-// Safe-dial look from the mockup: the numbers sit on an arc and a knob turns towards the chosen one.
 import { cn } from '@/shared/lib/cn.js'
 import es from '@/i18n/es.js'
 
-const ARC = 120 // degrees covered by the numbers, centred on the top
-const RADIUS = 112 // px from the knob centre to the numbers
+const ARC = 120
+const RADIUS = 112
 
 const angleOf = (n, min, max) => (max === min ? 0 : -ARC / 2 + ((n - min) * ARC) / (max - min))
 
 export function PlayersDial({ value, min, max, onChange }) {
-  // One button per allowed number: a number outside min..max does not exist, so it cannot be picked.
   const numbers = Array.from({ length: max - min + 1 }, (_, i) => min + i)
 
   return (

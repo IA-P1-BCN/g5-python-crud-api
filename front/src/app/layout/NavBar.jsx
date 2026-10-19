@@ -1,4 +1,3 @@
-// Navigation bar: shows only what the current role can access (uses @/features/auth).
 import { NavLink } from 'react-router-dom'
 import { hasRole, useAuth } from '@/features/auth'
 import Button from '@/shared/ui/Button.jsx'
@@ -6,10 +5,6 @@ import es from '@/i18n/es.js'
 
 const nav = es.common.nav
 
-// Only links to routes that are registered today. Add a link in the same PR that registers its
-// route (admin-stats is still empty).
-// `hideFor`: roles that must not see the link (staff and admin work on the planning; staff books with a separate client account).
-// No `role` = public. Otherwise the link shows for that role and above (see hasRole).
 const links = [
   { to: '/salas', label: nav.rooms, hideFor: ['staff', 'admin'] },
   { to: '/mis-reservas', label: nav.myBookings, role: 'client', hideFor: ['staff', 'admin'] },
@@ -45,7 +40,6 @@ export default function NavBar() {
           </li>
         ))}
       </ul>
-      {/* Wait for the session to be restored, so "Acceder" does not flash for a logged-in user. */}
       {loading ? null : isAuthenticated ? (
         <Button variant="ghost" onClick={logout}>
           {nav.logout}

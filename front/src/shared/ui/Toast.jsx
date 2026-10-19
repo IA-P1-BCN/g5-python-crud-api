@@ -13,8 +13,6 @@ const toastStyles = cva('flex items-start gap-3 rounded-lg border px-4 py-3 text
   defaultVariants: { tone: 'info' },
 })
 
-// Generic toast notification. No business logic. Errors use role="alert" so screen readers
-// announce them at once; the rest are polite statuses.
 export default function Toast({ tone, onClose, className, children }) {
   return (
     <div

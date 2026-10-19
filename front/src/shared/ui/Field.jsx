@@ -1,8 +1,6 @@
 import { useId } from 'react'
 import { cn } from '../lib/cn.js'
 
-// Label + input + error message. `ref` is a normal prop in React 19, so
-// <Field label="Email" error={errors.email?.message} {...register('email')} /> just works.
 export default function Field({
   label,
   error,

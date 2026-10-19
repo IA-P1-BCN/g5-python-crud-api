@@ -11,7 +11,6 @@ import { createLabel } from './labelTexture.js'
 
 const BACKGROUND = 0x06070a
 
-// Floor, ceiling, two walls, ambient light and the exit sign. Returns the sign (it blinks).
 export function buildCorridorStructure(scene) {
   scene.background = new Color(BACKGROUND)
   scene.fog = new Fog(BACKGROUND, 6, 22)

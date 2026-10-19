@@ -1,7 +1,5 @@
 import { cn } from '../lib/cn.js'
 
-// Loading indicator. With a label it is a status for screen readers (pages: es.common.loading);
-// without one it is decoration (inside a loading Button, which already has aria-busy).
 export default function Spinner({ label, className }) {
   return (
     <span
