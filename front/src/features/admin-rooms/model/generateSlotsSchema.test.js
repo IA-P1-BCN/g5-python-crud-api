@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { generateSlotsSchema, toUtcPayload } from './generateSlotsSchema'
 
 const valid = {
@@ -49,7 +49,7 @@ describe('toUtcPayload', () => {
 
 describe('local time limits (Europe/Madrid)', () => {
   beforeAll(() => {
-    process.env.TZ = 'Europe/Madrid'
+    vi.stubEnv('TZ', 'Europe/Madrid')
   })
 
   it('converts winter and summer local times with their own offset', () => {
