@@ -420,7 +420,7 @@ RoomsCorridor (rooms)  ->  CorridorView (corridor)  ->  Corridor.jsx -> scene/cr
 
 ### Access control
 
-Every route except `/login` and `/register` needs a session: `RequireAuth` (ticket 087) redirects to `/login` otherwise, and a successful login or sign-up lands on `/salas`.
+Every route except `/login` and `/register` needs a session: `RequireAuth` (ticket 087) redirects to `/login` otherwise, and a successful login or sign-up lands on `/salas` (`/staff` for staff and admin, see `homeFor` in `auth/model/roles.js`).
 
 `<RequireRole role="staff">` hides routes by role in the UI. The API remains the real authority (`BUSINESS_RULES.md`).
 
