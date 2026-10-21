@@ -22,6 +22,7 @@ def decode_access_token(token: str) -> dict:
         algorithms=["ES256"],
         audience="authenticated",
         issuer=SUPABASE_ISSUER,
+        leeway=30,
         options={
             "require": ["exp", "sub", "aud", "iss"],
         },
